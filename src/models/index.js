@@ -57,7 +57,7 @@ Minecraft.belongsTo(Instance, {
 // instance <--> minecraft
 Instance.hasOne(CounterStrike, {
   foreignKey: 'instanceId',
-  as: 'cs',
+  as: 'counterstrike',
   onDelete: 'CASCADE',
 });
 
@@ -65,7 +65,7 @@ CounterStrike.belongsTo(Instance, {
   foreignKey: 'instanceId',
 });
 
-// await db.sync({ force: true });
+// await db.sync({ alter: true });
 await db.query('PRAGMA foreign_keys = ON');
 
 export {

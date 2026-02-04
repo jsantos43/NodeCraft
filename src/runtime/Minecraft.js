@@ -31,11 +31,6 @@ class Minecraft extends Instance {
       updating: false,
     };
 
-    this.checker = {
-      lastRun: 0,
-      interval: null,
-    };
-
     this.setup();
   }
 
@@ -137,7 +132,7 @@ class Minecraft extends Instance {
   }
 
   async verifyRcon() {
-    this.initRcon(25575, async () => {
+    this.initRcon(25575, null, async () => {
       await this.emitEvent('gamerule send_command_feedback false');
       await this.emitEvent('gamerule  log_admin_commands false');
       await this.emitEvent('save-all');

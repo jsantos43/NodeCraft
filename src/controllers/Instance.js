@@ -1,6 +1,7 @@
 import Service from '../services/Instance.js';
 import Validator from '../validators/Instance.js';
 import MinecraftValidator from '../validators/Minecraft.js';
+import CounterStrikeValidator from '../validators/CounterStrike.js';
 
 class Instance {
   static async create(req, res, next) {
@@ -17,6 +18,7 @@ class Instance {
       // Get game data
       const gameData = body?.config || {};
       if (instanceData.type === 'minecraft') MinecraftValidator(gameData, false, true);
+      if (instanceData.type === 'counterstrike') CounterStrikeValidator(gameData, false, true);
 
       const instance = await Service.create(user.id, instanceData, gameData);
 
@@ -62,9 +64,8 @@ class Instance {
 
       // Get game data
       const gameData = body?.config || {};
-      if (instanceData.type === 'minecraft') {
-        MinecraftValidator(gameData, false, true);
-      }
+      if (instanceData.type === 'minecraft') MinecraftValidator(gameData, false, true);
+      if (instanceData.type === 'counterstrike') CounterStrikeValidator(gameData, false, true);
 
       const instance = await Service.update(id, instanceData, gameData);
 

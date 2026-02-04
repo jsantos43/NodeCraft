@@ -102,7 +102,7 @@ class Instance {
   static async readOne(id) {
     const includeMap = {
       minecraft: { model: MinecraftModel, as: 'minecraft' },
-      counterstrike: { model: CounterStrikeModel, as: 'cs' },
+      counterstrike: { model: CounterStrikeModel, as: 'counterstrike' },
       // terraria: { model: TerrariaConfig, as: 'terraria' },
     };
 
@@ -136,6 +136,7 @@ class Instance {
 
       // Update game data
       if (instance.minecraft) await instance.minecraft.update(gameData, { transaction: t });
+      if (instance.counterstrike) await instance.counterstrike.update(gameData, { transaction: t });
     });
 
     return instance;

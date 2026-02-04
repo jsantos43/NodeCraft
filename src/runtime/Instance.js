@@ -23,6 +23,11 @@ class Instance {
       players: [],
       ping: null,
     };
+
+    this.checker = {
+      lastRun: 0,
+      interval: null,
+    };
   }
 
   async updateHistory(message) {
@@ -102,7 +107,7 @@ class Instance {
         // eslint-disable-next-line no-console
         if (config.app.stage === 'DEV') console.log(msg);
 
-        callback(msg);
+        if (callback) callback(msg);
       };
 
       stdout.on('data', (chunk) => handleChunk(chunk, passFunction));
@@ -112,7 +117,7 @@ class Instance {
     }
   }
 
-  async initRcon(port, callback) {
+  async initRcon(port, password, callback) {
     try {
       if (!!this.rcon && !this.tryingRconConnection) return;
 
@@ -122,7 +127,7 @@ class Instance {
       const rcon = await Rcon.connect({
         host: containerIpAddress,
         port,
-        password: 'nodecraft',
+        password: password || 'nodecraft',
       });
 
       this.rcon = rcon;
@@ -131,6 +136,7 @@ class Instance {
     } catch (err) {
       this.rcon = null;
       this.tryingRconConnection = false;
+      console.log(err);
     }
   }
 
@@ -158,6 +164,10 @@ class Instance {
     }
   }
 
+  removeInterval() {
+    if (this?.monitor?.interval) clearInterval(this.monitor.interval);
+  }
+
   async start() {
     await Container.run(this.id);
     instancesRunning[this.id] = this;
@@ -166,7 +176,8 @@ class Instance {
   stop() {
     try {
       this.removeStream();
-      clearInterval(this.monitor.interval);
+      this.removeInterval();
+
       delete instancesRunning[this.id];
       delete this;
     } catch (err) {

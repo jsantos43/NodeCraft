@@ -120,7 +120,7 @@ class Container {
         }
       }
     } catch (err) {
-      logger.error({ err }, 'Error to start container');
+      logger.error({ err }, 'Error to stop container');
     }
   }
 
@@ -220,11 +220,9 @@ class Container {
     await Container.ensureNetwork('nodecraft-net');
 
     const enviroment = [
-      `SRCDS_TOKEN=${instance.cs.steamToken}`,
-      'rconPassword=nodecraft',
+      `SRCDS_TOKEN=${instance?.counterstrike?.steamToken}`,
+      `CS2_RCONPW=${instance?.counterstrike?.rconPassword}`,
     ];
-
-    console.log(enviroment);
 
     const container = await docker.createContainer({
       name: `Nodecraft_${instance.id}`,
@@ -233,6 +231,7 @@ class Container {
 
       ExposedPorts: {
         '27015/udp': {},
+        '27015/tcp': {},
       },
 
       HostConfig: {
@@ -242,6 +241,9 @@ class Container {
 
         PortBindings: {
           '27015/udp': [
+            { HostPort: String(instance.port) },
+          ],
+          '27015/tcp': [
             { HostPort: String(instance.port) },
           ],
         },
