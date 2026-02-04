@@ -300,7 +300,7 @@ class Minecraft extends Instance {
         }
       });
     } catch (err) {
-      logger.error({ err }, 'Error to setup instance');
+      logger.error({ err }, 'Error to setup minecraft instance');
     }
   }
 }

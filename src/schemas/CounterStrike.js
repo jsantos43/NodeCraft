@@ -18,6 +18,16 @@ const CounterStrike = {
     min: 3,
     max: 32,
   },
+  maxPlayers: {
+    type: 'number',
+    int: true,
+    min: 2,
+    max: 20,
+  },
+  mode: {
+    type: 'string',
+    values: ['casual', 'competitive', 'wingman', 'deathmatch'],
+  },
   map: {
     type: 'string',
     values: [
@@ -37,9 +47,21 @@ const CounterStrike = {
       'memento',
     ],
   },
-  mode: {
+  botDifficulty: {
+    type: 'number',
+    int: true,
+    min: 0,
+    max: 3,
+  },
+  botQuota: {
+    type: 'number',
+    int: true,
+    min: 0,
+    max: 20,
+  },
+  botMode: {
     type: 'string',
-    values: ['casual', 'competitive', 'wingman', 'deathmatch'],
+    values: ['fill', 'normal'],
   },
 };
 

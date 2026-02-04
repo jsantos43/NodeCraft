@@ -219,10 +219,18 @@ class Container {
     await Container.ensureImage('cm2network/cs2:latest');
     await Container.ensureNetwork('nodecraft-net');
 
+    const gameData = instance?.counterstrike;
+    if (!gameData) throw new Error('instance has no counterstrike config!');
+
     const enviroment = [
-      `SRCDS_TOKEN=${instance?.counterstrike?.steamToken}`,
-      `CS2_RCONPW=${instance?.counterstrike?.rconPassword}`,
+      `SRCDS_TOKEN=${gameData.steamToken}`,
+      `CS2_RCONPW=${gameData.rconPassword}`,
+      `CS2_SERVERNAME=${gameData.hostname}`,
+      `CS2_MAXPLAYERS=${gameData.maxPlayers}`,
+      'CS2_SERVER_HIBERNATE=1',
     ];
+
+    if (gameData.password) enviroment.push(`CS2_PW="${gameData.password}"`);
 
     const container = await docker.createContainer({
       name: `Nodecraft_${instance.id}`,

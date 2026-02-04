@@ -139,6 +139,8 @@ class Instance {
       if (instance.counterstrike) await instance.counterstrike.update(gameData, { transaction: t });
     });
 
+    await Container.delete(id);
+
     return instance;
   }
 

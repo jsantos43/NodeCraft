@@ -136,7 +136,6 @@ class Instance {
     } catch (err) {
       this.rcon = null;
       this.tryingRconConnection = false;
-      console.log(err);
     }
   }
 

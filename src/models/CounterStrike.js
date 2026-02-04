@@ -45,6 +45,33 @@ CounterStrike.init({
       },
     },
   },
+  maxPlayers: {
+    type: DataTypes.NUMBER,
+    defaultValue: 10,
+    allowNull: false,
+    validate: {
+      min: {
+        args: [2],
+        msg: 'maxPlayers field must be greater than or equal to 2!',
+      },
+      max: {
+        args: [20],
+        msg: 'maxPlayers field must be lower than or equal to 20!',
+      },
+    },
+  },
+  mode: {
+    type: DataTypes.STRING,
+    values: ['casual', 'competitive', 'wingman', 'deathmatch'],
+    defaultValue: 'casual',
+    allowNull: false,
+    validate: {
+      isIn: {
+        args: [['casual', 'competitive', 'wingman', 'deathmatch']],
+        msg: 'mode field must be a valid value!',
+      },
+    },
+  },
   map: {
     type: DataTypes.STRING,
     values: [
@@ -87,15 +114,45 @@ CounterStrike.init({
       },
     },
   },
-  mode: {
+  botDifficulty: {
+    type: DataTypes.NUMBER,
+    defaultValue: 1,
+    allowNull: false,
+    validate: {
+      min: {
+        args: [0],
+        msg: 'botDifficulty field must be greater than or equal to 0!',
+      },
+      max: {
+        args: [3],
+        msg: 'botDifficulty field must be lower than or equal to 3!',
+      },
+    },
+  },
+  botQuota: {
+    type: DataTypes.NUMBER,
+    defaultValue: 10,
+    allowNull: false,
+    validate: {
+      min: {
+        args: [0],
+        msg: 'botQuota field must be greater than or equal to 0!',
+      },
+      max: {
+        args: [20],
+        msg: 'botQuota field must be lower than or equal to 20!',
+      },
+    },
+  },
+  botMode: {
     type: DataTypes.STRING,
-    values: ['casual', 'competitive', 'wingman', 'deathmatch'],
-    defaultValue: 'casual',
+    defaultValue: 'fill',
+    values: ['fill', 'normal'],
     allowNull: false,
     validate: {
       isIn: {
-        args: [['casual', 'competitive', 'wingman', 'deathmatch']],
-        msg: 'mode field must be a valid value!',
+        args: [['fill', 'normal']],
+        msg: 'botMode field must be fill or normal!',
       },
     },
   },
