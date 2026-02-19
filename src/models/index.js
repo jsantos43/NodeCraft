@@ -5,6 +5,7 @@ import db from '../../config/sequelize.js';
 import Minecraft from './Minecraft.js';
 import CounterStrike from './CounterStrike.js';
 import Kerbal from './Kerbal.js';
+import Hytale from './Hytale.js';
 
 // instance <-> link
 Instance.hasMany(Link, {
@@ -77,6 +78,17 @@ Kerbal.belongsTo(Instance, {
   foreignKey: 'instanceId',
 });
 
+// instance <--> hytale
+Instance.hasOne(Hytale, {
+  foreignKey: 'instanceId',
+  as: 'hytale',
+  onDelete: 'CASCADE',
+});
+
+Hytale.belongsTo(Instance, {
+  foreignKey: 'instanceId',
+});
+
 // await db.sync({ force: true });
 await db.query('PRAGMA foreign_keys = ON');
 
@@ -88,4 +100,5 @@ export {
   Minecraft,
   CounterStrike,
   Kerbal,
+  Hytale,
 };

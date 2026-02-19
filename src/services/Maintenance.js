@@ -46,10 +46,10 @@ class Maintenance {
           lastRunDate = today;
 
           // Update all instances function
-          await Instance.updateAll();
+          await Instance.maintenanceAll();
         }
       } catch (err) {
-        logger.error({ err }, 'Error to update all instances');
+        logger.error({ err }, 'Error to maintenance all instances');
       }
     }, config.interval.checkUpdate);
   }

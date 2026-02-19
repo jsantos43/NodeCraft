@@ -1,5 +1,6 @@
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
+import config from '../../config/index.js';
 
 class CounterStrike extends Instance {
   constructor(instance, readFunction) {
@@ -41,13 +42,13 @@ class CounterStrike extends Instance {
       const mode = gameModes[counterstrike.mode || 'casual'];
       const mapCode = maps[counterstrike.map]?.code || 'de_dust2';
 
-      await this.emitEvent(`map ${mapCode}`);
-      await this.emitEvent(`game_type ${mode.type}`);
-      await this.emitEvent(`game_mode ${mode.mode}`);
-      await this.emitEvent(`exec ${mode.cfg}`);
-      await this.emitEvent(`bot_difficulty ${counterstrike.botDifficulty}`);
-      await this.emitEvent(`bot_quota ${counterstrike.botQuota}`);
-      await this.emitEvent(`bot_quota_mode ${counterstrike.botMode}`);
+      await this.sendRcon(`map ${mapCode}`);
+      await this.sendRcon(`game_type ${mode.type}`);
+      await this.sendRcon(`game_mode ${mode.mode}`);
+      await this.sendRcon(`exec ${mode.cfg}`);
+      await this.sendRcon(`bot_difficulty ${counterstrike.botDifficulty}`);
+      await this.sendRcon(`bot_quota ${counterstrike.botQuota}`);
+      await this.sendRcon(`bot_quota_mode ${counterstrike.botMode}`);
     } catch (err) {
       logger.error({ err }, 'Error to apply cs config');
     }
@@ -62,7 +63,7 @@ class CounterStrike extends Instance {
         this.initRcon(27015, rconPassword, async () => {
           await this.applyConfig();
         });
-      }, 10000);
+      }, config.games.counterstrike.checkTime);
 
       // Run container
       await this.start();

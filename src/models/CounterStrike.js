@@ -45,21 +45,6 @@ CounterStrike.init({
       },
     },
   },
-  maxPlayers: {
-    type: DataTypes.NUMBER,
-    defaultValue: 10,
-    allowNull: false,
-    validate: {
-      min: {
-        args: [2],
-        msg: 'maxPlayers field must be greater than or equal to 2!',
-      },
-      max: {
-        args: [20],
-        msg: 'maxPlayers field must be lower than or equal to 20!',
-      },
-    },
-  },
   mode: {
     type: DataTypes.STRING,
     values: ['casual', 'competitive', 'wingman', 'deathmatch'],

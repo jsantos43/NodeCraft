@@ -4,6 +4,7 @@ import Instance from './Instance.js';
 import query from '../utils/query.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import logger from '../../config/logger.js';
+import config from '../../config/index.js';
 
 class Minecraft extends Instance {
   constructor(instance, readFunction) {
@@ -55,7 +56,7 @@ class Minecraft extends Instance {
       if (!this.rcon) {
         fs.writeFileSync(this.paths.ops, '[]', 'utf8');
       } else {
-        const opsRaw = await this.emitEvent('op list');
+        const opsRaw = await this.sendRcon('op list');
 
         const currentOps = opsRaw
           .split(':')[1]
@@ -64,7 +65,7 @@ class Minecraft extends Instance {
           .filter(Boolean) || [];
 
         for (const player of currentOps) {
-          await this.emitEvent(`deop ${player}`);
+          await this.sendRcon(`deop ${player}`);
         }
       }
     } catch (err) {
@@ -140,10 +141,10 @@ class Minecraft extends Instance {
 
   async verifyRcon() {
     this.initRcon(25575, null, async () => {
-      await this.emitEvent('gamerule send_command_feedback false');
-      await this.emitEvent('gamerule  log_admin_commands false');
-      await this.emitEvent('save-all');
-      await this.emitEvent('save-on');
+      await this.sendRcon('gamerule send_command_feedback false');
+      await this.sendRcon('gamerule  log_admin_commands false');
+      await this.sendRcon('save-all');
+      await this.sendRcon('save-on');
     });
   }
 
@@ -195,18 +196,18 @@ class Minecraft extends Instance {
 
         // Set allowlist
         for (const gamertag of this.barrier.allowedGamertags) {
-          await this.emitEvent(`whitelist add ${gamertag}`);
+          await this.sendRcon(`whitelist add ${gamertag}`);
         }
 
         // Reload whitelist
-        await this.emitEvent('whitelist reload');
+        await this.sendRcon('whitelist reload');
 
         // Wipe privileges
         await this.wipeOps();
 
         // Set privileges
         for (const gamertag of this.barrier.opGamertags) {
-          await this.emitEvent(`op ${gamertag}`);
+          await this.sendRcon(`op ${gamertag}`);
         }
 
         this.barrier.applyRules = false;
@@ -216,7 +217,7 @@ class Minecraft extends Instance {
       // Kick players without authorized gamertag
         for (const player of this.state.players) {
           if (!this.barrier.allowedGamertags.includes(player.name)) {
-            await this.emitEvent(`kick ${player.name}`);
+            await this.sendRcon(`kick ${player.name}`);
           }
         }
       }
@@ -295,7 +296,7 @@ class Minecraft extends Instance {
       this.removeSessionLock();
 
       // Set monitoring
-      this.checker.interval = setInterval(() => this.monitor(), 5000);
+      this.checker.interval = setInterval(() => this.monitor(), config.games.minecraft.checkTime);
 
       // Start container
       await this.start();

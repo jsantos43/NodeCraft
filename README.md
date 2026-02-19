@@ -174,7 +174,7 @@ Fluxo seguro e preparado para aplicações web e mobile.
 * [x] Minecraft estável
 * [x] Counter-Strike
 * [ ] Terraria
-* [ ] Kerbal Space Program
+* [x] Kerbal Space Program
 * [ ] Hytale
 * [ ] Sistema de plugins por jogo
 * [ ] Painel web administrativo

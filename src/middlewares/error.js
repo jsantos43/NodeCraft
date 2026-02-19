@@ -1,6 +1,5 @@
-import { Base } from '../errors/index.js';
+import { Base, mapSequelizeError } from '../errors/index.js';
 import logger from '../../config/logger.js';
-import mapSequelizeError from '../../config/sequelizeMapError.js';
 import config from '../../config/index.js';
 
 // eslint-disable-next-line no-unused-vars

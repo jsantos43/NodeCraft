@@ -62,21 +62,6 @@ Kerbal.init(
       allowNull: false,
       defaultValue: false,
     },
-    maxPlayers: {
-      type: DataTypes.NUMBER,
-      defaultValue: 5,
-      allowNull: false,
-      validate: {
-        min: {
-          args: [1],
-          msg: 'maxPlayers field must be greater than or equal to 1!',
-        },
-        max: {
-          args: [10000],
-          msg: 'maxPlayers field must be lower than or equal to 10000!',
-        },
-      },
-    },
   },
   {
     tableName: 'kerbal',

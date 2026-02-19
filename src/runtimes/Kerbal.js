@@ -1,7 +1,7 @@
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
 
-class CounterStrike extends Instance {
+class Kerbal extends Instance {
   constructor(instance, readFunction) {
     super(instance, readFunction);
 
@@ -16,9 +16,9 @@ class CounterStrike extends Instance {
       // Listen container
       this.listen();
     } catch (err) {
-      logger.error({ err }, 'Error to setup counterstrike instance');
+      logger.error({ err }, 'Error to setup kerbal instance');
     }
   }
 }
 
-export default CounterStrike;
+export default Kerbal;

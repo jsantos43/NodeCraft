@@ -43,38 +43,38 @@ class Instance {
     }
   }
 
+  handleChunk(chunk, callback) {
+    try {
+      let data = chunk.toString('utf8');
+      let buffer = this?.buffer;
+
+      // eslint-disable-next-line no-control-regex
+      data = data.replace(/\x1B\[[0-9;]*m/g, ''); // ANSI
+      data = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+      buffer += data;
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      lines.forEach((line) => {
+        const cleanLine = line.trim();
+        if (!cleanLine) return;
+
+        const match = cleanLine.match(
+          /^\[(\d{2}:\d{2}:\d{2})\s+(INFO|WARN|ERROR|DEBUG|TRACE)\]:\s*(.*)$/,
+        );
+
+        const message = match ? match[3] : cleanLine;
+
+        callback(message);
+      });
+    } catch (err) {
+      logger.error({ err }, 'Error to handle container stream chunck');
+    }
+  }
+
   async listen(callback) {
-    const handleChunk = (chunk, passFunction) => {
-      try {
-        let data = chunk.toString('utf8');
-        let buffer = this?.buffer;
-
-        // eslint-disable-next-line no-control-regex
-        data = data.replace(/\x1B\[[0-9;]*m/g, ''); // ANSI
-        data = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-        buffer += data;
-
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-
-        lines.forEach((line) => {
-          const cleanLine = line.trim();
-          if (!cleanLine) return;
-
-          const match = cleanLine.match(
-            /^\[(\d{2}:\d{2}:\d{2})\s+(INFO|WARN|ERROR|DEBUG|TRACE)\]:\s*(.*)$/,
-          );
-
-          const message = match ? match[3] : cleanLine;
-
-          passFunction(message);
-        });
-      } catch (err) {
-        logger.error({ err }, 'Error to handle container stream chunck');
-      }
-    };
-
     try {
       const container = await Container.get(this.id);
       const since = Math.floor(Date.now() / 1000);
@@ -92,17 +92,16 @@ class Instance {
 
       container.modem.demuxStream(this.stream, stdout, stderr);
 
-      const passFunction = async (msg) => {
+      const handleMessage = async (msg) => {
         await this.updateHistory(msg);
+        if (callback) callback(msg);
 
         // eslint-disable-next-line no-console
         if (config.app.stage === 'DEV') console.log(msg);
-
-        if (callback) callback(msg);
       };
 
-      stdout.on('data', (chunk) => handleChunk(chunk, passFunction));
-      stderr.on('data', (chunk) => handleChunk(chunk, passFunction));
+      stdout.on('data', (chunk) => this.handleChunk(chunk, handleMessage));
+      stderr.on('data', (chunk) => this.handleChunk(chunk, handleMessage));
     } catch (err) {
       logger.error({ err }, 'Error to listen container');
     }
@@ -130,7 +129,7 @@ class Instance {
     }
   }
 
-  async emitEvent(command) {
+  async sendRcon(command) {
     let result = null;
     try {
       if (this.rcon) result = await this.rcon.send(command);
@@ -154,22 +153,23 @@ class Instance {
     }
   }
 
-  removeInterval() {
-    if (this?.monitor?.interval) clearInterval(this.monitor.interval);
+  removeChecker() {
+    const checkerInterval = this?.checker?.interval;
+    if (checkerInterval) clearInterval(checkerInterval);
   }
 
   async start() {
     await Container.run(this.id);
   }
 
-  stop() {
+  finish() {
     try {
       this.removeStream();
-      this.removeInterval();
+      this.removeChecker();
 
       delete this;
     } catch (err) {
-      logger.error({ err }, 'Error to stop instance');
+      logger.error({ err }, 'Error to finish instance');
     }
   }
 }

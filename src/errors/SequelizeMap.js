@@ -3,7 +3,7 @@ import {
   UniqueConstraintError,
   ForeignKeyConstraintError,
 } from 'sequelize';
-import { InvalidRequest } from '../src/errors/index.js';
+import { InvalidRequest } from './index.js';
 
 const mapSequelizeError = (error) => {
   if (error instanceof ValidationError) {

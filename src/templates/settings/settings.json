@@ -62,7 +62,8 @@
       "checkTime": 5000
     },
     "counterstrike": {
-      "image": "cm2network/cs2"
+      "image": "cm2network/cs2",
+      "checkTime": 10000
     },
     "kerbal": {
       "image": "ghcr.io/joaosantos2007/ksp:latest"

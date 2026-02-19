@@ -49,7 +49,7 @@ class Instance {
       if (instanceData.type === 'minecraft') gameModel = MinecraftModel;
       else if (instanceData.type === 'counterstrike') gameModel = CounterStrikeModel;
       else if (instanceData.type === 'kerbal') gameModel = KerbalModel;
-      else throw new Base('Gamemodel not found!');
+      else throw new Base('Game model not found!');
 
       // Create instance gamedata
       await gameModel.create({
@@ -187,19 +187,7 @@ class Instance {
       try {
         console.log(instance);
       } catch (err) {
-        logger.error({ err }, 'Error to update an instance');
-      }
-    }
-  }
-
-  static async backupAll() {
-    const instances = await Instance.readAll();
-
-    for (const instance of instances) {
-      try {
-        if (instance.backup) await Instance.backup(instance.id);
-      } catch (err) {
-        logger.error({ err }, 'Error to backup an instance');
+        logger.error({ err }, 'Error in an instance maintenance');
       }
     }
   }
@@ -245,7 +233,7 @@ class Instance {
       else if (instance.type === 'ksp') Runtime = KerbalRuntime;
 
       running[id] = new Runtime(instance, () => Instance.readOne(id));
-      await instance.update({ running: true });
+      await instance.update({ status: 'running' });
     } catch (err) {
       await Instance.stop(id);
 
@@ -260,11 +248,9 @@ class Instance {
     await Container.stop(id);
 
     // Stop runtime instance
-    if (running[id]) running[id].stop();
+    if (running[id]) running[id].finish();
 
-    // Update running instance status
-    await instance.update({ running: false });
-
+    await instance.update({ status: 'stopped' });
     return instance;
   }
 
@@ -273,7 +259,7 @@ class Instance {
 
     for (const instance of instances) {
       try {
-        if (instance.running) await Instance.run(instance.id);
+        if (instance.status === 'running') await Instance.run(instance.id);
       } catch (err) {
         logger.error({ err }, 'Error to attach an instance');
       }
