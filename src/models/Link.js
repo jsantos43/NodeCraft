@@ -1,7 +1,7 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
 import db from '../../config/sequelize.js';
 import config from '../../config/index.js';
-import instancesRunning from '../runtime/instancesRunning.js';
+import { running } from '../runtimes/index.js';
 import logger from '../../config/logger.js';
 
 class Link extends Model { }
@@ -93,7 +93,7 @@ Link.init({
 
 const updateBarrier = async (id) => {
   try {
-    if (instancesRunning[id]) await instancesRunning[id].newBarrier();
+    if (running[id]) await running[id].newBarrier();
   } catch (err) {
     logger.error({
       err,

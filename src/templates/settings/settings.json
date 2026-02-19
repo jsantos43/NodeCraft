@@ -54,9 +54,21 @@
     "accessKeyId": "",
     "secretAccessKey": ""
   },
-  "minecraft": {
-    "geyser": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot",
-    "floodgate": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot",
-    "checkTime": 5000
+  "games": {
+    "minecraft": {
+      "image": "itzg/minecraft-server",
+      "geyser": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot",
+      "floodgate": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot",
+      "checkTime": 5000
+    },
+    "counterstrike": {
+      "image": "cm2network/cs2"
+    },
+    "kerbal": {
+      "image": "ghcr.io/joaosantos2007/ksp:latest"
+    },
+    "hytale": {
+      "image": "ghcr.io/joaosantos2007/hytale:latest"
+    }
   }
 }

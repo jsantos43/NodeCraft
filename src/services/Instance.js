@@ -1,4 +1,3 @@
-/* eslint-disable no-new */
 import {
   mkdirSync,
   rmSync,
@@ -15,17 +14,21 @@ import {
   User as UserModel,
   Minecraft as MinecraftModel,
   CounterStrike as CounterStrikeModel,
+  Kerbal as KerbalModel,
   db,
 } from '../models/index.js';
-import { BadRequest } from '../errors/index.js';
+import { BadRequest, Base } from '../errors/index.js';
 import Container from './Container.js';
 import Link from './Link.js';
 import config from '../../config/index.js';
 import Storage from './Storage.js';
 import File from './File.js';
-import MinecraftRuntime from '../runtime/Minecraft.js';
-import CSRuntime from '../runtime/CounterStrike.js';
-import instancesRunning from '../runtime/instancesRunning.js';
+import {
+  running,
+  Minecraft as MinecraftRuntime,
+  CounterStrike as CounterStrikeRuntime,
+  Kerbal as KerbalRuntime,
+} from '../runtimes/index.js';
 import logger from '../../config/logger.js';
 
 class Instance {
@@ -33,31 +36,34 @@ class Instance {
     // Pick up a server port
     const port = await Instance.selectPort();
 
-    // Create instance in the Database
+    // Create instance in database
     const instanceBase = await Model.create({
       owner: userId,
       port,
       ...instanceData,
     });
 
-    // Select instance game model
-    let gameModel = MinecraftModel;
-    if (instanceData.type === 'counterstrike') gameModel = CounterStrikeModel;
+    try {
+      // Select instance game model
+      let gameModel = null;
+      if (instanceData.type === 'minecraft') gameModel = MinecraftModel;
+      else if (instanceData.type === 'counterstrike') gameModel = CounterStrikeModel;
+      else if (instanceData.type === 'kerbal') gameModel = KerbalModel;
+      else throw new Base('Gamemodel not found!');
 
-    // Create instance gamedata
-    await gameModel.create({
-      instanceId: instanceBase.id,
-      ...gameData,
-    });
+      // Create instance gamedata
+      await gameModel.create({
+        instanceId: instanceBase.id,
+        ...gameData,
+      });
 
-    // Full instance read
-    const instance = await Instance.readOne(instanceBase.id);
+      // Create instance path in the System
+      mkdirSync(Path.join(config.instance.path, instanceBase.id));
+    } catch (err) {
+      await Instance.delete(instanceBase.id);
 
-    // Create instance path in the System
-    mkdirSync(Path.join(config.instance.path, instanceBase.id));
-
-    // Create docker container
-    await Container.create(instance);
+      throw err;
+    }
 
     return instanceBase;
   }
@@ -103,6 +109,7 @@ class Instance {
     const includeMap = {
       minecraft: { model: MinecraftModel, as: 'minecraft' },
       counterstrike: { model: CounterStrikeModel, as: 'counterstrike' },
+      kerbal: { model: KerbalModel, as: 'kerbal' },
       // terraria: { model: TerrariaConfig, as: 'terraria' },
     };
 
@@ -137,23 +144,12 @@ class Instance {
       // Update game data
       if (instance.minecraft) await instance.minecraft.update(gameData, { transaction: t });
       if (instance.counterstrike) await instance.counterstrike.update(gameData, { transaction: t });
+      if (instance.kerbal) await instance.kerbal.update(gameData, { transaction: t });
     });
 
     await Container.delete(id);
 
     return instance;
-  }
-
-  static async updateAll() {
-    const instances = await Instance.readAll();
-
-    for (const instance of instances) {
-      try {
-        // if (instance.updateAlways) await Instance.install(instance);
-      } catch (err) {
-        logger.error({ err }, 'Error to update an instance');
-      }
-    }
   }
 
   static async delete(id) {
@@ -165,7 +161,7 @@ class Instance {
   }
 
   static async backup(id) {
-    const rcon = instancesRunning[id]?.rcon;
+    const rcon = running[id]?.rcon;
     // Stop minecraft saving
     if (rcon) {
       await rcon.send('save-all');
@@ -182,6 +178,18 @@ class Instance {
 
     // Send backup to bucket
     if (config.storage.enable) await Storage.backup(id, backupPath);
+  }
+
+  static async maintenanceAll() {
+    const instances = await Instance.readAll();
+
+    for (const instance of instances) {
+      try {
+        console.log(instance);
+      } catch (err) {
+        logger.error({ err }, 'Error to update an instance');
+      }
+    }
   }
 
   static async backupAll() {
@@ -231,10 +239,12 @@ class Instance {
 
     // Try to run instance
     try {
-      if (instance.type === 'minecraft') new MinecraftRuntime(instance, () => Instance.readOne(id));
-      if (instance.type === 'counterstrike') new CSRuntime(instance, () => Instance.readOne(id));
+      let Runtime = null;
+      if (instance.type === 'minecraft') Runtime = MinecraftRuntime;
+      else if (instance.type === 'counterstrike') Runtime = CounterStrikeRuntime;
+      else if (instance.type === 'ksp') Runtime = KerbalRuntime;
 
-      // Set instance running
+      running[id] = new Runtime(instance, () => Instance.readOne(id));
       await instance.update({ running: true });
     } catch (err) {
       await Instance.stop(id);
@@ -250,7 +260,7 @@ class Instance {
     await Container.stop(id);
 
     // Stop runtime instance
-    if (instancesRunning[id]) instancesRunning[id].stop();
+    if (running[id]) running[id].stop();
 
     // Update running instance status
     await instance.update({ running: false });

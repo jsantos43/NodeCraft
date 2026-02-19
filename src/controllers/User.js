@@ -1,5 +1,4 @@
 import Service from '../services/User.js';
-import Validator from '../validators/User.js';
 
 class User {
   static async read(req, res, next) {
@@ -36,7 +35,6 @@ class User {
     try {
       const data = req.body;
 
-      Validator(data, false, true);
       const userId = await Service.create(data);
       const user = await Service.readOne(userId);
 
@@ -51,7 +49,6 @@ class User {
       const data = req.body;
       const { user } = req;
 
-      Validator(data, true);
       const userUpdated = await Service.update(user.id, data);
 
       return res.status(200).json({ success: true, updated: true, user: userUpdated });
@@ -65,7 +62,6 @@ class User {
       const data = req.body;
       const { id } = req.params;
 
-      Validator(data, true);
       const user = await Service.update(id, data);
 
       return res.status(200).json({ success: true, updated: true, user });

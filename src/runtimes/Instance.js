@@ -4,7 +4,6 @@ import { Rcon } from 'rcon-client';
 import Container from '../services/Container.js';
 import config from '../../config/index.js';
 import logger from '../../config/logger.js';
-import instancesRunning from './instancesRunning.js';
 
 class Instance {
   constructor(instance, readFunction) {
@@ -16,14 +15,6 @@ class Instance {
     this.readFunction = readFunction;
     this.rcon = null;
     this.tryingRconConnection = false;
-
-    this.state = {
-      alive: false,
-      onlinePlayers: 0,
-      players: [],
-      ping: null,
-    };
-
     this.checker = {
       lastRun: 0,
       interval: null,
@@ -169,7 +160,6 @@ class Instance {
 
   async start() {
     await Container.run(this.id);
-    instancesRunning[this.id] = this;
   }
 
   stop() {
@@ -177,7 +167,6 @@ class Instance {
       this.removeStream();
       this.removeInterval();
 
-      delete instancesRunning[this.id];
       delete this;
     } catch (err) {
       logger.error({ err }, 'Error to stop instance');

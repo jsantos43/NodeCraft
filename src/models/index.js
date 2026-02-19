@@ -4,6 +4,7 @@ import Link from './Link.js';
 import db from '../../config/sequelize.js';
 import Minecraft from './Minecraft.js';
 import CounterStrike from './CounterStrike.js';
+import Kerbal from './Kerbal.js';
 
 // instance <-> link
 Instance.hasMany(Link, {
@@ -54,7 +55,7 @@ Minecraft.belongsTo(Instance, {
   foreignKey: 'instanceId',
 });
 
-// instance <--> minecraft
+// instance <--> counter strike
 Instance.hasOne(CounterStrike, {
   foreignKey: 'instanceId',
   as: 'counterstrike',
@@ -65,7 +66,18 @@ CounterStrike.belongsTo(Instance, {
   foreignKey: 'instanceId',
 });
 
-// await db.sync({ alter: true });
+// instance <--> ksp
+Instance.hasOne(Kerbal, {
+  foreignKey: 'instanceId',
+  as: 'kerbal',
+  onDelete: 'CASCADE',
+});
+
+Kerbal.belongsTo(Instance, {
+  foreignKey: 'instanceId',
+});
+
+// await db.sync({ force: true });
 await db.query('PRAGMA foreign_keys = ON');
 
 export {
@@ -75,4 +87,5 @@ export {
   Link,
   Minecraft,
   CounterStrike,
+  Kerbal,
 };

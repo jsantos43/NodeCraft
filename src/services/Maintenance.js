@@ -3,29 +3,35 @@ import config from '../../config/index.js';
 import Container from './Container.js';
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
+import { ensureNetwork, ensureImage } from '../utils/ensureDocker.js';
 
 class Maintenance {
-  static async ensureDefaultPaths() {
+  static async ensureEnviroment() {
+    // Ensure default paths
     try {
       if (!fs.existsSync(config.instance.path)) fs.mkdirSync(config.instance.path);
       if (!fs.existsSync(config.temp.path)) fs.mkdirSync(config.temp.path);
     } catch (err) {
       logger.error({ err }, 'Error to ensure default paths');
     }
-  }
 
-  static async ensureDocker() {
+    // Ensure docker
     try {
-      await Container.ensureImage('itzg/minecraft-server');
-      await Container.ensureNetwork('nodecraft-net');
+      await ensureNetwork('nodecraft-net');
 
-      await Instance.attachAll();
+      for (const [game, gameSettings] of Object.entries(config.games)) {
+        try {
+          await ensureImage(gameSettings.image);
+        } catch (err) {
+          logger.error({ err }, `Error to ensure docker ${game} image`);
+        }
+      }
     } catch (err) {
-      logger.error({ err }, 'Error to ensure docker and instances');
+      logger.error({ err }, 'Error to ensure docker');
     }
   }
 
-  static scheduleInstancesUpdate() {
+  static scheduleInstancesMaintenance() {
     let lastRunDate = null;
 
     setInterval(async () => {
@@ -44,29 +50,6 @@ class Maintenance {
         }
       } catch (err) {
         logger.error({ err }, 'Error to update all instances');
-      }
-    }, config.interval.checkUpdate);
-  }
-
-  static scheduleInstancesBackup() {
-    let lastRunDate = null;
-
-    setInterval(async () => {
-      try {
-        // Read time
-        const now = new Date();
-        const isFiveAM = now.getHours() === 5;
-        const today = now.toLocaleDateString('sv-SE');
-
-        // Verify if is 5 hour and backup was not executed today
-        if (isFiveAM && lastRunDate !== today) {
-          lastRunDate = today;
-
-          // Backup all instances function
-          await Instance.backupAll();
-        }
-      } catch (err) {
-        logger.error({ err }, 'Error to backup all instances');
       }
     }, config.interval.checkUpdate);
   }
@@ -107,26 +90,20 @@ class Maintenance {
   static scheduleRemoveLostInstances() {
     // First run
     Instance.verifyLost();
+    Container.removeLost();
 
     // Set periodically
-    setInterval(Instance.verifyLost, config.interval.checkLost);
-  }
-
-  static scheduleRemoveLostContainers() {
-    // First run
-    Container.removeLostContainers();
-
-    // Set periodically
-    setInterval(Container.removeLostContainers, config.interval.checkLost);
+    setInterval(() => {
+      Instance.verifyLost();
+      Container.removeLost();
+    }, config.interval.checkLost);
   }
 
   static scheduleJobs() {
     try {
-      Maintenance.scheduleInstancesUpdate();
-      Maintenance.scheduleInstancesBackup();
       Maintenance.scheduleRemoveOldTemp();
       Maintenance.scheduleRemoveLostInstances();
-      Maintenance.scheduleRemoveLostContainers();
+      Maintenance.scheduleInstancesMaintenance();
     } catch (err) {
       logger.error({ err }, 'Error to schedule instances jobs');
     }

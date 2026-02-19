@@ -3,50 +3,110 @@ import docker from '../../config/docker.js';
 import config from '../../config/index.js';
 import InstanceModel from '../models/Instance.js';
 import logger from '../../config/logger.js';
+import { Base } from '../errors/index.js';
 
 class Container {
-  static ensureImage(imageName) {
-    return new Promise((resolve, reject) => {
-      docker.getImage(imageName).inspect()
-        .then(() => resolve())
-        .catch(() => {
-          docker.pull(imageName, (err, stream) => {
-            if (err) return reject(err);
-
-            return docker.modem.followProgress(
-              stream,
-              (errProgress) => (errProgress ? reject(errProgress) : resolve()),
-            );
-          });
-        });
-    });
-  }
-
-  static async ensureNetwork(networkName) {
-    const networks = await docker.listNetworks();
-
-    let exists = false;
-    networks.forEach((net) => {
-      if (net.Name === networkName) exists = true;
-    });
-
-    if (exists) return;
-
-    await docker.createNetwork({
-      Name: networkName,
-      Driver: 'bridge',
-      Internal: false,
-      Attachable: false,
-    });
-  }
-
   static async create(instance) {
     const existsContainer = await Container.get(instance.id);
     if (existsContainer) return existsContainer;
 
-    let container = null;
-    if (instance.type === 'minecraft') container = await Container.createMinecraft(instance);
-    if (instance.type === 'counterstrike') container = await Container.createCounterStrike(instance);
+    const instancePath = Path.join(config.instance.path, instance.id);
+    let enviroment = [];
+    let binds = [];
+    let exposedPorts = {};
+    let portBindings = {};
+    let image = null;
+
+    if (instance.type === 'minecraft') {
+      const gameData = instance?.minecraft;
+      if (!gameData) throw new Error('instance has no minecraft config!');
+
+      enviroment = [
+        'EULA=TRUE',
+        'ENABLE_RCON=true',
+        'RCON_PASSWORD=nodecraft',
+        'RCON_PORT=25575',
+        'VERSION=latest',
+      ];
+      if (gameData.software === 'paper') enviroment.push('TYPE=paper');
+      else if (gameData.software === 'purpur') enviroment.push('TYPE=purpur');
+
+      image = config.games.minecraft.image;
+      binds = [`${instancePath}:/data`];
+      portBindings = {
+        '25565/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+        '25565/udp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else if (instance.type === 'counterstrike') {
+      const gameData = instance?.counterstrike;
+      if (!gameData) throw new Error('instance has no counterstrike config!');
+
+      enviroment = [
+        `SRCDS_TOKEN=${gameData.steamToken}`,
+        `CS2_RCONPW=${gameData.rconPassword}`,
+        `CS2_SERVERNAME=${gameData.hostname}`,
+        `CS2_MAXPLAYERS=${gameData.maxPlayers}`,
+        'CS2_SERVER_HIBERNATE=1',
+      ];
+      if (gameData.password) enviroment.push(`CS2_PW="${gameData.password}"`);
+
+      image = config.games.counterstrike.image;
+      exposedPorts = {
+        '27015/udp': {},
+        '27015/tcp': {},
+      };
+      binds = [`${instancePath}:/home/steam/cs2-dedicated`];
+      portBindings = {
+        '27015/udp': [
+          { HostPort: String(instance.port) },
+        ],
+        '27015/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else if (instance.type === 'kerbal') {
+      image = config.games.kerbal.image;
+      exposedPorts = { '6702/tcp': {} };
+      binds = [
+        `${instancePath}/Config:/data/Config`,
+        `${instancePath}/Universe:/data/Universe`,
+        `${instancePath}/logs:/data/logs`,
+      ];
+      portBindings = {
+        '6702/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else {
+      throw new Base('No container game type available!');
+    }
+
+    const container = await docker.createContainer({
+      name: `Nodecraft_${instance.id}`,
+      Image: image,
+      Env: enviroment,
+
+      ExposedPorts: exposedPorts,
+
+      HostConfig: {
+        Binds: binds,
+        PortBindings: portBindings,
+
+        NetworkMode: 'nodecraft-net',
+        Memory: instance.memory * 1024 * 1024,
+        NanoCpus: instance.cpu * 1e9,
+
+        // Secure
+        // ReadonlyRootfs: true,
+        // CapDrop: ['ALL'],
+        RestartPolicy: { Name: 'no' },
+        SecurityOpt: ['no-new-privileges'],
+      },
+    });
 
     return container;
   }
@@ -124,7 +184,7 @@ class Container {
     }
   }
 
-  static async removeLostContainers() {
+  static async removeLost() {
     try {
       const instances = await InstanceModel.findAll({
         attributes: ['id'],
@@ -151,121 +211,6 @@ class Container {
     } catch (err) {
       logger.error({ err }, 'Error to remove lost containers');
     }
-  }
-
-  static async createMinecraft(instance) {
-    const instancePath = Path.join(config.instance.path, instance.id);
-    await Container.ensureImage('itzg/minecraft-server');
-    await Container.ensureNetwork('nodecraft-net');
-
-    const enviroment = [
-      'EULA=TRUE',
-      'ENABLE_RCON=true',
-      'RCON_PASSWORD=nodecraft',
-      'RCON_PORT=25575',
-    ];
-
-    if (instance.minecraft.software === 'paper') {
-      enviroment.push('TYPE=paper');
-      enviroment.push('VERSION=latest');
-
-      if (instance.minecraft.bedrock) {
-        enviroment.push(`PLUGINS=${config.minecraft.geyser},${config.minecraft.floodgate}`);
-      }
-    }
-
-    if (instance.minecraft.software === 'purpur') {
-      enviroment.push('TYPE=purpur');
-      enviroment.push('VERSION=latest');
-
-      if (instance.minecraft.bedrock) {
-        enviroment.push(`PLUGINS=${config.minecraft.geyser},${config.minecraft.floodgate}`);
-      }
-    }
-
-    const container = await docker.createContainer({
-      name: `Nodecraft_${instance.id}`,
-      Image: 'itzg/minecraft-server',
-      Env: enviroment,
-
-      HostConfig: {
-        Binds: [`${instancePath}:/data`],
-        PortBindings: {
-          '25565/tcp': [
-            { HostPort: String(instance.port) },
-          ],
-          '25565/udp': [
-            { HostPort: String(instance.port) },
-          ],
-        },
-
-        NetworkMode: 'nodecraft-net',
-        Memory: instance.memory * 1024 * 1024,
-        NanoCpus: instance.cpu * 1e9,
-
-        // Secure
-        // ReadonlyRootfs: true,
-        // CapDrop: ['ALL'],
-        RestartPolicy: { Name: 'no' },
-        SecurityOpt: ['no-new-privileges'],
-      },
-    });
-
-    return container;
-  }
-
-  static async createCounterStrike(instance) {
-    const instancePath = Path.join(config.instance.path, instance.id);
-    await Container.ensureImage('cm2network/cs2:latest');
-    await Container.ensureNetwork('nodecraft-net');
-
-    const gameData = instance?.counterstrike;
-    if (!gameData) throw new Error('instance has no counterstrike config!');
-
-    const enviroment = [
-      `SRCDS_TOKEN=${gameData.steamToken}`,
-      `CS2_RCONPW=${gameData.rconPassword}`,
-      `CS2_SERVERNAME=${gameData.hostname}`,
-      `CS2_MAXPLAYERS=${gameData.maxPlayers}`,
-      'CS2_SERVER_HIBERNATE=1',
-    ];
-
-    if (gameData.password) enviroment.push(`CS2_PW="${gameData.password}"`);
-
-    const container = await docker.createContainer({
-      name: `Nodecraft_${instance.id}`,
-      Image: 'cm2network/cs2',
-      Env: enviroment,
-
-      ExposedPorts: {
-        '27015/udp': {},
-        '27015/tcp': {},
-      },
-
-      HostConfig: {
-        Binds: [
-          `${instancePath}:/home/steam/cs2-dedicated`,
-        ],
-
-        PortBindings: {
-          '27015/udp': [
-            { HostPort: String(instance.port) },
-          ],
-          '27015/tcp': [
-            { HostPort: String(instance.port) },
-          ],
-        },
-
-        NetworkMode: 'nodecraft-net',
-        Memory: instance.memory * 1024 * 1024,
-        NanoCpus: instance.cpu * 1e9,
-        RestartPolicy: {
-          Name: 'unless-stopped',
-        },
-      },
-    });
-
-    return container;
   }
 }
 

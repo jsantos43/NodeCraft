@@ -21,6 +21,13 @@ class Minecraft extends Instance {
       usercache: Path.join(this.instancePath, 'usercache.json'),
     };
 
+    this.state = {
+      alive: false,
+      onlinePlayers: 0,
+      players: [],
+      ping: null,
+    };
+
     this.barrier = {
       allowedGamertags: [],
       superGamertags: [],

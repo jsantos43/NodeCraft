@@ -1,5 +1,5 @@
 import { InvalidRequest } from '../errors/index.js';
-import instancesRunning from '../runtime/instancesRunning.js';
+import { running } from '../runtimes/index.js';
 import error from './error.js';
 
 class Instance {
@@ -7,7 +7,7 @@ class Instance {
     try {
       const id = req?.params?.id;
 
-      const runtime = instancesRunning[id];
+      const runtime = running[id];
       if (runtime) throw new InvalidRequest('You cannot do this while instance is running!');
 
       return next();
@@ -20,7 +20,7 @@ class Instance {
     try {
       const id = req?.params?.id;
 
-      const runtime = instancesRunning[id];
+      const runtime = running[id];
       if (!runtime) throw new InvalidRequest('You cannot do this while instance is not running!');
 
       return next();
