@@ -28,8 +28,8 @@ class Kerbal extends Instance {
         warp: gameData.warp.toUpperCase(),
         gamemode: gameData.gamemode.toUpperCase(),
         difficulty: gameData.difficulty.toUpperCase(),
-        allowlist: gameData.allowlist,
-        cheats: gameData.cheats,
+        allowlist: gameData.allowlist ? 'True' : 'False',
+        cheats: gameData.cheats ? 'True' : 'False',
         servername: gameData.servername,
         maxPlayers: instance.maxPlayers,
       });

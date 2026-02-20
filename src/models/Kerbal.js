@@ -18,36 +18,36 @@ Kerbal.init(
     },
     gamemode: {
       type: DataTypes.STRING,
-      values: ['sandbox', 'science', 'carrer'],
+      values: ['SANDBOX', 'SCIENCE', 'CARRER'],
       allowNull: false,
-      defaultValue: 'sandbox',
+      defaultValue: 'SANDBOX',
       validate: {
         isIn: {
-          args: [['sandbox', 'science', 'carrer']],
-          msg: 'gamemode field must be sandbox, science or carrer!',
+          args: [['SANDBOX', 'SCIENCE', 'CARRER']],
+          msg: 'gamemode field must be SANDBOX, SCIENCE or CARRER!',
         },
       },
     },
     difficulty: {
       type: DataTypes.STRING,
-      values: ['easy', 'normal', 'moderate', 'hard', 'custom'],
+      values: ['EASY', 'NORMAL', 'MODERATE', 'HARD', 'CUSTOM'],
       allowNull: false,
-      defaultValue: 'normal',
+      defaultValue: 'NORMAL',
       validate: {
         isIn: {
-          args: [['easy', 'normal', 'moderate', 'hard', 'custom']],
+          args: [['EASY', 'NORMAL', 'MODERATE', 'HARD', 'CUSTOM']],
           msg: 'difficulty field must be a valid value!',
         },
       },
     },
     warp: {
       type: DataTypes.STRING,
-      values: ['mcw_force', 'mcw_vote', 'mcw_lowest', 'subspace_simple', 'subspace', 'none'],
-      defaultValue: 'subspace',
+      values: ['MCW_FORCE', 'MCW_VOTE', 'MCW_LOWEST', 'SUBSPACE_SIMPLE', 'SUBSPACE', 'NONE'],
+      defaultValue: 'SUBSPACE',
       allowNull: false,
       validate: {
         isIn: {
-          args: [['mcw_force', 'mcw_vote', 'mcw_lowest', 'subspace_simple', 'subspace', 'none']],
+          args: [['MCW_FORCE', 'MCW_VOTE', 'MCW_LOWEST', 'SUBSPACE_SIMPLE', 'SUBSPACE', 'NONE']],
           msg: 'warp field must be a valid value!',
         },
       },

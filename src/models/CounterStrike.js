@@ -8,14 +8,14 @@ CounterStrike.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
-  hostname: {
+  servername: {
     type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: 'A Nodecraft CS:GO server',
+    defaultValue: 'A Nodecraft Counter Strike 2 server',
     validate: {
       len: {
         args: [3, 32],
-        msg: 'hostname field must have a length between 2 and 32!',
+        msg: 'servername field must have a length between 2 and 32!',
       },
     },
   },

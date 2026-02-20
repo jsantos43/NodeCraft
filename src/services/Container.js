@@ -48,7 +48,7 @@ class Container {
       enviroment = [
         `SRCDS_TOKEN=${gameData.steamToken}`,
         `CS2_RCONPW=${gameData.rconPassword}`,
-        `CS2_SERVERNAME=${gameData.hostname}`,
+        `CS2_SERVERNAME=${gameData.servername}`,
         `CS2_MAXPLAYERS=${gameData.maxPlayers}`,
         'CS2_SERVER_HIBERNATE=1',
       ];

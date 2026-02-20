@@ -1,4 +1,7 @@
 import Joi from 'joi';
+import minecraft from './minecraft.js';
+import counterstrike from './counterstrike.js';
+import kerbal from './kerbal.js';
 
 const createInstance = Joi.object({
   id: Joi.forbidden(),
@@ -11,6 +14,14 @@ const createInstance = Joi.object({
   maxPlayers: Joi.number().integer().min(1).max(1000),
   stauts: Joi.forbidden(),
   history: Joi.forbidden(),
+  game: Joi.when('type', {
+    switch: [
+      { is: 'minecraft', then: minecraft },
+      { is: 'counterstrike', then: counterstrike },
+      { is: 'kerbal', then: kerbal },
+    ],
+    otherwise: Joi.forbidden(),
+  }).required(),
 });
 
 const updateInstance = Joi.object({
@@ -24,6 +35,14 @@ const updateInstance = Joi.object({
   maxPlayers: Joi.number().integer().min(1).max(1000),
   stauts: Joi.forbidden(),
   history: Joi.forbidden(),
+  game: Joi.when('type', {
+    switch: [
+      { is: 'minecraft', then: minecraft },
+      { is: 'counterstrike', then: counterstrike },
+      { is: 'kerbal', then: kerbal },
+    ],
+    otherwise: Joi.forbidden(),
+  }).required(),
 });
 
 export { createInstance, updateInstance };

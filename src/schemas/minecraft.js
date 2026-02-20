@@ -1,13 +1,13 @@
 import Joi from 'joi';
 
 const minecraft = Joi.object({
-  software: Joi.string().trim().valid('vanilla', 'paper', 'purpur'),
+  software: Joi.string().trim().lowercase().valid('vanilla', 'paper', 'purpur'),
   bedrock: Joi.boolean(),
-  gamemode: Joi.string().trim().valid('survival', 'creative', 'adventure'),
-  difficulty: Joi.string().trim().valid('peaceful', 'easy', 'normal', 'hard'),
+  gamemode: Joi.string().trim().lowercase().valid('survival', 'creative', 'adventure'),
+  difficulty: Joi.string().trim().lowercase().valid('peaceful', 'easy', 'normal', 'hard'),
   seed: Joi.string().trim().min(0).max(50),
   motd: Joi.string().trim().min(0).max(50),
-  levelType: Joi.string().trim().valid('minecraft:normal', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified'),
+  levelType: Joi.string().trim().lowercase().valid('minecraft:normal', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified'),
   viewDistance: Joi.number().integer().min(3).max(32),
   spawn: Joi.number().integer().min(0).max(32),
   idle: Joi.number().integer().min(0).max(1440),

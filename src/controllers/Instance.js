@@ -9,10 +9,8 @@ class Instance {
 
       // Get instance data
       const instanceData = { ...body };
-      delete instanceData.config;
-
-      // Get game data
-      const gameData = body?.config || {};
+      delete instanceData.game;
+      const gameData = body?.game || {};
 
       const instance = await Service.create(user.id, instanceData, gameData);
 
@@ -53,10 +51,8 @@ class Instance {
 
       // Get instance data
       const instanceData = { ...body };
-      delete instanceData.config;
-
-      // Get game data
-      const gameData = body?.config || {};
+      delete instanceData.game;
+      const gameData = body?.game || {};
 
       const instance = await Service.update(id, instanceData, gameData);
 

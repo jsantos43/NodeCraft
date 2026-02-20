@@ -1,68 +1,30 @@
-const CounterStrike = {
-  steamToken: {
-    type: 'string',
-    max: 100,
-  },
-  hostname: {
-    type: 'string',
-    min: 3,
-    max: 32,
-  },
-  password: {
-    type: 'string',
-    min: 3,
-    max: 32,
-  },
-  rconPassword: {
-    type: 'string',
-    min: 3,
-    max: 32,
-  },
-  maxPlayers: {
-    type: 'number',
-    int: true,
-    min: 2,
-    max: 20,
-  },
-  mode: {
-    type: 'string',
-    values: ['casual', 'competitive', 'wingman', 'deathmatch'],
-  },
-  map: {
-    type: 'string',
-    values: [
-      'mirage',
-      'dust2',
-      'inferno',
-      'nuke',
-      'overpass',
-      'vertigo',
-      'ancient',
-      'anubis',
-      'officie',
-      'italy',
-      'lake',
-      'thistle',
-      'assembly',
-      'memento',
-    ],
-  },
-  botDifficulty: {
-    type: 'number',
-    int: true,
-    min: 0,
-    max: 3,
-  },
-  botQuota: {
-    type: 'number',
-    int: true,
-    min: 0,
-    max: 20,
-  },
-  botMode: {
-    type: 'string',
-    values: ['fill', 'normal'],
-  },
-};
+import Joi from 'joi';
 
-export default CounterStrike;
+const counterstrike = Joi.object({
+  steamToken: Joi.string().trim().max(100),
+  servername: Joi.string().trim().min(3).max(32),
+  password: Joi.string().trim().min(3).max(32),
+  rconPassword: Joi.string().trim().min(3).max(32),
+  mode: Joi.string().trim().lowercase().valid('casual', 'competitive', 'wingman', 'deathmatch'),
+  map: Joi.string().trim().lowercase().valid(
+    'mirage',
+    'dust2',
+    'inferno',
+    'nuke',
+    'overpass',
+    'vertigo',
+    'ancient',
+    'anubis',
+    'officie',
+    'italy',
+    'lake',
+    'thistle',
+    'assembly',
+    'memento',
+  ),
+  botDifficulty: Joi.number().integer().min(0).max(3),
+  botQuota: Joi.number().integer().min(0).max(20),
+  botMode: Joi.string().trim().lowercase().valid('fill', 'normal'),
+});
+
+export default counterstrike;
