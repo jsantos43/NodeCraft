@@ -1,35 +1,13 @@
-const Link = {
-  id: {
-    type: 'string',
-    internal: true,
-  },
-  instanceId: {
-    type: 'string',
-    isUUID: true,
-    internal: true,
-  },
-  userId: {
-    type: 'string',
-    isUUID: true,
-  },
-  gamertags: {
-    type: 'object',
-  },
-  bedrockGamertag: {
-    type: 'string',
-    min: 3,
-    max: 50,
-  },
-  permissions: {
-    type: 'object',
-  },
-  privileges: {
-    type: 'boolean',
-  },
-  access: {
-    type: 'string',
-    values: ['super', 'always', 'monitored'],
-  },
-};
+import Joi from 'joi';
 
-export default Link;
+const link = Joi.object({
+  id: Joi.forbidden(),
+  instanceId: Joi.forbidden(),
+  userId: Joi.string().trim().uuid(),
+  gamertags: Joi.array(),
+  permissions: Joi.array(),
+  privileges: Joi.boolean(),
+  access: Joi.string().trim().valid('super', 'always', 'monitored'),
+});
+
+export default link;

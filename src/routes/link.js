@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import auth from '../middlewares/auth.js';
+import validate from '../middlewares/validate.js';
+import { link } from '../schemas/index.js';
 import Controller from '../controllers/Link.js';
 
 const router = Router();
@@ -7,27 +9,29 @@ const router = Router();
 router
   .get(
     '/:id/link',
-    (req, res, next) => auth('instance:read', req, res, next),
+    auth('instance:read'),
     Controller.readAll,
   )
   .get(
     '/:id/link/:linkId',
-    (req, res, next) => auth('instance:read', req, res, next),
+    auth('instance:read'),
     Controller.readOne,
   )
   .post(
     '/:id/link',
-    (req, res, next) => auth('instance:owner', req, res, next),
+    auth('instance:owner'),
+    validate(link),
     Controller.create,
   )
   .put(
     '/:id/link/:linkId',
-    (req, res, next) => auth('instance:owner', req, res, next),
+    auth('instance:owner'),
+    validate(link),
     Controller.update,
   )
   .delete(
     '/:id/link/:linkId',
-    (req, res, next) => auth('instance:owner', req, res, next),
+    auth('instance:owner'),
     Controller.delete,
   );
 

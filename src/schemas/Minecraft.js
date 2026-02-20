@@ -1,115 +1,28 @@
-const Minecraft = {
-  software: {
-    type: 'string',
-    values: ['vanilla', 'paper', 'purpur'],
-    required: true,
-    internal: true,
-    firstTime: true,
-  },
-  bedrock: {
-    type: 'boolean',
-  },
-  version: {
-    type: 'string',
-    internal: true,
-  },
-  build: {
-    type: 'number',
-    int: true,
-    internal: true,
-  },
-  geyserBuild: {
-    type: 'number',
-    int: true,
-    internal: true,
-  },
-  floodgateBuild: {
-    type: 'number',
-    int: true,
-    internal: true,
-  },
-  gamemode: {
-    type: 'string',
-    values: ['survival', 'creative', 'adventure'],
-  },
-  difficulty: {
-    type: 'string',
-    values: ['peaceful', 'easy', 'normal', 'hard'],
-  },
-  seed: {
-    type: 'string',
-    min: 0,
-    max: 32,
-  },
-  motd: {
-    type: 'string',
-    min: 0,
-    max: 50,
-  },
-  levelType: {
-    type: 'string',
-    values: ['minecraft:normal', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified'],
-  },
-  maxPlayers: {
-    type: 'number',
-    int: true,
-    min: 1,
-    max: 10000,
-  },
-  viewDistance: {
-    type: 'number',
-    int: true,
-    min: 3,
-    max: 32,
-  },
-  spawn: {
-    type: 'number',
-    int: true,
-    min: 0,
-    max: 32,
-  },
-  idle: {
-    type: 'number',
-    int: true,
-    min: -1,
-    max: 1440,
-  },
-  commandBlock: {
-    type: 'boolean',
-  },
-  pvp: {
-    type: 'boolean',
-  },
-  licensed: {
-    type: 'boolean',
-  },
-  allowlist: {
-    type: 'boolean',
-  },
-  nether: {
-    type: 'boolean',
-  },
-  secureProfile: {
-    type: 'boolean',
-  },
-  forceGamemode: {
-    type: 'boolean',
-  },
-  hardcore: {
-    type: 'boolean',
-  },
-  animals: {
-    type: 'boolean',
-  },
-  monsters: {
-    type: 'boolean',
-  },
-  npcs: {
-    type: 'boolean',
-  },
-  cheats: {
-    type: 'boolean',
-  },
-};
+import Joi from 'joi';
 
-export default Minecraft;
+const minecraft = Joi.object({
+  software: Joi.string().trim().valid('vanilla', 'paper', 'purpur'),
+  bedrock: Joi.boolean(),
+  gamemode: Joi.string().trim().valid('survival', 'creative', 'adventure'),
+  difficulty: Joi.string().trim().valid('peaceful', 'easy', 'normal', 'hard'),
+  seed: Joi.string().trim().min(0).max(50),
+  motd: Joi.string().trim().min(0).max(50),
+  levelType: Joi.string().trim().valid('minecraft:normal', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified'),
+  viewDistance: Joi.number().integer().min(3).max(32),
+  spawn: Joi.number().integer().min(0).max(32),
+  idle: Joi.number().integer().min(0).max(1440),
+  commandBlock: Joi.boolean(),
+  pvp: Joi.boolean(),
+  licensed: Joi.boolean(),
+  allowlist: Joi.boolean(),
+  nether: Joi.boolean(),
+  secureProfile: Joi.boolean(),
+  forceGamemode: Joi.boolean(),
+  hardcore: Joi.boolean(),
+  animals: Joi.boolean(),
+  monsters: Joi.boolean(),
+  npcs: Joi.boolean(),
+  cheats: Joi.boolean(),
+});
+
+export default minecraft;

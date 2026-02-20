@@ -1,32 +1,23 @@
-const User = {
-  id: {
-    type: 'string',
-    internal: true,
-    isUUID: true,
-  },
-  name: {
-    type: 'string',
-    min: 2,
-    max: 32,
-  },
-  email: {
-    type: 'string',
-    min: 5,
-    max: 257,
-    required: true,
-    internal: true,
-    firstTime: true,
-  },
-  password: {
-    type: 'string',
-    required: true,
-    internal: true,
-    firstTime: true,
-  },
-  admin: {
-    type: 'boolean',
-    internal: true,
-  },
-};
+import Joi from 'joi';
 
-export default User;
+const createUser = Joi.object({
+  id: Joi.forbidden(),
+  admin: Joi.forbidden(),
+  name: Joi.string().trim().min(3).max(32).required(),
+  email: Joi.string().trim().email().required(),
+  password: Joi.string().trim().required(),
+  verified: Joi.forbidden(),
+  birthDate: Joi.date(),
+});
+
+const updateUser = Joi.object({
+  id: Joi.forbidden(),
+  admin: Joi.forbidden(),
+  name: Joi.string().trim().min(3).max(32).required(),
+  email: Joi.forbidden(),
+  password: Joi.forbidden(),
+  verified: Joi.forbidden(),
+  birthDate: Joi.date(),
+});
+
+export { createUser, updateUser };

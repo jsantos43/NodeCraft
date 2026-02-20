@@ -37,33 +37,6 @@ Instance.init({
       },
     },
   },
-  status: {
-    type: DataTypes.BOOLEAN,
-    values: ['running', 'stopped', 'failed'],
-    defaultValue: 'stopped',
-    allowNull: false,
-    validate: {
-      isIn: {
-        args: [['running', 'stopped', 'failed']],
-        msg: 'status field must have a valid value!',
-      },
-    },
-  },
-  maxPlayers: {
-    type: DataTypes.NUMBER,
-    defaultValue: 10,
-    allowNull: false,
-    validate: {
-      min: {
-        args: [1],
-        msg: 'maxPlayers field must be greater than or equal to 1!',
-      },
-      max: {
-        args: [10000],
-        msg: 'maxPlayers field must be lower than or equal to 10000!',
-      },
-    },
-  },
   type: {
     type: DataTypes.STRING,
     values: ['minecraft', 'hytale', 'counterstrike', 'terraria', 'kerbal'],
@@ -83,11 +56,11 @@ Instance.init({
   memory: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 2048,
+    defaultValue: 1024,
     validate: {
       min: {
-        args: [1024],
-        msg: 'memory field must be greater than or equal to 1024mb!',
+        args: [512],
+        msg: 'memory field must be greater than or equal to 512mb!',
       },
     },
   },
@@ -99,6 +72,33 @@ Instance.init({
       min: {
         args: [1],
         msg: 'cpu field must be greater than or equal to 1!',
+      },
+    },
+  },
+  maxPlayers: {
+    type: DataTypes.NUMBER,
+    defaultValue: 10,
+    allowNull: false,
+    validate: {
+      min: {
+        args: [1],
+        msg: 'maxPlayers field must be greater than or equal to 1!',
+      },
+      max: {
+        args: [1000],
+        msg: 'maxPlayers field must be lower than or equal to 1000!',
+      },
+    },
+  },
+  status: {
+    type: DataTypes.BOOLEAN,
+    values: ['running', 'stopped', 'failed'],
+    defaultValue: 'stopped',
+    allowNull: false,
+    validate: {
+      isIn: {
+        args: [['running', 'stopped', 'failed']],
+        msg: 'status field must have a valid value!',
       },
     },
   },

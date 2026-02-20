@@ -3,7 +3,7 @@ import logger from '../../config/logger.js';
 import config from '../../config/index.js';
 
 // eslint-disable-next-line no-unused-vars
-const error = (err, req, res, next) => {
+const handleError = (err, req, res, next) => {
   const sequelizeMappedError = mapSequelizeError(err);
   if (sequelizeMappedError) return sequelizeMappedError.send(res);
 
@@ -36,4 +36,4 @@ const error = (err, req, res, next) => {
   return err.send(res);
 };
 
-export default error;
+export default handleError;

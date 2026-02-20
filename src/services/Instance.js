@@ -230,7 +230,8 @@ class Instance {
       let Runtime = null;
       if (instance.type === 'minecraft') Runtime = MinecraftRuntime;
       else if (instance.type === 'counterstrike') Runtime = CounterStrikeRuntime;
-      else if (instance.type === 'ksp') Runtime = KerbalRuntime;
+      else if (instance.type === 'kerbal') Runtime = KerbalRuntime;
+      else throw new Base('Instace game runtime not found!');
 
       running[id] = new Runtime(instance, () => Instance.readOne(id));
       await instance.update({ status: 'running' });
@@ -249,6 +250,7 @@ class Instance {
 
     // Stop runtime instance
     if (running[id]) running[id].finish();
+    delete running[id];
 
     await instance.update({ status: 'stopped' });
     return instance;

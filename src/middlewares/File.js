@@ -2,7 +2,7 @@ import { existsSync, realpathSync } from 'fs';
 import * as Path from 'path';
 import { BadRequest, InvalidRequest, Unathorized } from '../errors/index.js';
 import config from '../../config/index.js';
-import error from './error.js';
+import handleError from './handleError.js';
 
 class File {
   static verifyTwoPoints(path) {
@@ -48,8 +48,8 @@ class File {
 
       return next();
     } catch (err) {
-      if (err.code === 'ENOENT') return error(new BadRequest('path not exists!'), req, res);
-      return error(err, req, res);
+      if (err.code === 'ENOENT') return handleError(new BadRequest('path not exists!'), req, res);
+      return handleError(err, req, res);
     }
   }
 

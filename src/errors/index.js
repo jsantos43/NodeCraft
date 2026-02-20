@@ -1,4 +1,4 @@
-import BadRequest from './BadRequest.js';
+import NotFound from './NotFound.js';
 import Base from './Base.js';
 import InvalidRequest from './InvalidRequest.js';
 import Unathorized from './Unathorized.js';
@@ -7,7 +7,7 @@ import mapSequelizeError from './SequelizeMap.js';
 
 export {
   mapSequelizeError,
-  BadRequest,
+  NotFound,
   Base,
   InvalidRequest,
   Unathorized,

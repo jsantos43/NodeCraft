@@ -1,9 +1,9 @@
 import express from 'express';
 import routes from './routes/index.js';
-import errorMiddleware from './middlewares/error.js';
+import handleError from './middlewares/handleError.js';
 
 const app = express();
 routes(app);
-app.use(errorMiddleware);
+app.use(handleError);
 
 export default app;

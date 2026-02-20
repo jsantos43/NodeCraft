@@ -52,7 +52,7 @@ Minecraft.init(
       allowNull: false,
       validate: {
         len: {
-          args: [0, 32],
+          args: [0, 50],
           msg: 'seed field must have a length between 0 and 32!',
         },
       },

@@ -1,47 +1,52 @@
 import { Router } from 'express';
 import Controller from '../controllers/User.js';
 import auth from '../middlewares/auth.js';
+import { createUser, updateUser } from '../schemas/User.js';
+import validate from '../middlewares/validate.js';
 
 const router = Router();
 
 router
   .get(
     '/user',
-    (req, res, next) => auth('logged', req, res, next),
+    auth('logged'),
     Controller.read,
   )
   .get(
     '/user/all',
-    (req, res, next) => auth('admin', req, res, next),
+    auth('admin'),
     Controller.readAll,
   )
   .get(
     '/user/:id',
-    (req, res, next) => auth('logged', req, res, next),
+    auth('logged'),
     Controller.readById,
   )
   .post(
     '/user',
+    validate(createUser),
     Controller.create,
   )
   .put(
     '/user',
-    (req, res, next) => auth('logged', req, res, next),
+    auth('logged'),
+    validate(updateUser),
     Controller.update,
   )
   .put(
     '/user/:id',
-    (req, res, next) => auth('admin', req, res, next),
+    auth('admin'),
+    validate(updateUser),
     Controller.updateOther,
   )
   .delete(
     '/user',
-    (req, res, next) => auth('logged', req, res, next),
+    auth('logged'),
     Controller.delete,
   )
   .delete(
     '/user/:id',
-    (req, res, next) => auth('admin', req, res, next),
+    auth('admin'),
     Controller.deleteOther,
   );
 

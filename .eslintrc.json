@@ -23,7 +23,8 @@
             }
         ],
         "no-await-in-loop": "off",
-        "no-continue": "off"
+        "no-continue": "off",
+        "newline-per-chained-call": "off"
     }
   }
   

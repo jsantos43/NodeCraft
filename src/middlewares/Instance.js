@@ -1,6 +1,6 @@
 import { InvalidRequest } from '../errors/index.js';
 import { running } from '../runtimes/index.js';
-import error from './error.js';
+import handleError from './handleError.js';
 
 class Instance {
   static async verifyRunning(req, res, next) {
@@ -12,7 +12,7 @@ class Instance {
 
       return next();
     } catch (err) {
-      return error(err, req, res);
+      return handleError(err, req, res);
     }
   }
 
@@ -25,7 +25,7 @@ class Instance {
 
       return next();
     } catch (err) {
-      return error(err, req, res);
+      return handleError(err, req, res);
     }
   }
 }
