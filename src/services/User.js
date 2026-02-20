@@ -1,6 +1,6 @@
 import { hashSync } from 'bcrypt';
 import { User as Model, Link as LinkModel } from '../models/index.js';
-import { BadRequest } from '../errors/index.js';
+import { NotFound } from '../errors/index.js';
 
 class User {
   static async create(data) {
@@ -36,7 +36,7 @@ class User {
       },
     });
 
-    if (!user) throw new BadRequest('User not found!');
+    if (!user) throw new NotFound('User not found!');
 
     return user;
   }

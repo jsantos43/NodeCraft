@@ -2,9 +2,9 @@ import { Router } from 'express';
 import Controller from '../controllers/Instance.js';
 import file from './file.js';
 import link from './link.js';
-import auth from '../middlewares/auth.js';
-import Middleware from '../middlewares/Instance.js';
-import validate from '../middlewares/validate.js';
+import {
+  auth, verifyRunning, verifyNotRunning, validate,
+} from '../middlewares/index.js';
 import { createInstance, updateInstance } from '../schemas/index.js';
 
 const router = Router();
@@ -29,26 +29,26 @@ router
   .put(
     '/instance/:id',
     auth('instance:update'),
-    Middleware.verifyRunning,
+    verifyRunning,
     validate(updateInstance),
     Controller.update,
   )
   .delete(
     '/instance/:id',
     auth('instance:delete'),
-    Middleware.verifyRunning,
+    verifyRunning,
     Controller.delete,
   )
   .post(
     '/instance/:id/run',
     auth('instance:execute'),
-    Middleware.verifyRunning,
+    verifyRunning,
     Controller.run,
   )
   .post(
     '/instance/:id/stop',
     auth('instance:execute'),
-    Middleware.verifyNotRunning,
+    verifyNotRunning,
     Controller.stop,
   )
   .post(
@@ -64,7 +64,7 @@ router
   .put(
     '/instance/:id/remap/port',
     auth('instance:update'),
-    Middleware.verifyRunning,
+    verifyRunning,
     Controller.remapPort,
   )
   .use('/instance', file)

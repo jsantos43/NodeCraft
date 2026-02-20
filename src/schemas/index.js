@@ -1,8 +1,8 @@
-import { createInstance, updateInstance } from './Instance.js';
-import { createUser, updateUser } from './User.js';
-import file from './File.js';
-import link from './Link.js';
-import minecraft from './Minecraft.js';
+import { createInstance, updateInstance } from './instance.js';
+import { createUser, updateUser } from './user.js';
+import file from './file.js';
+import link from './link.js';
+import minecraft from './minecraft.js';
 
 export {
   createInstance,

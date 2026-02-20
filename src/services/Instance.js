@@ -17,7 +17,7 @@ import {
   Kerbal as KerbalModel,
   db,
 } from '../models/index.js';
-import { BadRequest, Base } from '../errors/index.js';
+import { NotFound, Base } from '../errors/index.js';
 import Container from './Container.js';
 import Link from './Link.js';
 import config from '../../config/index.js';
@@ -114,7 +114,7 @@ class Instance {
     };
 
     const base = await Model.findByPk(id);
-    if (!base) throw new BadRequest('Instance not found!');
+    if (!base) throw new NotFound('Instance not found!');
 
     const instance = await Model.findByPk(id, {
       include: [

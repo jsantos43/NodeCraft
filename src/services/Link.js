@@ -1,4 +1,4 @@
-import { BadRequest, InvalidRequest } from '../errors/index.js';
+import { InvalidRequest, NotFound } from '../errors/index.js';
 import { Link as Model } from '../models/index.js';
 import User from './User.js';
 
@@ -22,7 +22,7 @@ class Link {
   static async readOne(linkId) {
     const link = await Model.findByPk(linkId);
 
-    if (!link) throw new BadRequest('Link not found!');
+    if (!link) throw new NotFound('Link not found!');
 
     return link;
   }

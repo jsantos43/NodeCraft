@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import auth from '../middlewares/auth.js';
-import validate from '../middlewares/validate.js';
+import { auth, validate } from '../middlewares/index.js';
 import { link } from '../schemas/index.js';
 import Controller from '../controllers/Link.js';
 

@@ -2,9 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import {
-  BadRequest,
-  Unathorized,
-  InvalidToken,
+  NotFound, Unathorized, InvalidToken,
 } from '../errors/index.js';
 import sendEmail from '../utils/sendEmail.js';
 import renderTemplate from '../utils/renderTemplate.js';
@@ -170,7 +168,7 @@ class Auth {
 
   static async forgotPassword(email) {
     const user = await User.readAllAttributes(null, email);
-    if (!user) throw new BadRequest('User not found!');
+    if (!user) throw new NotFound('User not found!');
 
     const token = Auth.generateRandomToken();
 
