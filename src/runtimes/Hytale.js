@@ -5,13 +5,13 @@ import logger from '../../config/logger.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import { Base } from '../errors/index.js';
 
-class Kerbal extends Instance {
+class Hytale extends Instance {
   constructor(instance, readFunction) {
     super(instance, readFunction);
 
     this.paths = {
       instance: this.instancePath,
-      settings: Path.join(this.instancePath, 'Config', 'Settings.txt'),
+      settings: Path.join(this.instancePath, 'config.json'),
     };
 
     this.setup();
@@ -20,24 +20,23 @@ class Kerbal extends Instance {
   async syncSettings() {
     try {
       const instance = this.instance.get({ plain: true });
-      const gameData = instance?.kerbal;
-      if (!gameData) throw new Base('instance kerbal data not found!');
+      const gameData = instance?.hytale;
+      if (!gameData) throw new Base('instance hytale data not found!');
 
       // Sync database with Settings.txt
-      const kerbalSettings = renderTemplate('kerbal/Settings.txt', {
-        warp: gameData.warp,
-        gamemode: gameData.gamemode,
-        difficulty: gameData.difficulty,
-        allowlist: gameData.allowlist ? 'True' : 'False',
-        cheats: gameData.cheats ? 'True' : 'False',
+      const hytaleSettings = renderTemplate('hytale/config.json', {
         servername: gameData.servername,
+        motd: gameData.motd,
+        password: gameData.password,
         maxPlayers: instance.maxPlayers,
+        maxView: gameData.maxView,
+        worldname: gameData.worldname,
+        gamemode: gameData.gamemode,
       });
 
-      fs.mkdirSync(Path.dirname(this.paths.settings), { recursive: true });
-      fs.writeFileSync(this.paths.settings, kerbalSettings, 'utf8');
+      fs.writeFileSync(this.paths.settings, hytaleSettings, 'utf8');
     } catch (err) {
-      logger.error({ err }, 'Error to sync kerbal Server.txt');
+      logger.error({ err }, 'Error to sync hytale config.json');
     }
   }
 
@@ -51,9 +50,9 @@ class Kerbal extends Instance {
       // Listen container
       this.listen();
     } catch (err) {
-      logger.error({ err }, 'Error to setup kerbal instance');
+      logger.error({ err }, 'Error to setup hytale instance');
     }
   }
 }
 
-export default Kerbal;
+export default Hytale;

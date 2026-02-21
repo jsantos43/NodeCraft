@@ -60,7 +60,7 @@ Hytale.init(
       validate: {
         len: {
           args: [3, 32],
-          msg: 'worldname field must have a length between 2 and 32!',
+          msg: 'worldname field must have a length between 3 and 32!',
         },
       },
     },

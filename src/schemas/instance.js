@@ -2,6 +2,8 @@ import Joi from 'joi';
 import minecraft from './minecraft.js';
 import counterstrike from './counterstrike.js';
 import kerbal from './kerbal.js';
+import hytale from './hytale.js';
+import terraria from './terraria.js';
 
 const createInstance = Joi.object({
   id: Joi.forbidden(),
@@ -19,6 +21,8 @@ const createInstance = Joi.object({
       { is: 'minecraft', then: minecraft },
       { is: 'counterstrike', then: counterstrike },
       { is: 'kerbal', then: kerbal },
+      { is: 'hytale', then: hytale },
+      { is: 'terraria', then: terraria },
     ],
     otherwise: Joi.forbidden(),
   }).required(),
@@ -40,6 +44,8 @@ const updateInstance = Joi.object({
       { is: 'minecraft', then: minecraft },
       { is: 'counterstrike', then: counterstrike },
       { is: 'kerbal', then: kerbal },
+      { is: 'hytale', then: hytale },
+      { is: 'terraria', then: terraria },
     ],
     otherwise: Joi.forbidden(),
   }).required(),

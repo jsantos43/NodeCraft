@@ -81,6 +81,29 @@ class Container {
           { HostPort: String(instance.port) },
         ],
       };
+    } else if (instance.type === 'hytale') {
+      image = config.games.hytale.image;
+      exposedPorts = { '5520/udp': {} };
+      binds = [`${instancePath}:/data`];
+      portBindings = {
+        '5520/udp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else if (instance.type === 'terraria') {
+      image = config.games.terraria.image;
+      enviroment = [
+        'SERVERCONFIG=1',
+      ];
+      exposedPorts = { '7777/tcp': {} };
+      binds = [
+        `${instancePath}:/opt/terraria/config/`,
+      ];
+      portBindings = {
+        '7777/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
     } else {
       throw new Base('No container game type available!');
     }

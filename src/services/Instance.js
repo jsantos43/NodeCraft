@@ -15,6 +15,8 @@ import {
   Minecraft as MinecraftModel,
   CounterStrike as CounterStrikeModel,
   Kerbal as KerbalModel,
+  Hytale as HytaleModel,
+  Terraria as TerrariaModel,
   db,
 } from '../models/index.js';
 import { NotFound, Base } from '../errors/index.js';
@@ -28,6 +30,8 @@ import {
   Minecraft as MinecraftRuntime,
   CounterStrike as CounterStrikeRuntime,
   Kerbal as KerbalRuntime,
+  Hytale as HytaleRuntime,
+  Terraria as TerrariaRuntime,
 } from '../runtimes/index.js';
 import logger from '../../config/logger.js';
 
@@ -49,6 +53,8 @@ class Instance {
       if (instanceData.type === 'minecraft') gameModel = MinecraftModel;
       else if (instanceData.type === 'counterstrike') gameModel = CounterStrikeModel;
       else if (instanceData.type === 'kerbal') gameModel = KerbalModel;
+      else if (instanceData.type === 'hytale') gameModel = HytaleModel;
+      else if (instanceData.type === 'terraria') gameModel = TerrariaModel;
       else throw new Base('Game model not found!');
 
       // Create instance gamedata
@@ -105,16 +111,18 @@ class Instance {
     return instances;
   }
 
-  static async readOne(id) {
+  static async readOne(id, onlyBase = false) {
     const includeMap = {
       minecraft: { model: MinecraftModel, as: 'minecraft' },
       counterstrike: { model: CounterStrikeModel, as: 'counterstrike' },
       kerbal: { model: KerbalModel, as: 'kerbal' },
-      // terraria: { model: TerrariaConfig, as: 'terraria' },
+      hytale: { model: HytaleModel, as: 'hytale' },
+      terraria: { model: TerrariaModel, as: 'terraria' },
     };
 
     const base = await Model.findByPk(id);
     if (!base) throw new NotFound('Instance not found!');
+    if (onlyBase) return base;
 
     const instance = await Model.findByPk(id, {
       include: [
@@ -145,6 +153,8 @@ class Instance {
       if (instance.minecraft) await instance.minecraft.update(gameData, { transaction: t });
       if (instance.counterstrike) await instance.counterstrike.update(gameData, { transaction: t });
       if (instance.kerbal) await instance.kerbal.update(gameData, { transaction: t });
+      if (instance.hytale) await instance.hytale.update(gameData, { transaction: t });
+      if (instance.terraria) await instance.terraria.update(gameData, { transaction: t });
     });
 
     await Container.delete(id);
@@ -153,7 +163,7 @@ class Instance {
   }
 
   static async delete(id) {
-    const instance = await Instance.readOne(id);
+    const instance = await Instance.readOne(id, true);
     await instance.destroy();
     rmSync(Path.join(config.instance.path, id), { recursive: true, force: true });
 
@@ -231,6 +241,8 @@ class Instance {
       if (instance.type === 'minecraft') Runtime = MinecraftRuntime;
       else if (instance.type === 'counterstrike') Runtime = CounterStrikeRuntime;
       else if (instance.type === 'kerbal') Runtime = KerbalRuntime;
+      else if (instance.type === 'hytale') Runtime = HytaleRuntime;
+      else if (instance.type === 'terraria') Runtime = TerrariaRuntime;
       else throw new Base('Instace game runtime not found!');
 
       running[id] = new Runtime(instance, () => Instance.readOne(id));
@@ -251,6 +263,7 @@ class Instance {
     // Stop runtime instance
     if (running[id]) running[id].finish();
     delete running[id];
+    await Container.delete(id);
 
     await instance.update({ status: 'stopped' });
     return instance;

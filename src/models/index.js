@@ -6,6 +6,7 @@ import Minecraft from './Minecraft.js';
 import CounterStrike from './CounterStrike.js';
 import Kerbal from './Kerbal.js';
 import Hytale from './Hytale.js';
+import Terraria from './Terraria.js';
 
 // instance <-> link
 Instance.hasMany(Link, {
@@ -89,6 +90,17 @@ Hytale.belongsTo(Instance, {
   foreignKey: 'instanceId',
 });
 
+// instance <--> terraria
+Instance.hasOne(Terraria, {
+  foreignKey: 'instanceId',
+  as: 'terraria',
+  onDelete: 'CASCADE',
+});
+
+Terraria.belongsTo(Instance, {
+  foreignKey: 'instanceId',
+});
+
 // await db.sync({ force: true });
 await db.query('PRAGMA foreign_keys = ON');
 
@@ -101,4 +113,5 @@ export {
   CounterStrike,
   Kerbal,
   Hytale,
+  Terraria,
 };

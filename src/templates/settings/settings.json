@@ -56,13 +56,13 @@
   },
   "games": {
     "minecraft": {
-      "image": "itzg/minecraft-server",
+      "image": "itzg/minecraft-server:latest",
       "geyser": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot",
       "floodgate": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot",
       "checkTime": 5000
     },
     "counterstrike": {
-      "image": "cm2network/cs2",
+      "image": "cm2network/cs2:latest",
       "checkTime": 10000
     },
     "kerbal": {
@@ -70,6 +70,9 @@
     },
     "hytale": {
       "image": "ghcr.io/joaosantos2007/hytale:latest"
+    },
+    "terraria": {
+      "image": "ghcr.io/passivelemon/terraria-docker:latest"
     }
   }
 }
