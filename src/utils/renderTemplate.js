@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import Path from 'path';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 
 const renderTemplate = (templateName, variables = {}) => {
   const filePath = Path.resolve(config.absoutePath, 'src', 'templates', templateName);

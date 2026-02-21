@@ -1,6 +1,6 @@
 import Path from 'path';
 import docker from '../../config/docker.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import InstanceModel from '../models/Instance.js';
 import logger from '../../config/logger.js';
 import { Base } from '../errors/index.js';

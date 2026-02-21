@@ -1,5 +1,5 @@
 import mailer from '../../config/mailer.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 
 const sendEmail = async ({
   to, subject, html, text = '',

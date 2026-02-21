@@ -22,7 +22,7 @@ import {
 import { NotFound, Base } from '../errors/index.js';
 import Container from './Container.js';
 import Link from './Link.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import Storage from './Storage.js';
 import File from './File.js';
 import {

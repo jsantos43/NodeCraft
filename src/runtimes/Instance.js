@@ -2,7 +2,7 @@ import { PassThrough } from 'stream';
 import Path from 'path';
 import { Rcon } from 'rcon-client';
 import Container from '../services/Container.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import logger from '../../config/logger.js';
 
 class Instance {

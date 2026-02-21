@@ -1,5 +1,5 @@
 import app from './src/app.js';
-import config from './config/index.js';
+import config from './config/config.js';
 import Maintenance from './src/services/Maintenance.js';
 import Instance from './src/services/Instance.js';
 

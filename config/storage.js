@@ -1,18 +1,16 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import config from './index.js';
+import config from './config.js';
 
-let s3Client;
+const s3Config = {
+  endpoint: config.storage.endpoint || undefined,
+  forcePathStyle: config.storage.forcePathStyle === 'true',
+  credentials: {
+    accessKeyId: config.storage.accessKeyId,
+    secretAccessKey: config.storage.secretAccessKey,
+  },
+  ...(config.storage.region && { region: config.storage.region }),
+};
 
-if (config.storage.enable === true) {
-  s3Client = new S3Client({
-    region: config.storage.region,
-    endpoint: config.storage.endpoint || undefined,
-    forcePathStyle: config.storage.forcePathStyle === 'true',
-    credentials: {
-      accessKeyId: config.storage.accessKeyId,
-      secretAccessKey: config.storage.secretAccessKey,
-    },
-  });
-}
+const s3Client = new S3Client(s3Config);
 
 export default s3Client;

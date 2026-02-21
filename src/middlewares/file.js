@@ -1,7 +1,7 @@
 import { existsSync, realpathSync } from 'fs';
 import * as Path from 'path';
 import { NotFound, InvalidRequest, Unathorized } from '../errors/index.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import handleError from './handleError.js';
 
 const verifyTwoPoints = (path) => {

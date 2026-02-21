@@ -1,5 +1,5 @@
 import fs from 'fs';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import Container from './Container.js';
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';

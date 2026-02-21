@@ -3,7 +3,7 @@ import Path from 'path';
 import AdmZip from 'adm-zip';
 import { randomUUID } from 'crypto';
 import archiver from 'archiver';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import { Base, InvalidRequest } from '../errors/index.js';
 
 class File {

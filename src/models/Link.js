@@ -1,6 +1,6 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
 import db from '../../config/sequelize.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import { running } from '../runtimes/index.js';
 import logger from '../../config/logger.js';
 

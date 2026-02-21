@@ -9,7 +9,7 @@ import renderTemplate from '../utils/renderTemplate.js';
 import User from './User.js';
 import Instance from './Instance.js';
 import Link from './Link.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 
 class Auth {
   static hashToken(token) {

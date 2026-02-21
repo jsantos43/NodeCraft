@@ -4,7 +4,7 @@ import Instance from './Instance.js';
 import query from '../utils/query.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import logger from '../../config/logger.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 
 class Minecraft extends Instance {
   constructor(instance, readFunction) {

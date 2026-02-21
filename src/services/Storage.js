@@ -6,7 +6,7 @@ import {
 import Path from 'path';
 import { createReadStream } from 'fs';
 import s3Client from '../../config/storage.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 
 class Storage {
   static async list(prefix) {

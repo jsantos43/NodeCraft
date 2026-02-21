@@ -1,6 +1,6 @@
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 
 class CounterStrike extends Instance {
   constructor(instance, readFunction) {
