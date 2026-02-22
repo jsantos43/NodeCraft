@@ -32,7 +32,7 @@ const updateInstance = Joi.object({
   id: Joi.forbidden(),
   owner: Joi.forbidden(),
   name: Joi.string().trim().min(3).max(32),
-  type: Joi.forbidden(),
+  type: Joi.string().trim().strip().valid('minecraft', 'hytale', 'counterstrike', 'terraria', 'kerbal'),
   port: Joi.forbidden(),
   memory: Joi.number().integer().min(512),
   cpu: Joi.number().integer().min(1),

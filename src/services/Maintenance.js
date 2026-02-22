@@ -32,6 +32,7 @@ class Maintenance {
   }
 
   static scheduleInstancesMaintenance() {
+    // await db.query('VACUUM')
     let lastRunDate = null;
 
     setInterval(async () => {

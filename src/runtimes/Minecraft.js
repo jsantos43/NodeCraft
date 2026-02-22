@@ -87,7 +87,7 @@ class Minecraft extends Instance {
         motd: instance.minecraft.motd,
         pvp: instance.minecraft.pvp,
         difficulty: instance.minecraft.difficulty,
-        maxPlayers: instance.minecraft.maxPlayers,
+        maxPlayers: instance.maxPlayers,
         licensed: instance.minecraft.licensed,
         viewDistance: instance.minecraft.viewDistance,
         nether: instance.minecraft.nether,
@@ -114,7 +114,7 @@ class Minecraft extends Instance {
         const geyser = renderTemplate('minecraft/geyser.yml', {
           motd: instance.name,
           name: instance.name,
-          maxPlayers: instance.minecraft.maxPlayers,
+          maxPlayers: instance.maxPlayers,
         });
 
         const floodgate = renderTemplate('minecraft/floodgate.yml');

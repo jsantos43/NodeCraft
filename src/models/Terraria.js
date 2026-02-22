@@ -5,6 +5,15 @@ class Terraria extends Model { }
 
 Terraria.init(
   {
+    instanceId: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      references: {
+        model: 'instance',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
     difficulty: {
       type: DataTypes.INTEGER,
       allowNull: false,

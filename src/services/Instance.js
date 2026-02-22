@@ -9,15 +9,10 @@ import {
 import { Op } from 'sequelize';
 import Path from 'path';
 import {
-  Instance as Model,
-  Link as LinkModel,
-  User as UserModel,
-  Minecraft as MinecraftModel,
-  CounterStrike as CounterStrikeModel,
-  Kerbal as KerbalModel,
-  Hytale as HytaleModel,
-  Terraria as TerrariaModel,
   db,
+  gameModels,
+  instanceInclude,
+  Instance as Model,
 } from '../models/index.js';
 import { NotFound, Base } from '../errors/index.js';
 import Container from './Container.js';
@@ -25,67 +20,43 @@ import Link from './Link.js';
 import config from '../../config/config.js';
 import Storage from './Storage.js';
 import File from './File.js';
-import {
-  running,
-  Minecraft as MinecraftRuntime,
-  CounterStrike as CounterStrikeRuntime,
-  Kerbal as KerbalRuntime,
-  Hytale as HytaleRuntime,
-  Terraria as TerrariaRuntime,
-} from '../runtimes/index.js';
+import { running, gameRuntimes } from '../runtimes/index.js';
 import logger from '../../config/logger.js';
 
 class Instance {
   static async create(userId, instanceData, gameData) {
+    // Select game model
+    const gameType = instanceData.type;
+    const TargetModel = gameModels[gameType];
+    if (!TargetModel) throw new Base('Game model not found!');
+
     // Pick up a server port
     const port = await Instance.selectPort();
 
-    // Create instance in database
-    const instanceBase = await Model.create({
-      owner: userId,
-      port,
-      ...instanceData,
-    });
-
-    try {
-      // Select instance game model
-      let gameModel = null;
-      if (instanceData.type === 'minecraft') gameModel = MinecraftModel;
-      else if (instanceData.type === 'counterstrike') gameModel = CounterStrikeModel;
-      else if (instanceData.type === 'kerbal') gameModel = KerbalModel;
-      else if (instanceData.type === 'hytale') gameModel = HytaleModel;
-      else if (instanceData.type === 'terraria') gameModel = TerrariaModel;
-      else throw new Base('Game model not found!');
-
-      // Create instance gamedata
-      await gameModel.create({
-        instanceId: instanceBase.id,
-        ...gameData,
+    // Use a Transaction to ensure: either everything is recorded or nothing is.
+    return db.transaction(async (t) => {
+      // Create instance and game data in an unique command
+      const instance = await Model.create({
+        owner: userId,
+        port,
+        ...instanceData,
+        [gameType]: gameData,
+      }, {
+        include: [{ model: TargetModel, as: gameType }],
+        transaction: t,
       });
 
-      // Create instance path in the System
-      mkdirSync(Path.join(config.instance.path, instanceBase.id));
-    } catch (err) {
-      await Instance.delete(instanceBase.id);
+      mkdirSync(Path.join(config.instance.path, instance.id));
 
-      throw err;
-    }
-
-    return instanceBase;
+      return instance;
+    });
   }
 
   static async readAll() {
     const instances = await Model.findAll({
-      include: {
-        model: LinkModel,
-        as: 'players',
-        include: {
-          model: UserModel,
-          as: 'user',
-          required: false,
-        },
-      },
+      include: instanceInclude,
     });
+
     return instances;
   }
 
@@ -96,6 +67,7 @@ class Instance {
       where: {
         owner: user.id,
       },
+      include: instanceInclude,
     });
 
     const instancesId = await Link.readInstancesIdByUserLink(user.id);
@@ -104,6 +76,7 @@ class Instance {
       where: {
         id: { [Op.in]: instancesId },
       },
+      include: instanceInclude,
     });
 
     const instances = [...userInstances, ...linkInstances];
@@ -111,33 +84,12 @@ class Instance {
     return instances;
   }
 
-  static async readOne(id, onlyBase = false) {
-    const includeMap = {
-      minecraft: { model: MinecraftModel, as: 'minecraft' },
-      counterstrike: { model: CounterStrikeModel, as: 'counterstrike' },
-      kerbal: { model: KerbalModel, as: 'kerbal' },
-      hytale: { model: HytaleModel, as: 'hytale' },
-      terraria: { model: TerrariaModel, as: 'terraria' },
-    };
-
-    const base = await Model.findByPk(id);
-    if (!base) throw new NotFound('Instance not found!');
-    if (onlyBase) return base;
-
+  static async readOne(id) {
     const instance = await Model.findByPk(id, {
-      include: [
-        includeMap[base.type || 'minecraft'],
-        {
-          model: LinkModel,
-          as: 'players',
-          include: {
-            model: UserModel,
-            as: 'user',
-            required: false,
-          },
-        },
-      ],
+      include: instanceInclude,
     });
+
+    if (!instance) throw new NotFound('Instance not found!');
 
     return instance;
   }
@@ -146,15 +98,13 @@ class Instance {
     const instance = await Instance.readOne(id);
 
     await db.transaction(async (t) => {
-      // Update instance data
+      // Update instance basic data
       await instance.update(instanceData, { transaction: t });
 
       // Update game data
-      if (instance.minecraft) await instance.minecraft.update(gameData, { transaction: t });
-      if (instance.counterstrike) await instance.counterstrike.update(gameData, { transaction: t });
-      if (instance.kerbal) await instance.kerbal.update(gameData, { transaction: t });
-      if (instance.hytale) await instance.hytale.update(gameData, { transaction: t });
-      if (instance.terraria) await instance.terraria.update(gameData, { transaction: t });
+      if (gameData && instance[instance.type]) {
+        await instance[instance.type].update(gameData, { transaction: t });
+      }
     });
 
     await Container.delete(id);
@@ -165,6 +115,7 @@ class Instance {
   static async delete(id) {
     const instance = await Instance.readOne(id, true);
     await instance.destroy();
+    await Container.delete(id);
     rmSync(Path.join(config.instance.path, id), { recursive: true, force: true });
 
     return instance;
@@ -235,15 +186,9 @@ class Instance {
     const instance = await Instance.readOne(id);
     await Container.create(instance);
 
-    // Try to run instance
     try {
-      let Runtime = null;
-      if (instance.type === 'minecraft') Runtime = MinecraftRuntime;
-      else if (instance.type === 'counterstrike') Runtime = CounterStrikeRuntime;
-      else if (instance.type === 'kerbal') Runtime = KerbalRuntime;
-      else if (instance.type === 'hytale') Runtime = HytaleRuntime;
-      else if (instance.type === 'terraria') Runtime = TerrariaRuntime;
-      else throw new Base('Instace game runtime not found!');
+      const Runtime = gameRuntimes[instance.type];
+      if (!Runtime) throw new Base('Instace game runtime not found!');
 
       running[id] = new Runtime(instance, () => Instance.readOne(id));
       await instance.update({ status: 'running' });

@@ -30,7 +30,7 @@ User.hasMany(Link, {
 Link.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user',
-  constraints: false, // userId pode ser arbitrário
+  constraints: false, // userId can be arbitrary.
 });
 
 // user <-> instance
@@ -101,17 +101,41 @@ Terraria.belongsTo(Instance, {
   foreignKey: 'instanceId',
 });
 
+// Set default game models
+const gameModels = {
+  minecraft: Minecraft,
+  counterstrike: CounterStrike,
+  kerbal: Kerbal,
+  hytale: Hytale,
+  terraria: Terraria,
+};
+
+// Define instances query include
+const instanceInclude = [
+  { model: Minecraft, as: 'minecraft', required: false },
+  { model: CounterStrike, as: 'counterstrike', required: false },
+  { model: Kerbal, as: 'kerbal', required: false },
+  { model: Hytale, as: 'hytale', required: false },
+  { model: Terraria, as: 'terraria', required: false },
+  {
+    model: Link,
+    as: 'players',
+    include: {
+      model: User,
+      as: 'user',
+      required: false,
+    },
+  },
+];
+
 // await db.sync({ force: true });
 await db.query('PRAGMA foreign_keys = ON');
 
 export {
   db,
+  gameModels,
+  instanceInclude,
   User,
   Instance,
   Link,
-  Minecraft,
-  CounterStrike,
-  Kerbal,
-  Hytale,
-  Terraria,
 };

@@ -6,11 +6,15 @@ import Terraria from './Terraria.js';
 
 const running = {};
 
+const gameRuntimes = {
+  minecraft: Minecraft,
+  counterstrike: CounterStrike,
+  kerbal: Kerbal,
+  hytale: Hytale,
+  terraria: Terraria,
+};
+
 export {
   running,
-  Minecraft,
-  CounterStrike,
-  Kerbal,
-  Hytale,
-  Terraria,
+  gameRuntimes,
 };

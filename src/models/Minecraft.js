@@ -5,6 +5,15 @@ class Minecraft extends Model { }
 
 Minecraft.init(
   {
+    instanceId: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      references: {
+        model: 'instance',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
     software: {
       type: DataTypes.STRING,
       values: ['vanilla', 'paper', 'purpur'],

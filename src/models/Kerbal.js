@@ -5,6 +5,15 @@ class Kerbal extends Model { }
 
 Kerbal.init(
   {
+    instanceId: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      references: {
+        model: 'instance',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
     servername: {
       type: DataTypes.STRING,
       defaultValue: 'Nodecraft KSP Server',

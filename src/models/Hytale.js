@@ -5,6 +5,15 @@ class Hytale extends Model { }
 
 Hytale.init(
   {
+    instanceId: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      references: {
+        model: 'instance',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
     servername: {
       type: DataTypes.STRING,
       defaultValue: 'Nodecraft Hytale Server',

@@ -4,6 +4,15 @@ import db from '../../config/sequelize.js';
 class CounterStrike extends Model { }
 
 CounterStrike.init({
+  instanceId: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    references: {
+      model: 'instance',
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
+  },
   steamToken: {
     type: DataTypes.STRING,
     allowNull: false,

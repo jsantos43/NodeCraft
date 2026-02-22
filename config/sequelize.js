@@ -5,6 +5,9 @@ const db = new Sequelize({
   dialect: 'sqlite',
   storage: './db.sqlite',
   logging: false,
+  dialectOptions: {
+    foreignKeys: true,
+  },
 });
 
 try {
