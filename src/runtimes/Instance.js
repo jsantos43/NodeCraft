@@ -1,9 +1,9 @@
-import { PassThrough } from 'stream';
 import Path from 'path';
 import { Rcon } from 'rcon-client';
 import Container from '../services/Container.js';
 import config from '../../config/config.js';
 import logger from '../../config/logger.js';
+import { getIO } from '../../config/socket.js';
 
 class Instance {
   constructor(instance, readFunction) {
@@ -19,12 +19,14 @@ class Instance {
       lastRun: 0,
       interval: null,
     };
+    this.io = null;
   }
 
   async updateHistory(message) {
     try {
       // Get instance in registry
-      const { instance } = this;
+      const instance = this?.instance;
+      if (!instance) return;
 
       // Copy instance history array
       let history = [...instance.history];
@@ -43,65 +45,54 @@ class Instance {
     }
   }
 
-  handleChunk(chunk, callback) {
+  async handleMessage(chunk, callback) {
     try {
       let data = chunk.toString('utf8');
-      let buffer = this?.buffer;
 
       // eslint-disable-next-line no-control-regex
-      data = data.replace(/\x1B\[[0-9;]*m/g, ''); // ANSI
+      data = data.replace(/\x1B\[[0-9;]*m/g, '');
       data = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-      buffer += data;
+      const message = data.trim();
 
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
+      if (!message) return;
 
-      lines.forEach((line) => {
-        const cleanLine = line.trim();
-        if (!cleanLine) return;
+      // Update instance history field
+      await this.updateHistory(message);
 
-        const match = cleanLine.match(
-          /^\[(\d{2}:\d{2}:\d{2})\s+(INFO|WARN|ERROR|DEBUG|TRACE)\]:\s*(.*)$/,
-        );
+      // Send server output to socket.io
+      if (this.io) this.io.to(`instance:${this.id}`).emit('instance-output', message);
 
-        const message = match ? match[3] : cleanLine;
+      // Run callback if needed
+      if (callback) callback(message);
 
-        callback(message);
-      });
+    // eslint-disable-next-line no-console
+    // if (config.app.stage === 'DEV') console.log(message);
     } catch (err) {
-      logger.error({ err }, 'Error to handle container stream chunck');
+      logger.error({ err }, 'Error to handle container message');
     }
   }
 
   async listen(callback) {
     try {
-      const container = await Container.get(this.id);
-      const since = Math.floor(Date.now() / 1000);
+      if (this.stream) return;
 
-      this.stream = await container.logs({
+      const container = await Container.get(this.id);
+
+      this.stream = await container.attach({
+        stream: true,
+        stdin: true,
         stdout: true,
         stderr: true,
-        follow: true,
-        since,
-        timestamps: false,
       });
+      this.stream.setEncoding('utf8');
 
-      const stdout = new PassThrough();
-      const stderr = new PassThrough();
+      this.stream.on('data', (chunk) => this.handleMessage(chunk, callback));
+      this.stream.once('end', this.finish);
+      this.stream.once('close', this.finish);
+      this.stream.once('error', this.finish);
 
-      container.modem.demuxStream(this.stream, stdout, stderr);
-
-      const handleMessage = async (msg) => {
-        await this.updateHistory(msg);
-        if (callback) callback(msg);
-
-        // eslint-disable-next-line no-console
-        if (config.app.stage === 'DEV') console.log(msg);
-      };
-
-      stdout.on('data', (chunk) => this.handleChunk(chunk, handleMessage));
-      stderr.on('data', (chunk) => this.handleChunk(chunk, handleMessage));
+      container.wait().then(this.finish);
     } catch (err) {
       logger.error({ err }, 'Error to listen container');
     }
@@ -130,42 +121,64 @@ class Instance {
   }
 
   async sendRcon(command) {
-    let result = null;
+    let sent = false;
+    let result = '';
+
     try {
-      if (this.rcon) result = await this.rcon.send(command);
+      if (this.rcon) {
+        result = await this.rcon.send(command);
+        sent = true;
+      } else {
+        sent = false;
+      }
     } catch (err) {
       logger.error({ err }, `Error to emit ${command}`);
+
+      sent = false;
     }
 
-    return result;
+    return { sent, result };
   }
 
-  removeStream() {
-    if (this.stream) {
-      this.stream.removeAllListeners('data');
-      this.stream.removeAllListeners('error');
-      this.stream.removeAllListeners('end');
+  async sendCommand(command) {
+    try {
+      const { sent } = await this.sendRcon(command);
 
-      // Close stream
-      if (typeof this.stream.destroy === 'function') {
-        this.stream.destroy();
+      if (!sent && this.stream && !this.stream.destroyed) {
+        this.stream.write(`${command}\r\n`);
       }
+    } catch (err) {
+      logger.error({ err }, 'Error to send command');
     }
-  }
-
-  removeChecker() {
-    const checkerInterval = this?.checker?.interval;
-    if (checkerInterval) clearInterval(checkerInterval);
   }
 
   async start() {
+    try {
+      this.io = getIO();
+    } catch (err) {
+      this.io = null;
+    }
+
     await Container.run(this.id);
   }
 
-  finish() {
+  async finish() {
     try {
-      this.removeStream();
-      this.removeChecker();
+      if (!this) return;
+
+      // remove stream
+      if (this?.stream) {
+        this.stream.removeAllListeners();
+        this.stream = null;
+      }
+
+      // remoce check interval
+      const checkerInterval = this?.checker?.interval;
+      if (checkerInterval) clearInterval(checkerInterval);
+
+      // Set instance status as stopped
+      const instance = this?.instance;
+      if (instance) await instance.update({ status: 'stopped' });
 
       delete this;
     } catch (err) {

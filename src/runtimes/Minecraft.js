@@ -56,7 +56,8 @@ class Minecraft extends Instance {
       if (!this.rcon) {
         fs.writeFileSync(this.paths.ops, '[]', 'utf8');
       } else {
-        const opsRaw = await this.sendRcon('op list');
+        const { result } = await this.sendRcon('op list');
+        const opsRaw = result || '';
 
         const currentOps = opsRaw
           .split(':')[1]

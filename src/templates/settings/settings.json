@@ -30,7 +30,7 @@
   },
   "instance": {
     "path": null,
-    "maxHistory": 150,
+    "maxHistory": 10,
     "minPort": 5621,
     "maxPort": 5671,
     "lifetime": 172800000,
@@ -38,7 +38,8 @@
       "instance:read",
       "instance:update",
       "instance:execute",
-      "instance:backup"
+      "instance:backup",
+      "instance:console"
     ]
   },
   "temp": {

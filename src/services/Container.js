@@ -113,6 +113,12 @@ class Container {
       Image: image,
       Env: enviroment,
 
+      Tty: true,
+      OpenStdin: true,
+      AttachStdin: true,
+      AttachStdout: true,
+      AttachStderr: true,
+
       ExposedPorts: exposedPorts,
 
       HostConfig: {
