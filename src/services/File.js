@@ -1,209 +1,228 @@
-import fs from 'fs';
+import {
+  access,
+  mkdir,
+  stat,
+  rm,
+  readFile,
+  readdir,
+  writeFile,
+  rename,
+  open,
+} from 'node:fs/promises';
+import * as unzipper from 'unzipper';
+import { createWriteStream, createReadStream } from 'node:fs';
 import Path from 'path';
-import AdmZip from 'adm-zip';
-import { randomUUID } from 'crypto';
 import archiver from 'archiver';
 import config from '../../config/config.js';
-import { Base, InvalidRequest } from '../errors/index.js';
+import logger from '../../config/logger.js';
 
 class File {
-  static createTempPath() {
+  static async verifyExists(path) {
+    try {
+      await access(path);
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  static async getType(path) {
+    try {
+      const stats = await stat(path);
+
+      if (stats.isFile()) return 'file';
+      if (stats.isDirectory()) return 'directory';
+
+      return 'other';
+    } catch (err) {
+      return null;
+    }
+  }
+
+  static async readOneFile(path) {
+    try {
+      const rawData = await readFile(path, 'utf8');
+
+      return rawData;
+    } catch (err) {
+      logger.error({ err }, 'Error to read a file');
+
+      return '';
+    }
+  }
+
+  static async readOneDirectory(path, detailed = false) {
+    try {
+      const items = await readdir(path, 'utf8');
+
+      if (!detailed) return items || [];
+
+      const result = [];
+      for (const item of items) {
+        result.push({
+          name: item,
+          type: File.getType(Path.join(path, item)),
+        });
+      }
+
+      return result;
+    } catch (err) {
+      logger.error({ err }, 'Error to read a directory');
+
+      return [];
+    }
+  }
+
+  static async createTemp() {
     const timestamp = new Date().getTime();
     const tempPath = Path.join(config.temp.path, timestamp);
 
-    fs.mkdirSync(tempPath);
+    await File.createOneDirectory(tempPath);
     return tempPath;
   }
 
-  static verifyType(path) {
-    const stats = fs.statSync(path);
-    const isDir = stats.isDirectory(path);
-    const isFile = stats.isFile(path);
+  static async createOneFile(path, data) {
+    try {
+      await writeFile(path, data, 'utf8');
 
-    if (isDir) return 'dir';
-    if (isFile) return 'file';
-    throw new Base('Invalid file type!');
-  }
-
-  static read(id, path = '', info = '') {
-    const absolutePath = `${config.instance.path}/${id}/${path}`;
-    const type = info || File.verifyType(absolutePath);
-    let content;
-
-    if (type === 'file') content = fs.readFileSync(absolutePath, 'utf8');
-    else {
-      const items = fs.readdirSync(absolutePath);
-      content = [];
-      items.forEach((item) => {
-        content.push({
-          name: item,
-          type: File.verifyType(`${absolutePath}/${item}`),
-        });
-      });
+      return true;
+    } catch (err) {
+      logger.error({ err }, 'Error to create a file');
+      return false;
     }
-
-    return {
-      type,
-      content,
-    };
   }
 
-  static create(id, path, data) {
-    const { type } = data;
-    const absolutePath = `${config.instance.path}/${id}/${path}`;
-    let content = '';
+  static async createOneDirectory(path) {
+    try {
+      await mkdir(path, { recursive: true });
 
-    if (type === 'dir') {
-      fs.mkdirSync(absolutePath);
-      content = [];
-    } else {
-      fs.writeFileSync(absolutePath, data.content, 'utf8');
-      content = data.content;
+      return true;
+    } catch (err) {
+      logger.error({ err }, 'Error to create a directory');
+
+      return false;
     }
-
-    return {
-      type,
-      content,
-    };
   }
 
-  static update(id, path, data) {
-    const absolutePath = `${config.instance.path}/${id}/${path}`;
-    const type = File.verifyType(absolutePath);
-    if (type === 'file') fs.writeFileSync(absolutePath, data.content, 'utf8');
+  static async move(originPath, destinyPath) {
+    try {
+      await rename(originPath, destinyPath);
 
-    return File.read(id, path, type);
+      return true;
+    } catch (err) {
+      logger.error({ err }, 'Error to move paths');
+
+      return false;
+    }
   }
 
-  static delete(id, path) {
-    const info = File.read(id, path);
-    fs.rmSync(`${config.instance.path}/${id}/${path}`, { recursive: true });
-
-    return info;
+  static async delete(path) {
+    try {
+      await rm(path, { recursive: true, force: true });
+    } catch (err) {
+      logger.error({ err }, 'Error to delete file');
+    }
   }
 
-  static addFolderToZip(zip, folderPath, folderInZipPath) {
-    const items = fs.readdirSync(folderPath);
-    items.forEach((item) => {
-      const fullPath = Path.join(folderPath, item);
-      const pathInZip = Path.join(folderInZipPath, item);
-      if (fs.statSync(fullPath).isDirectory()) {
-        File.addFolderToZip(zip, fullPath, pathInZip);
-      } else {
-        zip.addLocalFile(fullPath, folderInZipPath);
+  static async removeOldTemp() {
+    try {
+      const tempPath = config.temp.path;
+
+      // Verify if temporary path exists
+      if (!(await File.verifyExists(tempPath))) return;
+
+      // Read temporary path items
+      const items = await File.readOneDirectory(tempPath);
+
+      // Get timestamp
+      const now = Date.now();
+
+      for (const item of items) {
+        const createdAt = Number(item);
+
+        if (!Number.isInteger(createdAt) || now - createdAt >= config.temp.lifetime) {
+          await File.delete(Path.join(tempPath, item));
+        }
       }
+    } catch (err) {
+      logger.error({ err }, 'Error to remove old temp paths');
+    }
+  }
+
+  static async makeZip(outputPath, paths) {
+    const output = createWriteStream(outputPath);
+    const archive = archiver('zip', { zlib: { level: 6 } });
+
+    // Create promise to monitore stream end
+    const streamFinished = new Promise((resolve, reject) => {
+      output.on('close', () => resolve(outputPath));
+      output.on('error', reject);
+      archive.on('error', reject);
     });
+
+    archive.pipe(output);
+
+    for (const itemPath of paths) {
+      try {
+        const type = await File.getType(itemPath);
+        const name = Path.basename(itemPath);
+
+        if (type === 'file') archive.file(itemPath, { name });
+        else if (type === 'directory') archive.directory(itemPath, name);
+      } catch (err) {
+        logger.error({ err }, 'Error to add file in zip');
+      }
+    }
+
+    await archive.finalize();
+
+    return streamFinished;
   }
 
-  static zip(pathFrom, pathTo) {
-    const zip = new AdmZip();
-    File.addFolderToZip(zip, pathFrom, '');
-    zip.writeZip(pathTo);
-  }
-
-  static download(id, path) {
-    const absolutePath = `${config.instance.path}/${id}/${path}`;
-    const type = File.verifyType(absolutePath);
-
-    // File
-    if (type === 'file') return absolutePath;
-
-    // Path
-    const tempPath = File.createTempPath();
-    const pathTo = `${tempPath}/${randomUUID()}.zip`;
-    File.zip(absolutePath, pathTo);
-    return pathTo;
-  }
-
-  static verifyZipFile(filePath) {
-    const ZIP_SIGNATURE = [0x50, 0x4B]; // PK
-    const buffer = Buffer.alloc(2);
+  static async verifyZip(path) {
+    let file;
 
     try {
-      const fd = fs.openSync(filePath, 'r');
-      fs.readSync(fd, buffer, 0, 2, 0);
-      fs.closeSync(fd);
-      return buffer[0] === ZIP_SIGNATURE[0] && buffer[1] === ZIP_SIGNATURE[1];
+      file = await open(path, 'r');
+
+      const buffer = Buffer.alloc(4);
+      await file.read(buffer, 0, 4, 0);
+
+      await file.close();
+
+      // SIGNATURE ZIP: 0x504B0304
+      return buffer.equals(Buffer.from([0x50, 0x4B, 0x03, 0x04]));
     } catch (err) {
-      throw new Base('Error verifying zip file!');
+      if (file) await file.close();
+
+      return false;
     }
   }
 
-  static unzip(id, path) {
-    const absolutePath = `${config.instance.path}/${id}/${path}`;
-    const type = File.verifyType(absolutePath);
+  static async unzip(fromZip, toPath) {
+    try {
+      await File.createOneDirectory(toPath);
 
-    // Validate
-    if (type !== 'file') throw new InvalidRequest("You can't unzip a folder!");
-    if (!File.verifyZipFile(absolutePath)) throw new InvalidRequest('Invalid zip file!');
+      // Create the read stream for the .zip file
+      const stream = createReadStream(fromZip).pipe(unzipper.Extract({ path: toPath }));
 
-    // Unzip
-    const parentDir = Path.dirname(absolutePath);
-    const extractPathName = randomUUID();
-    const extractTo = `${parentDir}/${extractPathName}`;
-    fs.mkdirSync(extractTo);
+      // Transform the Stream event into a Promise
+      return new Promise((resolve, reject) => {
+        stream.on('close', () => {
+          resolve(true);
+        });
 
-    const zip = new AdmZip(absolutePath);
-    zip.extractAllTo(extractTo, true);
-
-    return extractPathName;
-  }
-
-  static move(id, path, destiny) {
-    const absolutePath = `${config.instance.path}/${id}/${path}`;
-    const absoluteDestiny = `${config.instance.path}/${id}/${destiny}`;
-
-    fs.renameSync(absolutePath, absoluteDestiny);
-
-    return true;
-  }
-
-  static makeBackup(id) {
-    return new Promise((resolve, reject) => {
-      const instancePath = Path.join(config.instance.path, id);
-      if (!fs.existsSync(instancePath)) reject();
-
-      const backupsPath = Path.join(instancePath, 'backups');
-      if (!fs.existsSync(backupsPath)) fs.mkdirSync(backupsPath, { recursive: true });
-
-      const backupName = `backup-${Date.now()}.zip`;
-      const outputPath = Path.join(backupsPath, backupName);
-      const output = fs.createWriteStream(outputPath);
-
-      const archive = archiver('zip', { zlib: { level: 9 } });
-      output.on('close', () => resolve(outputPath));
-      archive.on('error', reject);
-
-      archive.pipe(output);
-
-      const dirsToBackup = ['world', 'world_nether', 'world_the_end', 'plugins'];
-      dirsToBackup.forEach((dir) => {
-        const full = Path.join(instancePath, dir);
-        if (fs.existsSync(full)) archive.directory(full, dir);
+        stream.on('error', (err) => {
+          logger.error({ err }, 'Error during zip extraction');
+          reject(false);
+        });
       });
+    } catch (err) {
+      logger.error({ err }, 'Error configuring unzip');
 
-      const filesToBackup = ['server.properties'];
-      filesToBackup.forEach((file) => {
-        const full = Path.join(instancePath, file);
-        if (fs.existsSync(full)) archive.file(full, { name: file });
-      });
-
-      archive.finalize();
-    });
-  }
-
-  static deleteOldBackups(id, newBackupPath) {
-    const instancePath = Path.join(config.instance.path, id);
-    const backupsPath = Path.join(instancePath, 'backups');
-    if (!fs.existsSync(instancePath) || !fs.existsSync(backupsPath)) return;
-
-    const newBackupFilename = Path.basename(newBackupPath);
-    const files = fs.readdirSync(backupsPath);
-    files.forEach((file) => {
-      if (file !== newBackupFilename) {
-        fs.rmSync(Path.join(backupsPath, file), { recursive: true, force: true });
-      }
-    });
+      return false;
+    }
   }
 }
 

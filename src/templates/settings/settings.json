@@ -44,7 +44,7 @@
   },
   "temp": {
     "path": null,
-    "lifetime": 300000
+    "lifetime": 900000
   },
   "storage": {
     "enable": false,

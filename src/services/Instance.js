@@ -1,11 +1,3 @@
-import {
-  mkdirSync,
-  rmSync,
-  existsSync,
-  writeFileSync,
-  readFileSync,
-  readdirSync,
-} from 'fs';
 import { Op } from 'sequelize';
 import Path from 'path';
 import {
@@ -46,7 +38,7 @@ class Instance {
         transaction: t,
       });
 
-      mkdirSync(Path.join(config.instance.path, instance.id));
+      await File.createOneDirectory(Path.join(config.instance.path, instance.id));
 
       return instance;
     });
@@ -115,30 +107,38 @@ class Instance {
   static async delete(id) {
     const instance = await Instance.readOne(id, true);
     await instance.destroy();
-    await Container.delete(id);
-    rmSync(Path.join(config.instance.path, id), { recursive: true, force: true });
+    Container.delete(id);
+    File.delete(Path.join(config.instance.path, id));
 
     return instance;
   }
 
   static async backup(id) {
-    const rcon = running[id]?.rcon;
-    // Stop minecraft saving
-    if (rcon) {
-      await rcon.send('save-all');
-      await rcon.send('save-off');
+    try {
+      const instance = await Instance.readOne(id);
+      const instancePath = Path.join(config.instance.path, id);
+
+      const tempPath = await File.createTemp();
+      const backupName = `backup-${Date.now()}.zip`;
+      const backupPath = Path.join(tempPath, backupName);
+
+      if (instance.type === 'minecraft') {
+        await File.makeBackup(backupPath, [
+          Path.join(instancePath, 'world'),
+          Path.join(instancePath, 'world_nether'),
+          Path.join(instancePath, 'world_the_end'),
+          Path.join(instancePath, 'server.properties'),
+          Path.join(instancePath, 'spigot.yml'),
+          Path.join(instancePath, 'bukkit.yml'),
+          Path.join(instancePath, 'config'),
+        ]);
+      }
+
+      // Send backup to bucket
+      if (config.storage.enable) await Storage.backup(id, backupPath);
+    } catch (err) {
+      logger.error({ err }, 'Error to backup an instance');
     }
-
-    // Make backup locally
-    const backupPath = await File.makeBackup(id);
-
-    if (rcon) await rcon.send('save-on');
-
-    // Delete old backups locally
-    File.deleteOldBackups(id, backupPath);
-
-    // Send backup to bucket
-    if (config.storage.enable) await Storage.backup(id, backupPath);
   }
 
   static async maintenanceAll() {
@@ -146,7 +146,9 @@ class Instance {
 
     for (const instance of instances) {
       try {
-        console.log(instance);
+        await Instance.stop(instance.id);
+
+        await instance.backup(instance.id);
       } catch (err) {
         logger.error({ err }, 'Error in an instance maintenance');
       }
@@ -227,20 +229,20 @@ class Instance {
   }
 
   static async verifyLost() {
-    const instancesId = readdirSync(config.instance.path);
+    const instancesId = await File.readOneDirectory(config.instance.path);
     if (!instancesId) return;
 
     for (const id of instancesId) {
       try {
         const instancePath = Path.join(config.instance.path, id);
         const pendingDeletePath = Path.join(instancePath, '.delete-pending.json');
-        const existsPendingDelete = existsSync(pendingDeletePath);
+        const existsPendingDelete = await File.verifyExists(pendingDeletePath);
 
         // Verify if instances exists in database, delete pending process and return
         try {
           const instance = await Model.findByPk(id);
           if (instance) {
-            rmSync(pendingDeletePath, { recursive: true, force: true });
+            await File.delete(pendingDeletePath);
             continue;
           }
         } catch (err) {
@@ -250,7 +252,7 @@ class Instance {
         // Verify if pending delete process exists
         if (existsPendingDelete) {
           // Try to read .delete-pending.json
-          const rawData = readFileSync(pendingDeletePath, 'utf8');
+          const rawData = await File.readOneFile(pendingDeletePath);
           const data = JSON.parse(rawData);
 
           const time = Number(data?.time);
@@ -258,11 +260,11 @@ class Instance {
 
           if (!time || now - time >= config.instance.lifetime) {
             // Delete pending instance
-            rmSync(instancePath, { recursive: true, force: true });
+            await File.delete(instancePath);
           }
         } else {
           // Write .delete-pending.json
-          writeFileSync(pendingDeletePath, `{"time":${Date.now()}}`, 'utf8');
+          await File.createOneFile(pendingDeletePath, `{"time":${Date.now()}}`);
         }
       } catch (err) {
         logger.error({ err }, 'Error to verify lost instance');

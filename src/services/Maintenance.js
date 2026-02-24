@@ -1,7 +1,7 @@
-import fs from 'fs';
 import config from '../../config/config.js';
 import Container from './Container.js';
 import Instance from './Instance.js';
+import File from './File.js';
 import logger from '../../config/logger.js';
 import { ensureNetwork, ensureImage } from '../utils/ensureDocker.js';
 
@@ -9,8 +9,13 @@ class Maintenance {
   static async ensureEnviroment() {
     // Ensure default paths
     try {
-      if (!fs.existsSync(config.instance.path)) fs.mkdirSync(config.instance.path);
-      if (!fs.existsSync(config.temp.path)) fs.mkdirSync(config.temp.path);
+      if (!(await File.verifyExists(config.instance.path))) {
+        await File.createOneDirectory(config.instance.path);
+      }
+
+      if (!(await File.verifyExists(config.temp.path))) {
+        await File.createOneDirectory(config.temp.path);
+      }
     } catch (err) {
       logger.error({ err }, 'Error to ensure default paths');
     }
@@ -32,7 +37,6 @@ class Maintenance {
   }
 
   static scheduleInstancesMaintenance() {
-    // await db.query('VACUUM')
     let lastRunDate = null;
 
     setInterval(async () => {
@@ -46,6 +50,8 @@ class Maintenance {
         if (isThreeAM && lastRunDate !== today) {
           lastRunDate = today;
 
+          // await db.query('VACUUM')
+
           // Update all instances function
           await Instance.maintenanceAll();
         }
@@ -56,36 +62,11 @@ class Maintenance {
   }
 
   static scheduleRemoveOldTemp() {
-    const removeOldTemp = () => {
-      try {
-        // Verify if temporary path exists
-        if (!fs.existsSync(config.temp.path)) return;
-
-        // Read temporary path items
-        const items = fs.readdirSync(config.temp.path);
-
-        // Get timestamp
-        const now = Date.now();
-
-        for (const item of items) {
-          // Verify if item name is a timestamp
-          const createdAt = Number(item);
-          if (Number.isInteger(createdAt) && createdAt > 0) {
-            if (now - createdAt >= config.temp.lifetime) fs.rmSync(`${config.temp.path}/${item}`, { recursive: true, force: true });
-          } else {
-            fs.rmSync(`${config.temp.path}/${item}`, { recursive: true, force: true });
-          }
-        }
-      } catch (err) {
-        logger.error({ err }, 'Error to remove old temp paths');
-      }
-    };
-
     // First run
-    removeOldTemp();
+    File.removeOldTemp();
 
     // Set periodically
-    setInterval(removeOldTemp, config.interval.checkTemp);
+    setInterval(File.removeOldTemp, config.interval.checkTemp);
   }
 
   static scheduleRemoveLostInstances() {
