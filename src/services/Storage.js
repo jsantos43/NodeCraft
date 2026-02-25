@@ -7,6 +7,7 @@ import Path from 'path';
 import { createReadStream } from 'fs';
 import s3Client from '../../config/storage.js';
 import config from '../../config/config.js';
+import logger from '../../config/logger.js';
 
 class Storage {
   static async list(prefix) {
@@ -56,10 +57,9 @@ class Storage {
 
     // Verify backups ages and wipe olds
     let needWeeklyBackup = true;
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const backup of weeklyBackups) {
       const age = Date.now() - new Date(backup.LastModified).getTime();
-      // eslint-disable-next-line no-await-in-loop
       if (age >= ONE_WEEK) await Storage.delete(backup.Key);
       else needWeeklyBackup = false;
     }
@@ -67,21 +67,26 @@ class Storage {
   }
 
   static async backup(id, localBackupPath) {
-    const filename = Path.basename(localBackupPath);
-    const dailyBackupKey = `${id}/daily/${filename}`;
-    const weeklyBackupKey = `${id}/weekly/${filename}`;
+    try {
+      const filename = Path.basename(localBackupPath);
+      const dailyBackupKey = `${id}/daily/${filename}`;
+      const weeklyBackupKey = `${id}/weekly/${filename}`;
 
-    // Upload daily
-    await Storage.upload(dailyBackupKey, localBackupPath);
+      // Upload daily
+      await Storage.upload(dailyBackupKey, localBackupPath);
 
-    // Delete old daily backups
-    await Storage.deleteOldDailyBackups(id, dailyBackupKey);
+      // Delete old daily backups
+      await Storage.deleteOldDailyBackups(id, dailyBackupKey);
 
-    // Delete old weekly backups and verify if need one
-    const needWeeklyBackup = await Storage.verifyAndDeleteOldWeeklyBackups(id);
+      // Delete old weekly backups and verify if need one
+      const needWeeklyBackup = await Storage.verifyAndDeleteOldWeeklyBackups(id);
 
-    // Upload weekly if needed
-    if (needWeeklyBackup) await Storage.upload(weeklyBackupKey, localBackupPath);
+      // Upload weekly if needed
+      if (needWeeklyBackup) await Storage.upload(weeklyBackupKey, localBackupPath);
+    } catch (err) {
+      console.error(err);
+      logger.error({ err }, 'Error while backuping');
+    }
   }
 }
 

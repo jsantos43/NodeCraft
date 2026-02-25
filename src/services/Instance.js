@@ -123,7 +123,7 @@ class Instance {
       const backupPath = Path.join(tempPath, backupName);
 
       if (instance.type === 'minecraft') {
-        await File.makeBackup(backupPath, [
+        await File.makeZip(backupPath, [
           Path.join(instancePath, 'world'),
           Path.join(instancePath, 'world_nether'),
           Path.join(instancePath, 'world_the_end'),
@@ -148,7 +148,7 @@ class Instance {
       try {
         await Instance.stop(instance.id);
 
-        await instance.backup(instance.id);
+        // await Instance.backup(instance.id);
       } catch (err) {
         logger.error({ err }, 'Error in an instance maintenance');
       }

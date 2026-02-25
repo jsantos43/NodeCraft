@@ -76,7 +76,7 @@ class File {
 
   static async createTemp() {
     const timestamp = new Date().getTime();
-    const tempPath = Path.join(config.temp.path, timestamp);
+    const tempPath = Path.join(config.temp.path, String(timestamp));
 
     await File.createOneDirectory(tempPath);
     return tempPath;
@@ -215,7 +215,7 @@ class File {
 
         stream.on('error', (err) => {
           logger.error({ err }, 'Error during zip extraction');
-          reject(false);
+          reject(err);
         });
       });
     } catch (err) {
