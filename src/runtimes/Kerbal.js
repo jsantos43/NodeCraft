@@ -1,9 +1,9 @@
-import fs from 'fs';
 import Path from 'path';
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import { Base } from '../errors/index.js';
+import FileService from '../services/File.js';
 
 class Kerbal extends Instance {
   constructor(instance, readFunction) {
@@ -24,7 +24,7 @@ class Kerbal extends Instance {
       if (!gameData) throw new Base('instance kerbal data not found!');
 
       // Sync database with Settings.txt
-      const kerbalSettings = renderTemplate('kerbal/Settings.txt', {
+      const kerbalSettings = await renderTemplate('kerbal/Settings.txt', {
         warp: gameData.warp,
         gamemode: gameData.gamemode,
         difficulty: gameData.difficulty,
@@ -34,8 +34,8 @@ class Kerbal extends Instance {
         maxPlayers: instance.maxPlayers,
       });
 
-      fs.mkdirSync(Path.dirname(this.paths.settings), { recursive: true });
-      fs.writeFileSync(this.paths.settings, kerbalSettings, 'utf8');
+      await FileService.createOneDirectory(Path.dirname(this.paths.settings));
+      await FileService.createOneFile(this.paths.settings, kerbalSettings);
     } catch (err) {
       logger.error({ err }, 'Error to sync kerbal Server.txt');
     }

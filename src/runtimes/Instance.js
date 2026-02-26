@@ -66,8 +66,8 @@ class Instance {
       // Run callback if needed
       if (callback) callback(message);
 
-    // eslint-disable-next-line no-console
-    // if (config.app.stage === 'DEV') console.log(message);
+      // eslint-disable-next-line no-console
+      if (config.app.stage === 'DEV') console.log(message);
     } catch (err) {
       logger.error({ err }, 'Error to handle container message');
     }

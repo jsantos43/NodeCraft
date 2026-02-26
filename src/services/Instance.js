@@ -10,7 +10,7 @@ import { NotFound, Base } from '../errors/index.js';
 import Container from './Container.js';
 import Link from './Link.js';
 import config from '../../config/config.js';
-import Storage from './Storage.js';
+import Backup from './Backup.js';
 import File from './File.js';
 import { running, gameRuntimes } from '../runtimes/index.js';
 import logger from '../../config/logger.js';
@@ -113,34 +113,6 @@ class Instance {
     return instance;
   }
 
-  static async backup(id) {
-    try {
-      const instance = await Instance.readOne(id);
-      const instancePath = Path.join(config.instance.path, id);
-
-      const tempPath = await File.createTemp();
-      const backupName = `backup-${Date.now()}.zip`;
-      const backupPath = Path.join(tempPath, backupName);
-
-      if (instance.type === 'minecraft') {
-        await File.makeZip(backupPath, [
-          Path.join(instancePath, 'world'),
-          Path.join(instancePath, 'world_nether'),
-          Path.join(instancePath, 'world_the_end'),
-          Path.join(instancePath, 'server.properties'),
-          Path.join(instancePath, 'spigot.yml'),
-          Path.join(instancePath, 'bukkit.yml'),
-          Path.join(instancePath, 'config'),
-        ]);
-      }
-
-      // Send backup to bucket
-      if (config.storage.enable) await Storage.backup(id, backupPath);
-    } catch (err) {
-      logger.error({ err }, 'Error to backup an instance');
-    }
-  }
-
   static async maintenanceAll() {
     const instances = await Instance.readAll();
 
@@ -148,7 +120,7 @@ class Instance {
       try {
         await Instance.stop(instance.id);
 
-        // await Instance.backup(instance.id);
+        await Backup.execute(instance);
       } catch (err) {
         logger.error({ err }, 'Error in an instance maintenance');
       }

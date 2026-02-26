@@ -1,9 +1,9 @@
-import fs from 'fs';
 import Path from 'path';
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import { Base } from '../errors/index.js';
+import FileService from '../services/File.js';
 
 class Hytale extends Instance {
   constructor(instance, readFunction) {
@@ -24,7 +24,7 @@ class Hytale extends Instance {
       if (!gameData) throw new Base('instance hytale data not found!');
 
       // Sync database with Settings.txt
-      const hytaleSettings = renderTemplate('hytale/config.json', {
+      const hytaleSettings = await renderTemplate('hytale/config.json', {
         servername: gameData.servername,
         motd: gameData.motd,
         password: gameData.password,
@@ -34,7 +34,7 @@ class Hytale extends Instance {
         gamemode: gameData.gamemode,
       });
 
-      fs.writeFileSync(this.paths.settings, hytaleSettings, 'utf8');
+      await FileService.createOneFile(this.paths.settings, hytaleSettings);
     } catch (err) {
       logger.error({ err }, 'Error to sync hytale config.json');
     }

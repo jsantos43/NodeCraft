@@ -40,6 +40,19 @@ class File {
     }
   }
 
+  static async getSize(path) {
+    try {
+      const stats = await stat(path);
+      const sizeMb = stats.size / (1024 * 1024);
+
+      return sizeMb;
+    } catch (err) {
+      logger.error({ err }, 'Error to get path size');
+
+      return 0;
+    }
+  }
+
   static async readOneFile(path) {
     try {
       const rawData = await readFile(path, 'utf8');
@@ -223,6 +236,47 @@ class File {
 
       return false;
     }
+  }
+
+  static async makeBackup(instance) {
+    const instancePath = Path.join(config.instance.path, String(instance.id));
+
+    const tempPath = await File.createTemp();
+    const backupName = `backup-${Date.now()}.zip`;
+    const backupPath = Path.join(tempPath, backupName);
+
+    if (instance.type === 'minecraft') {
+      await File.makeZip(backupPath, [
+        Path.join(instancePath, 'world'),
+        Path.join(instancePath, 'world_nether'),
+        Path.join(instancePath, 'world_the_end'),
+        Path.join(instancePath, 'server.properties'),
+        Path.join(instancePath, 'spigot.yml'),
+        Path.join(instancePath, 'bukkit.yml'),
+        Path.join(instancePath, 'config'),
+      ]);
+    } else if (instance.type === 'terraria') {
+      await File.makeZip(backupPath, [
+        Path.join(instancePath, 'Worlds'),
+      ]);
+    } else if (instance.type === 'kerbal') {
+      await File.makeZip(backupPath, [
+        Path.join(instancePath, 'Universe'),
+        Path.join(instancePath, 'Config'),
+      ]);
+    } else if (instance.type === 'hytale') {
+      await File.makeZip(backupPath, [
+        Path.join(instancePath, 'universe'),
+        Path.join(instancePath, 'config.json'),
+      ]);
+    }
+
+    const backupSize = await File.getSize(backupPath);
+
+    return {
+      backupPath,
+      backupSize,
+    };
   }
 }
 

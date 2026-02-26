@@ -59,6 +59,7 @@ router
   .post(
     '/instance/:id/backup',
     auth('instance:backup'),
+    verifyRunning,
     Controller.backup,
   )
   .put(

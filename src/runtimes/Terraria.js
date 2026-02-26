@@ -1,9 +1,9 @@
-import fs from 'fs';
 import Path from 'path';
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import { Base } from '../errors/index.js';
+import FileService from '../services/File.js';
 
 class Terraria extends Instance {
   constructor(instance, readFunction) {
@@ -24,14 +24,14 @@ class Terraria extends Instance {
       if (!gameData) throw new Base('instance terraria data not found!');
 
       // Sync database with Settings.txt
-      const terrariaSettings = renderTemplate('terraria/serverconfig.txt', {
+      const terrariaSettings = await renderTemplate('terraria/serverconfig.txt', {
         maxPlayers: instance.maxPlayers,
         difficulty: gameData.difficulty,
         password: gameData.password,
         motd: gameData.motd,
       });
 
-      fs.writeFileSync(this.paths.settings, terrariaSettings, 'utf8');
+      await FileService.createOneFile(this.paths.settings, terrariaSettings);
     } catch (err) {
       logger.error({ err }, 'Error to sync terraria serverconfig.txt');
     }

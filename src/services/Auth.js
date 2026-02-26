@@ -138,7 +138,7 @@ class Auth {
 
     // Send Email
     const link = `${config.site.validateUrl}?token=${token}`;
-    const html = renderTemplate('email/verify.html', {
+    const html = await renderTemplate('email/verify.html', {
       name: user.name || 'usuário',
       link,
       token,
@@ -178,7 +178,7 @@ class Auth {
     // Send Email
 
     const link = `${config.site.resetUrl}?token=${token}`;
-    const html = renderTemplate('email/reset.html', {
+    const html = await renderTemplate('email/reset.html', {
       name: user.name || 'usuário',
       link,
       token,

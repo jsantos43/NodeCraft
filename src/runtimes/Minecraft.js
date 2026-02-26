@@ -1,10 +1,10 @@
-import fs, { rmSync } from 'fs';
 import Path from 'path';
 import Instance from './Instance.js';
 import query from '../utils/query.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import logger from '../../config/logger.js';
 import config from '../../config/config.js';
+import FileService from '../services/File.js';
 
 class Minecraft extends Instance {
   constructor(instance, readFunction) {
@@ -44,8 +44,8 @@ class Minecraft extends Instance {
 
   async wipeAllowlist() {
     try {
-      fs.writeFileSync(this.paths.allowlist, '[]', 'utf8');
-      rmSync(this.paths.usercache, { recursive: true, force: true });
+      await FileService.createOneFile(this.paths.allowlist, '[]');
+      await FileService.delete(this.paths.usercache);
     } catch (err) {
       logger.error({ err }, 'Error to wipe instance allowlist');
     }
@@ -54,7 +54,7 @@ class Minecraft extends Instance {
   async wipeOps() {
     try {
       if (!this.rcon) {
-        fs.writeFileSync(this.paths.ops, '[]', 'utf8');
+        await FileService.createOneFile(this.paths.ops, '[]');
       } else {
         const { result } = await this.sendRcon('op list');
         const opsRaw = result || '';
@@ -79,7 +79,7 @@ class Minecraft extends Instance {
 
     try {
       // Sync database with server.properties
-      const properties = renderTemplate('minecraft/server.properties', {
+      const properties = await renderTemplate('minecraft/server.properties', {
         name: instance.name,
         seed: instance.minecraft.seed,
         gamemode: instance.minecraft.gamemode,
@@ -104,7 +104,7 @@ class Minecraft extends Instance {
         spawn: instance.minecraft.spawn,
       });
 
-      fs.writeFileSync(this.paths.properties, properties, 'utf8');
+      await FileService.createOneFile(this.paths.properties, properties);
     } catch (err) {
       logger.error({ err }, 'Error to sync server.properties');
     }
@@ -112,20 +112,20 @@ class Minecraft extends Instance {
     try {
       // Ensure bedrock
       if (instance.minecraft.bedrock) {
-        const geyser = renderTemplate('minecraft/geyser.yml', {
+        const geyser = await renderTemplate('minecraft/geyser.yml', {
           motd: instance.name,
           name: instance.name,
           maxPlayers: instance.maxPlayers,
         });
 
-        const floodgate = renderTemplate('minecraft/floodgate.yml');
+        const floodgate = await renderTemplate('minecraft/floodgate.yml');
 
-        fs.mkdirSync(this.paths.plugins, { recursive: true });
-        fs.mkdirSync(Path.dirname(this.paths.geyser), { recursive: true });
-        fs.mkdirSync(Path.dirname(this.paths.floodgate), { recursive: true });
+        await FileService.createOneDirectory(this.paths.plugins);
+        await FileService.createOneDirectory(Path.dirname(this.paths.geyser));
+        await FileService.createOneDirectory(Path.dirname(this.paths.floodgate));
 
-        fs.writeFileSync(this.paths.geyser, geyser, 'utf8');
-        fs.writeFileSync(this.paths.floodgate, floodgate, 'utf8');
+        await FileService.createOneFile(this.paths.geyser, geyser);
+        await FileService.createOneDirectory(this.paths.floodgate, floodgate);
       }
     } catch (err) {
       logger.error({ err }, 'Error to sync geyser and floodgate');
@@ -134,7 +134,7 @@ class Minecraft extends Instance {
 
   async removeSessionLock() {
     try {
-      fs.rmSync(this.paths.sessionLock, { recursive: true, force: true });
+      await FileService.delete(this.paths.sessionLock);
     } catch (err) {
       logger.error({ err }, 'Error to remove instance session lock');
     }

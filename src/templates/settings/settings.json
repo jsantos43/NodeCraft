@@ -53,7 +53,8 @@
     "endpoint": "",
     "forcePathStyle": false,
     "accessKeyId": "",
-    "secretAccessKey": ""
+    "secretAccessKey": "",
+    "max": 100000
   },
   "games": {
     "minecraft": {
