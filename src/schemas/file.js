@@ -1,8 +1,13 @@
 import Joi from 'joi';
 
-const file = Joi.object({
-  type: Joi.string().trim().valid('file', 'dir'),
+const createFile = Joi.object({
+  type: Joi.string().trim().valid('file', 'directory').required(),
   content: Joi.string(),
 });
 
-export default file;
+const updateFile = Joi.object({
+  type: Joi.forbidden(),
+  content: Joi.string().required(),
+});
+
+export { createFile, updateFile };

@@ -4,6 +4,7 @@ import Instance from './Instance.js';
 import File from './File.js';
 import logger from '../../config/logger.js';
 import { ensureNetwork, ensureImage } from '../utils/ensureDocker.js';
+import db from '../../config/sequelize.js';
 
 class Maintenance {
   static async ensureEnviroment() {
@@ -36,7 +37,7 @@ class Maintenance {
     }
   }
 
-  static scheduleInstancesMaintenance() {
+  static scheduleMaintenance() {
     let lastRunDate = null;
 
     setInterval(async () => {
@@ -50,42 +51,37 @@ class Maintenance {
         if (isThreeAM && lastRunDate !== today) {
           lastRunDate = today;
 
-          // await db.query('VACUUM')
+          // Wipe sqlite3
+          await db.query('VACUUM');
 
           // Update all instances function
           await Instance.maintenanceAll();
         }
       } catch (err) {
-        logger.error({ err }, 'Error to maintenance all instances');
+        logger.error({ err }, 'Error in maintenance');
       }
     }, config.interval.checkUpdate);
   }
 
-  static scheduleRemoveOldTemp() {
-    // First run
-    File.removeOldTemp();
-
-    // Set periodically
-    setInterval(File.removeOldTemp, config.interval.checkTemp);
-  }
-
-  static scheduleRemoveLostInstances() {
+  static scheduleCleanup() {
     // First run
     Instance.verifyLost();
     Container.removeLost();
+    File.removeOldTemp();
 
     // Set periodically
     setInterval(() => {
       Instance.verifyLost();
       Container.removeLost();
     }, config.interval.checkLost);
+
+    setInterval(File.removeOldTemp, config.interval.checkTemp);
   }
 
   static scheduleJobs() {
     try {
-      Maintenance.scheduleRemoveOldTemp();
-      Maintenance.scheduleRemoveLostInstances();
-      Maintenance.scheduleInstancesMaintenance();
+      Maintenance.scheduleCleanup();
+      Maintenance.scheduleMaintenance();
     } catch (err) {
       logger.error({ err }, 'Error to schedule instances jobs');
     }

@@ -2,7 +2,7 @@ import { InvalidRequest } from '../errors/index.js';
 import { running } from '../runtimes/index.js';
 import handleError from './handleError.js';
 
-const verifyRunning = (req, res, next) => {
+const verifyNotRunning = (req, res, next) => {
   try {
     const id = req?.params?.id;
 
@@ -15,7 +15,7 @@ const verifyRunning = (req, res, next) => {
   }
 };
 
-const verifyNotRunning = (req, res, next) => {
+const verifyRunning = (req, res, next) => {
   try {
     const id = req?.params?.id;
 
@@ -29,6 +29,6 @@ const verifyNotRunning = (req, res, next) => {
 };
 
 export {
-  verifyRunning,
   verifyNotRunning,
+  verifyRunning,
 };

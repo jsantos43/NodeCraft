@@ -4,7 +4,7 @@ import uploader from './uploader.js';
 import validate from './validate.js';
 import verifyService from './verifyService.js';
 import { verifyRunning, verifyNotRunning } from './instance.js';
-import { verifyPath, verifyNewPath, verifyDestiny } from './file.js';
+import verifyPath from './file.js';
 
 export {
   auth,
@@ -15,6 +15,4 @@ export {
   verifyRunning,
   verifyNotRunning,
   verifyPath,
-  verifyNewPath,
-  verifyDestiny,
 };

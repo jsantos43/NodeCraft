@@ -1,73 +1,150 @@
+import Path from 'path';
+import config from '../../config/config.js';
 import Service from '../services/File.js';
+import { InvalidRequest } from '../errors/index.js';
 
 class File {
-  static read(req, res, next) {
+  static async read(req, res, next) {
     try {
-      const { id } = req.params;
-      const { query } = req;
-      let path = req?.params?.path;
-      if (Array.isArray(path)) path = req.params.path.join('/');
+      const query = req?.query;
 
-      // Download file
-      if (query.download === 'true') {
-        const result = Service.download(id, path);
-        return res.download(result);
+      const path = query?.path;
+      const toDownload = query?.download === 'true';
+
+      const instancePath = Path.join(config.instance.path, req.params.id);
+      const fullPath = Path.join(instancePath, path);
+
+      const pathType = await Service.getType(fullPath);
+
+      let content = null;
+      if (pathType === 'file') {
+        if (toDownload) return res.download(fullPath);
+
+        content = await Service.readOneFile(fullPath);
+      } else if (pathType === 'directory') {
+        if (toDownload) {
+          const tempPath = await Service.createTemp();
+          const downloadName = `download-${Date.now()}.zip`;
+          const downloadPath = Path.join(tempPath, downloadName);
+          await Service.makeZip(downloadPath, [fullPath]);
+
+          return res.download(downloadPath);
+        }
+
+        content = await Service.readOneDirectory(fullPath, true);
+      } else {
+        throw new InvalidRequest('This path is not directory or file');
       }
 
-      // Read file content
-      const result = Service.read(id, path);
-      return res.status(200).json({ success: true, ...result });
+      return res.status(200).json({
+        success: true,
+        path,
+        type: pathType,
+        content,
+      });
     } catch (err) {
       return next(err);
     }
   }
 
-  static create(req, res, next) {
+  static async create(req, res, next) {
     try {
-      const { id } = req.params;
+      const { destiny } = req.query;
       const body = req?.body;
-      const location = req?.location;
-      const filename = req?.filename;
-      let path = req?.params?.path;
-      if (Array.isArray(path)) path = req.params.path.join('/');
 
-      if (location || filename) {
-        return res.status(201).json({
-          success: true, uploaded: true, location, filename,
-        });
-      }
+      const instancePath = Path.join(config.instance.path, req.params.id);
+      const fullDestiny = Path.join(instancePath, destiny);
 
-      const result = Service.create(id, path, body);
+      if (body.type === 'file') await Service.createOneFile(fullDestiny, body.content);
+      if (body.type === 'directory') await Service.createOneDirectory(fullDestiny);
 
-      return res.status(201).json({ success: true, created: true, ...result });
+      return res.status(201).json({
+        success: true,
+        created: true,
+        destiny,
+      });
     } catch (err) {
       return next(err);
     }
   }
 
-  static update(req, res, next) {
+  static async upload(req, res, next) {
     try {
-      const { id } = req.params;
-      const { body } = req;
-      let path = req?.params?.path;
-      if (Array.isArray(path)) path = req.params.path.join('/');
+      const { destiny } = req.query;
 
-      const result = Service.update(id, path, body);
-
-      return res.status(200).json({ success: true, updated: true, ...result });
+      return res.status(201).json({
+        success: true,
+        uploaded: true,
+        destiny,
+        name: req.filename,
+      });
     } catch (err) {
       return next(err);
     }
   }
 
-  static delete(req, res, next) {
+  static async update(req, res, next) {
     try {
-      const { id } = req.params;
-      let path = req?.params?.path;
-      if (Array.isArray(path)) path = req.params.path.join('/');
+      const { path } = req.query;
+      const { content } = req.body;
 
-      const result = Service.delete(id, path);
-      return res.status(200).json({ success: true, deleted: true, ...result });
+      const instancePath = Path.join(config.instance.path, req.params.id);
+      const fullPath = Path.join(instancePath, path);
+
+      const pathType = await Service.getType(fullPath);
+
+      if (pathType !== 'file') throw new InvalidRequest('This path must be a file');
+
+      await Service.createOneFile(fullPath, content);
+
+      return res.status(200).json({
+        success: true,
+        updated: true,
+        path,
+        content,
+      });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async delete(req, res, next) {
+    try {
+      const { path } = req.query;
+
+      const instancePath = Path.join(config.instance.path, req.params.id);
+      const fullPath = Path.join(instancePath, path);
+
+      await Service.delete(fullPath);
+
+      return res.status(200).json({
+        success: true,
+        deleted: true,
+        path,
+      });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async transfer(req, res, next) {
+    try {
+      const { path, destiny } = req.query;
+      const actions = req.query?.actions;
+
+      const instancePath = Path.join(config.instance.path, req.params.id);
+      const fullPath = Path.join(instancePath, path);
+      const fullDestiny = Path.join(instancePath, destiny);
+
+      if (actions === 'move') await Service.move(fullPath, fullDestiny);
+      else if (actions === 'copy') await Service.copy(fullPath, fullDestiny);
+      else throw new InvalidRequest('Transfer action is invalid!');
+
+      return res.status(200).json({
+        success: true,
+        path,
+        destiny,
+      });
     } catch (err) {
       return next(err);
     }
@@ -75,30 +152,25 @@ class File {
 
   static async unzip(req, res, next) {
     try {
-      const { id } = req.params;
-      let path = req?.params?.path;
-      if (Array.isArray(path)) path = req.params.path.join('/');
+      const { path, destiny } = req.query;
 
-      const pathName = Service.unzip(id, path);
-      return res.status(200).json({ success: true, unzipped: true, name: pathName });
-    } catch (err) {
-      return next(err);
-    }
-  }
+      const instancePath = Path.join(config.instance.path, req.params.id);
+      const fullPath = Path.join(instancePath, path);
+      const fullDestiny = Path.join(instancePath, destiny);
 
-  static async move(req, res, next) {
-    try {
-      const { id } = req.params;
-      let path = req?.params?.path;
-      if (Array.isArray(path)) path = req.params.path.join('/');
+      // Verify if path is a zip
+      if (!(await Service.verifyZip(fullPath))) {
+        throw new InvalidRequest(`${path} path is not a zip file`);
+      }
 
-      let destiny = req?.params?.destiny;
-      if (Array.isArray(destiny)) destiny = req.params.destiny.join('/');
-
-      const result = Service.move(id, path, destiny);
+      await Service.unzip(fullPath, fullDestiny);
 
       return res.status(200).json({
-        success: true, moved: result, path, destiny,
+        success: true,
+        uncompressing: true,
+        path,
+        destiny,
+        name: Path.basename(fullDestiny),
       });
     } catch (err) {
       return next(err);

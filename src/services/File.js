@@ -8,6 +8,7 @@ import {
   writeFile,
   rename,
   open,
+  cp,
 } from 'node:fs/promises';
 import * as unzipper from 'unzipper';
 import { createWriteStream, createReadStream } from 'node:fs';
@@ -75,7 +76,7 @@ class File {
       for (const item of items) {
         result.push({
           name: item,
-          type: File.getType(Path.join(path, item)),
+          type: await File.getType(Path.join(path, item)),
         });
       }
 
@@ -113,6 +114,18 @@ class File {
       return true;
     } catch (err) {
       logger.error({ err }, 'Error to create a directory');
+
+      return false;
+    }
+  }
+
+  static async copy(originPath, destinyPath) {
+    try {
+      await cp(originPath, destinyPath, { recursive: true });
+
+      return true;
+    } catch (err) {
+      logger.error({ err }, 'Error to copy paths');
 
       return false;
     }

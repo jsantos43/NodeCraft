@@ -1,72 +1,71 @@
-import { existsSync, realpathSync } from 'fs';
-import * as Path from 'path';
+import Path from 'path';
 import { NotFound, InvalidRequest, Unathorized } from '../errors/index.js';
 import config from '../../config/config.js';
 import handleError from './handleError.js';
+import Service from '../services/File.js';
 
-const verifyTwoPoints = (path) => {
+const verifyDirectoryTraversal = (path) => {
   const regex = /\.\./;
-  if (regex.test(path)) return true;
-
-  return false;
+  if (regex.test(path)) throw new InvalidRequest('directory traversal is not allowed!');
 };
 
-const validateAllowedPath = (id, path) => {
-  const instancePath = realpathSync(`${config.instance.path}/${id}`);
+const verifyAllowedPath = (instancePath, path) => {
+  const fullPath = Path.resolve(Path.join(instancePath, path));
 
-  if (path.includes('nodecraft.json')) return false;
-  if (path.startsWith(instancePath)) return true;
-  return false;
+  if (!fullPath.startsWith(instancePath)) throw new Unathorized(`${path} is forbidden!`);
 };
 
-// const verifyUUID = (id) => {
-//   const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-//   return uuidRegex.test(id);
-// };
+const verifyPathExists = async (instancePath, path) => {
+  const fullPath = Path.resolve(Path.join(instancePath, path));
 
-const verifyFile = (req, res, next, newPath = false) => {
+  if (!(await Service.verifyExists(fullPath))) throw new NotFound(`${path} path not exists!`);
+};
+
+const verifyPathNotExists = async (instancePath, path) => {
+  const fullPath = Path.resolve(Path.join(instancePath, path));
+
+  if (await Service.verifyExists(fullPath)) throw new InvalidRequest(`${path} path already exists!`);
+};
+
+const verifyPathIsDirectory = async (instancePath, path) => {
+  const fullPath = Path.resolve(Path.join(instancePath, path));
+
+  const pathType = await Service.getType(fullPath);
+  if (pathType !== 'directory') throw new InvalidRequest(`${path} path must be a directory!`);
+};
+
+const verifyPath = (verifyDestiny = false) => async (req, res, next) => {
   try {
-    const { id } = req.params;
-    let path = req?.params?.path;
-    if (Array.isArray(path)) path = req.params.path.join('/');
+    const instancePath = Path.join(config.instance.path, req.params.id);
+    const path = req?.query?.path || '';
+    const destiny = req?.query?.destiny || '';
 
-    // if (!verifyUUID(id)) throw new InvalidRequest(`${id} is not a valid uuid!`);
-    if (verifyTwoPoints(path)) throw new InvalidRequest('directory traversal is not valid!');
+    // Verify directory traversal
+    verifyDirectoryTraversal(path);
+    verifyDirectoryTraversal(destiny);
 
-    let realPath;
+    // Validate if path is allowed
+    verifyAllowedPath(instancePath, path);
+    verifyAllowedPath(instancePath, destiny);
 
-    if (newPath) {
-      if (existsSync(`${config.instance.path}/${id}/${path}`)) throw new InvalidRequest(`${path} already exists!`);
+    // Verify if path exits
+    await verifyPathExists(instancePath, path);
 
-      realPath = realpathSync(`${config.instance.path}/${id}/${Path.dirname(path)}`);
-    } else {
-      realPath = realpathSync(`${config.instance.path}/${id}/${path}`);
+    // Verify if destiny is valid
+    if (verifyDestiny) {
+      const destinyDirName = Path.dirname(destiny);
+
+      await verifyPathNotExists(instancePath, destiny);
+      await verifyPathExists(instancePath, destinyDirName);
+      await verifyPathIsDirectory(instancePath, destinyDirName);
     }
-
-    if (!validateAllowedPath(id, realPath)) throw new Unathorized(`${path} is forbidden!`);
 
     return next();
   } catch (err) {
     if (err.code === 'ENOENT') return handleError(new NotFound('path not exists!'), req, res);
+
     return handleError(err, req, res);
   }
 };
 
-const verifyPath = (req, res, next) => verifyFile(req, res, next, false);
-
-const verifyNewPath = (req, res, next) => verifyFile(req, res, next, true);
-
-const verifyDestiny = (req, res, next) => {
-  // Change the path params to destiny only for the verify method
-  const reqCopy = { params: structuredClone(req.params) };
-  reqCopy.params.path = req.params.destiny;
-  [reqCopy.params[0]] = [req.params[1]];
-
-  return verifyFile(reqCopy, res, next, true);
-};
-
-export {
-  verifyPath,
-  verifyNewPath,
-  verifyDestiny,
-};
+export default verifyPath;

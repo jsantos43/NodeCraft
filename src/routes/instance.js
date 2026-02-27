@@ -29,26 +29,26 @@ router
   .put(
     '/instance/:id',
     auth('instance:update'),
-    verifyRunning,
+    verifyNotRunning,
     validate(updateInstance),
     Controller.update,
   )
   .delete(
     '/instance/:id',
     auth('instance:delete'),
-    verifyRunning,
+    verifyNotRunning,
     Controller.delete,
   )
   .post(
     '/instance/:id/run',
     auth('instance:execute'),
-    verifyRunning,
+    verifyNotRunning,
     Controller.run,
   )
   .post(
     '/instance/:id/stop',
     auth('instance:execute'),
-    verifyNotRunning,
+    verifyRunning,
     Controller.stop,
   )
   .post(
@@ -59,13 +59,13 @@ router
   .post(
     '/instance/:id/backup',
     auth('instance:backup'),
-    verifyRunning,
+    verifyNotRunning,
     Controller.backup,
   )
   .put(
     '/instance/:id/remap/port',
     auth('instance:update'),
-    verifyRunning,
+    verifyNotRunning,
     Controller.remapPort,
   )
   .use('/instance', file)
