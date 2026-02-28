@@ -1,0 +1,47 @@
+{
+  "put": {
+    "summary": "update File",
+    "parameters": [
+      {
+        "name": "path",
+        "in": "query",
+        "required": false,
+        "deprecated": false,
+        "schema": {},
+        "example": "eula.txt"
+      }
+    ],
+    "responses": {},
+    "tags": [
+      "Files"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string"
+              }
+            }
+          },
+          "example": {
+            "content": "eula=false"
+          }
+        }
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    }
+  ]
+}

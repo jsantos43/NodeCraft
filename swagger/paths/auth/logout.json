@@ -1,0 +1,18 @@
+{
+  "post": {
+    "summary": "logout User",
+    "responses": {},
+    "tags": [
+      "Auth"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

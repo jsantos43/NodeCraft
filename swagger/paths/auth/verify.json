@@ -1,0 +1,9 @@
+{
+  "post": {
+    "summary": "verify User",
+    "responses": {},
+    "tags": [
+      "Auth"
+    ]
+  }
+}

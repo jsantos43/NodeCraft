@@ -1,0 +1,20 @@
+{
+  "put": {
+    "summary": "remap Port",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ]
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "e0908735-eda2-4f52-a4ac-e3abcd36c2a1"
+    }
+  ]
+}

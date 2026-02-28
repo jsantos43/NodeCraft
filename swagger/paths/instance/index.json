@@ -1,0 +1,68 @@
+{
+  "get": {
+    "summary": "read all Instances",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ]
+  },
+  "post": {
+    "summary": "create Instance",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "game": {
+                "type": "object",
+                "properties": {
+                  "software": {
+                    "type": "string"
+                  },
+                  "gamemode": {
+                    "type": "string"
+                  },
+                  "difficulty": {
+                    "type": "string"
+                  },
+                  "pvp": {
+                    "type": "boolean"
+                  },
+                  "forceGamemode": {
+                    "type": "boolean"
+                  },
+                  "maxPlayers": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "example": {
+            "name": "Teste",
+            "type": "minecraft",
+            "game": {
+              "software": "paper",
+              "gamemode": "survival",
+              "difficulty": "normal",
+              "pvp": true,
+              "forceGamemode": true,
+              "maxPlayers": 3
+            }
+          }
+        }
+      }
+    }
+  }
+}

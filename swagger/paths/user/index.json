@@ -1,0 +1,82 @@
+{
+  "get": {
+    "summary": "read my User",
+    "tags": [
+      "User"
+    ],
+    "responses": {}
+  },
+  "post": {
+    "summary": "create User",
+    "responses": {},
+    "tags": [
+      "User"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "password": {
+                "type": "string",
+                "format": "color"
+              }
+            }
+          },
+          "example": {
+            "name": "Joao Pedro",
+            "email": "joao.santos.2007sp@gmail.com",
+            "password": "123456"
+          }
+        }
+      }
+    }
+  },
+  "put": {
+    "summary": "update my User",
+    "responses": {},
+    "tags": [
+      "User"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "gamertag": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              }
+            }
+          },
+          "example": {
+            "name": "João Pedro Tomaz",
+            "gamertag": "JPGamerPlay",
+            "role": "admin"
+          }
+        }
+      }
+    }
+  },
+  "delete": {
+    "summary": "delete my user",
+    "responses": {},
+    "tags": [
+      "User"
+    ]
+  }
+}

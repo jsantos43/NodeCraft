@@ -1,0 +1,50 @@
+{
+  "post": {
+    "summary": "create File",
+    "parameters": [
+      {
+        "name": "destiny",
+        "in": "query",
+        "required": false,
+        "deprecated": false,
+        "schema": {},
+        "example": "/versions/teste.json"
+      }
+    ],
+    "responses": {},
+    "tags": [
+      "Files"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              }
+            }
+          },
+          "example": {
+            "type": "directory",
+            "content": "Hello World!"
+          }
+        }
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "deprecated": false,
+      "schema": {},
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    }
+  ]
+}

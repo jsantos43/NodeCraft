@@ -1,0 +1,26 @@
+{
+  "post": {
+    "summary": "validate User",
+    "responses": {},
+    "tags": [
+      "Auth"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              }
+            }
+          },
+          "example": {
+            "token": "70e942b1a1604772acd0c0b2958e8d4862d4af5b41955b80be2d4c0746c1ceeee735b3374156bc5e925811e91682ff3b1462e7e71692b52e06b4c2daa2821413"
+          }
+        }
+      }
+    }
+  }
+}

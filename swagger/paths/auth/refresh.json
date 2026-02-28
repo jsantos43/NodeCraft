@@ -1,0 +1,9 @@
+{
+  "post": {
+    "summary": "refresh User",
+    "responses": {},
+    "tags": [
+      "Auth"
+    ]
+  }
+}

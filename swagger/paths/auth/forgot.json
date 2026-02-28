@@ -1,0 +1,27 @@
+{
+  "post": {
+    "summary": "forgot User",
+    "responses": {},
+    "tags": [
+      "Auth"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              }
+            }
+          },
+          "example": {
+            "email": "joao.santos.2007sp@gmail.com"
+          }
+        }
+      }
+    }
+  }
+}

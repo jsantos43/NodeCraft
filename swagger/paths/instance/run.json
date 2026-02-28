@@ -1,0 +1,20 @@
+{
+  "post": {
+    "summary": "run Instance",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ]
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "4db9a47a-bacc-4540-9757-527575c4f384"
+    }
+  ]
+}

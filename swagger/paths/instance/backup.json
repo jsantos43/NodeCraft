@@ -1,0 +1,20 @@
+{
+  "post": {
+    "summary": "backup Instance",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ]
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    }
+  ]
+}

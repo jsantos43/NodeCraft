@@ -1,0 +1,87 @@
+{
+  "get": {
+    "summary": "read a Instance",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ]
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "0ea9d116-9c5f-4593-9ef5-bc2eec2caf93"
+    }
+  ],
+  "put": {
+    "summary": "update a Instance",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "updateAlways": {
+                "type": "boolean"
+              },
+              "game": {
+                "type": "object",
+                "properties": {
+                  "gamemode": {
+                    "type": "string"
+                  },
+                  "allowlist": {
+                    "type": "boolean"
+                  },
+                  "bedrock": {
+                    "type": "boolean"
+                  },
+                  "seed": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "motd": {
+                    "type": "string"
+                  },
+                  "forceGamemode": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "example": {
+            "name": "My Mega Server2",
+            "updateAlways": true,
+            "game": {
+              "gamemode": "creative",
+              "allowlist": true,
+              "bedrock": true,
+              "seed": "3982321",
+              "motd": "Keep Calm and Play Minecraft!",
+              "forceGamemode": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "delete": {
+    "summary": "delete a Instance",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ]
+  }
+}

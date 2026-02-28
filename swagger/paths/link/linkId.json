@@ -1,0 +1,75 @@
+{
+  "get": {
+    "summary": "read a Link",
+    "responses": {},
+    "tags": [
+      "Link"
+    ]
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "f12a7f95-9d0d-4769-819f-c7d5fce31c06"
+    },
+    {
+      "name": "linkId",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "af344d9c-2fa6-4b49-89b2-70b0cdb2e25b"
+    }
+  ],
+  "put": {
+    "summary": "update link",
+    "responses": {},
+    "tags": [
+      "Link"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "javaGamertag": {
+                "type": "string"
+              },
+              "access": {
+                "type": "string"
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "example": {
+            "javaGamertag": "JPGamerPlay",
+            "access": "super",
+            "permissions": [
+              "instance:update",
+              "instance:read"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "delete": {
+    "summary": "delete Link",
+    "responses": {},
+    "tags": [
+      "Link"
+    ]
+  }
+}

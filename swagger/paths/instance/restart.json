@@ -1,0 +1,29 @@
+{
+  "post": {
+    "summary": "restart Instance",
+    "responses": {},
+    "tags": [
+      "Instance"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "cff9e0d4-72ac-4e79-9159-d668535034eb"
+    }
+  ]
+}

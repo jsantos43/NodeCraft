@@ -18,6 +18,7 @@
   "author": "João Pedro Tomaz dos Santos",
   "license": "ISC",
   "dependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
     "@aws-sdk/client-s3": "^3.997.0",
     "archiver": "^7.0.1",
     "bcrypt": "^6.0.0",
@@ -35,6 +36,7 @@
     "sequelize": "^6.37.7",
     "socket.io": "^4.8.3",
     "sqlite3": "^5.1.7",
+    "swagger-ui-express": "^5.0.1",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {

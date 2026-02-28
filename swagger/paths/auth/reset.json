@@ -1,0 +1,31 @@
+{
+  "post": {
+    "summary": "reset User",
+    "responses": {},
+    "tags": [
+      "Auth"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string",
+                "format": "color"
+              }
+            }
+          },
+          "example": {
+            "token": "eea07ccc96ed4bade91405eb9f68922b5e431eee0fbc4d0aaa82b25f4d97e7232c694f97b8948afd5a1f14af622dff74c491a567137f9310c6ae72754f2e90f2",
+            "password": "123456"
+          }
+        }
+      }
+    }
+  }
+}

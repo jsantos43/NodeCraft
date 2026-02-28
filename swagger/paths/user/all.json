@@ -1,0 +1,9 @@
+{
+  "get": {
+    "summary": "read all Users",
+    "responses": {},
+    "tags": [
+      "User"
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "get": {
+    "summary": "read a User",
+    "responses": {},
+    "tags": [
+      "User"
+    ]
+  },
+  "delete": {
+    "summary": "delete a User",
+    "responses": {},
+    "tags": [
+      "User"
+    ]
+  },
+  "put": {
+    "summary": "update a User",
+    "responses": {},
+    "tags": [
+      "User"
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "quota": {
+                "type": "integer"
+              }
+            }
+          },
+          "example": {
+            "quota": 5
+          }
+        }
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "0b1afbe4-71dd-49b8-8094-945ee93bd594"
+    }
+  ]
+}

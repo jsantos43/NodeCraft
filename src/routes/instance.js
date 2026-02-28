@@ -63,7 +63,7 @@ router
     Controller.backup,
   )
   .put(
-    '/instance/:id/remap/port',
+    '/instance/:id/remap',
     auth('instance:update'),
     verifyNotRunning,
     Controller.remapPort,
