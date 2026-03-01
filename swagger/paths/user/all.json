@@ -19,7 +19,7 @@
                 "users": {
                   "type": "array",
                   "items": {
-                    "$ref": "../../components/schemas/user.json#/readUser"
+                    "$ref": "../../components/schemas/user.json"
                   }
                 }
               }
