@@ -51,10 +51,6 @@ User.init({
     allowNull: false,
     defaultValue: false,
   },
-  birthDate: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
   emailTokenHash: {
     type: DataTypes.TEXT,
     allowNull: true,

@@ -38,7 +38,7 @@ class User {
       const userId = await Service.create(data);
       const user = await Service.readOne(userId);
 
-      return res.status(201).json({ success: true, created: true, user });
+      return res.status(201).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -51,7 +51,7 @@ class User {
 
       const userUpdated = await Service.update(user.id, data);
 
-      return res.status(200).json({ success: true, updated: true, user: userUpdated });
+      return res.status(200).json({ success: true, user: userUpdated });
     } catch (err) {
       return next(err);
     }
@@ -64,7 +64,7 @@ class User {
 
       const user = await Service.update(id, data);
 
-      return res.status(200).json({ success: true, updated: true, user });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -75,7 +75,7 @@ class User {
       const { user } = req;
       await Service.delete(user.id);
 
-      return res.status(200).json({ success: true, deleted: true, user });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -86,7 +86,7 @@ class User {
       const { id } = req.params;
       const user = await Service.delete(id);
 
-      return res.status(200).json({ success: true, deleted: true, user });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }

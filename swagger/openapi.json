@@ -3,7 +3,7 @@
   "info": {
     "title": "NodeCraft",
     "version": "1.0.0",
-    "description": "API para gerenciar servidores de jogos via Docker"
+    "description": "API for managing game servers via Docker."
   },
   "servers": [
     {

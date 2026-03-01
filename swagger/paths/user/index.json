@@ -4,79 +4,70 @@
     "tags": [
       "User"
     ],
-    "responses": {}
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
   },
   "post": {
     "summary": "create User",
-    "responses": {},
     "tags": [
       "User"
     ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string",
-                "format": "email"
-              },
-              "password": {
-                "type": "string",
-                "format": "color"
-              }
-            }
-          },
-          "example": {
-            "name": "Joao Pedro",
-            "email": "joao.santos.2007sp@gmail.com",
-            "password": "123456"
-          }
-        }
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/DuplicateEmail"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/user.json#/createUser"
     }
   },
   "put": {
     "summary": "update my User",
-    "responses": {},
     "tags": [
       "User"
     ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "gamertag": {
-                "type": "string"
-              },
-              "role": {
-                "type": "string"
-              }
-            }
-          },
-          "example": {
-            "name": "João Pedro Tomaz",
-            "gamertag": "JPGamerPlay",
-            "role": "admin"
-          }
-        }
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/user.json#/updateUser"
     }
   },
   "delete": {
     "summary": "delete my user",
-    "responses": {},
     "tags": [
       "User"
-    ]
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
   }
 }

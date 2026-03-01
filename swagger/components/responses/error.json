@@ -1,0 +1,97 @@
+{
+  "Internal": {
+    "description": "INTERNAL_ERROR",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "../schemas/error.json"
+        }
+      }
+    }
+  },
+  "Unathorized": {
+    "description": "UNATHORIZED",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "../schemas/error.json"
+        },
+        "example": {
+          "success": false,
+          "error": "UNATHORIZED",
+          "message": "Invalid Access Token!",
+          "details": []
+        }
+      }
+    }
+  },
+  "DuplicateEmail": {
+    "description": "BAD_REQUEST",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "../schemas/error.json"
+        },
+        "example": {
+          "success": false,
+          "error": "INVALID_REQUEST",
+          "message": "Invalid Data!",
+          "details": [
+            {
+              "field": "email",
+              "message": "email must be unique"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "InvalidRequest": {
+    "description": "BAD_REQUEST",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "../schemas/error.json"
+        },
+        "example": {
+          "success": false,
+          "error": "INVALID_REQUEST",
+          "message": "Invalid Data!",
+          "details": []
+        }
+      }
+    }
+  },
+  "Forbidden": {
+    "description": "FORBIDDEN",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "../schemas/error.json"
+        },
+        "example": {
+          "success": false,
+          "error": "FORBIDDEN",
+          "message": "You don't have necessary permission!",
+          "details": []
+        }
+      }
+    }
+  },
+  "NotFound": {
+    "description": "NOT_FOUND",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "../schemas/error.json"
+        },
+        "example": {
+          "success": false,
+          "error": "NOT_FOUND",
+          "message": "Item not found!",
+          "details": []
+        }
+      }
+    }
+  }
+}

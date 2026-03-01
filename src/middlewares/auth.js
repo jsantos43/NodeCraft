@@ -1,5 +1,5 @@
 import User from '../services/User.js';
-import { Unathorized } from '../errors/index.js';
+import { Forbidden, Unathorized } from '../errors/index.js';
 import Service from '../services/Auth.js';
 import handleError from './handleError.js';
 
@@ -27,8 +27,8 @@ const auth = (permission) => async (req, res, next) => {
     const authorized = await Service.checkPermission(user, permission, id);
     if (authorized) return next();
 
-    // Throw unathorized error if user is not authorized
-    throw new Unathorized("You don't have permission to access this route!");
+    // Throw forbidden error if user is not authorized
+    throw new Forbidden();
   } catch (err) {
     return handleError(err, req, res);
   }
