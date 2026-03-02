@@ -1,32 +1,22 @@
 {
   "post": {
     "summary": "login User",
-    "responses": {},
     "tags": [
       "Auth"
     ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "email": {
-                "type": "string",
-                "format": "email"
-              },
-              "password": {
-                "type": "string",
-                "format": "color"
-              }
-            }
-          },
-          "example": {
-            "email": "joao.santos.2007sp@gmail.com",
-            "password": "123456"
-          }
-        }
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "401": {
+        "$ref": "../../components/responses/auth.json#/invalidLogin"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/auth.json#/login"
     }
   }
 }

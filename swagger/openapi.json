@@ -23,11 +23,11 @@
     "/auth/login": {
       "$ref": "./paths/auth/login.json"
     },
-    "/auth/logout": {
-      "$ref": "./paths/auth/logout.json"
-    },
     "/auth/refresh": {
       "$ref": "./paths/auth/refresh.json"
+    },
+    "/auth/logout": {
+      "$ref": "./paths/auth/logout.json"
     },
     "/auth/verify": {
       "$ref": "./paths/auth/verify.json"

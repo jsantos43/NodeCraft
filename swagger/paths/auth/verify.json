@@ -1,9 +1,25 @@
 {
   "post": {
     "summary": "verify User",
-    "responses": {},
     "tags": [
       "Auth"
-    ]
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "400": {
+        "$ref": "../../components/responses/auth.json#/alreadyVerified"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      },
+      "503": {
+        "$ref": "../../components/responses/auth.json#/emailService"
+      }
+    }
   }
 }

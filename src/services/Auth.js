@@ -112,7 +112,9 @@ class Auth {
     const refreshToken = Auth.generateRandomToken();
     await Auth.saveToken(user.id, refreshToken, 'refresh');
 
-    return { user, accessToken, refreshToken };
+    const safeUser = await User.readOne(user.id);
+
+    return { user: safeUser, accessToken, refreshToken };
   }
 
   static async refreshAuthentication(token) {
@@ -127,7 +129,9 @@ class Auth {
     const refreshToken = Auth.generateRandomToken();
     await Auth.saveToken(user.id, refreshToken, 'refresh');
 
-    return { user, accessToken, refreshToken };
+    const safeUser = await User.readOne(user.id);
+
+    return { user: safeUser, accessToken, refreshToken };
   }
 
   static async sendVerification(user) {
@@ -159,11 +163,15 @@ class Auth {
 
     if (!user || !user?.emailTokenHash) throw new InvalidToken('Email token is invalid!');
     if (hashedToken !== user.emailTokenHash) throw new InvalidToken('Email token is invalid!');
-    if (user.emailTokenExpires < Date.now()) throw new InvalidToken('Email token expiried!');
+    if (user.emailTokenExpires < Date.now()) throw new InvalidToken('Email token is invalid');
 
     // Set verified account and wipe tokens
     await User.update(user.id, { verified: true });
     await Auth.wipeToken(user.id, 'email');
+
+    const safeUser = await User.readOne(user.id);
+
+    return safeUser;
   }
 
   static async forgotPassword(email) {
@@ -192,6 +200,10 @@ class Auth {
       html,
       text: `Link: ${link} | Token: ${token}`,
     });
+
+    const safeUser = await User.readOne(user.id);
+
+    return safeUser;
   }
 
   static async resetPassword(token, password) {
@@ -206,6 +218,10 @@ class Auth {
     const hashedPassword = bcrypt.hashSync(password, 12);
     await User.update(user.id, { password: hashedPassword });
     await Auth.wipeToken(user.id, 'password');
+
+    const safeUser = await User.readOne(user.id);
+
+    return safeUser;
   }
 }
 

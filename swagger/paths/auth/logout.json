@@ -1,17 +1,18 @@
 {
   "post": {
     "summary": "logout User",
-    "responses": {},
     "tags": [
       "Auth"
     ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object"
-          }
-        }
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
       }
     }
   }

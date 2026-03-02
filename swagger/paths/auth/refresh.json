@@ -1,9 +1,19 @@
 {
   "post": {
     "summary": "refresh User",
-    "responses": {},
     "tags": [
       "Auth"
-    ]
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "401": {
+        "$ref": "../../components/responses/auth.json#/refreshError"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
   }
 }

@@ -1,27 +1,25 @@
 {
   "post": {
     "summary": "forgot User",
-    "responses": {},
     "tags": [
       "Auth"
     ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "email": {
-                "type": "string",
-                "format": "email"
-              }
-            }
-          },
-          "example": {
-            "email": "joao.santos.2007sp@gmail.com"
-          }
-        }
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      },
+      "503": {
+        "$ref": "../../components/responses/auth.json#/emailService"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/auth.json#/forgot"
     }
   }
 }
