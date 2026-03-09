@@ -1,7 +1,7 @@
 import Path from 'path';
 import logger from '../../config/logger.js';
 import StorageProvider from '../providers/Storage.js';
-import { Base } from '../errors/index.js';
+import { Internal } from '../errors/index.js';
 import config from '../../config/config.js';
 import File from './File.js';
 
@@ -48,7 +48,7 @@ class Backup {
     try {
       const totalSize = (daily && weekly) ? (2 * size) : size;
       const availableSpace = await Backup.verifyAvailableSpace(totalSize);
-      if (!availableSpace) throw new Base('No space available to backups');
+      if (!availableSpace) throw new Internal('No space available to backups');
 
       const filename = Path.basename(path);
       if (daily) await StorageProvider.upload(`${id}/daily/${filename}`, path);

@@ -2,7 +2,7 @@ import Path from 'path';
 import Instance from './Instance.js';
 import logger from '../../config/logger.js';
 import renderTemplate from '../utils/renderTemplate.js';
-import { Base } from '../errors/index.js';
+import { Internal } from '../errors/index.js';
 import FileService from '../services/File.js';
 
 class Kerbal extends Instance {
@@ -21,7 +21,7 @@ class Kerbal extends Instance {
     try {
       const instance = this.instance.get({ plain: true });
       const gameData = instance?.kerbal;
-      if (!gameData) throw new Base('instance kerbal data not found!');
+      if (!gameData) throw new Internal('instance kerbal data not found!');
 
       // Sync database with Settings.txt
       const kerbalSettings = await renderTemplate('kerbal/Settings.txt', {

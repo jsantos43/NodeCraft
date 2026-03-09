@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import {
-  NotFound, Unathorized, InvalidToken,
+  NotFound, InvalidRequest, Unathorized,
 } from '../errors/index.js';
 import sendEmail from '../utils/sendEmail.js';
 import renderTemplate from '../utils/renderTemplate.js';
@@ -90,14 +90,14 @@ class Auth {
       return payload;
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
-        throw new InvalidToken('Token is expired!');
+        throw new Unathorized('Token is expired!');
       } else if (err.name === 'JsonWebTokenError') {
-        throw new InvalidToken('Token is invalid!');
+        throw new Unathorized('Token is invalid!');
       } else if (err.name === 'NotBeforeError') {
-        throw new InvalidToken('Token is not yet valid!');
+        throw new Unathorized('Token is not yet valid!');
       }
 
-      throw new InvalidToken();
+      throw new Unathorized('Token is invalid!');
     }
   }
 
@@ -121,9 +121,9 @@ class Auth {
     const hashedToken = Auth.hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'refresh');
 
-    if (!user || !user?.refreshTokenHash) throw new InvalidToken('Refresh token is invalid!');
-    if (hashedToken !== user.refreshTokenHash) throw new InvalidToken('Refresh token is invalid!');
-    if (user.refreshTokenExpires < Date.now()) throw new InvalidToken('Refresh token expiried!');
+    if (!user || !user?.refreshTokenHash) throw new InvalidRequest('Refresh token is invalid!');
+    if (hashedToken !== user.refreshTokenHash) throw new InvalidRequest('Refresh token is invalid!');
+    if (user.refreshTokenExpires < Date.now()) throw new InvalidRequest('Refresh token is expiried!');
 
     const accessToken = Auth.generateAccessToken(user.id);
     const refreshToken = Auth.generateRandomToken();
@@ -161,9 +161,9 @@ class Auth {
     const hashedToken = Auth.hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'email');
 
-    if (!user || !user?.emailTokenHash) throw new InvalidToken('Email token is invalid!');
-    if (hashedToken !== user.emailTokenHash) throw new InvalidToken('Email token is invalid!');
-    if (user.emailTokenExpires < Date.now()) throw new InvalidToken('Email token is invalid');
+    if (!user || !user?.emailTokenHash) throw new InvalidRequest('Email token is invalid!');
+    if (hashedToken !== user.emailTokenHash) throw new InvalidRequest('Email token is invalid!');
+    if (user.emailTokenExpires < Date.now()) throw new InvalidRequest('Email token is expired!');
 
     // Set verified account and wipe tokens
     await User.update(user.id, { verified: true });
@@ -210,9 +210,9 @@ class Auth {
     const hashedToken = Auth.hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'password');
 
-    if (!user || !user?.resetPasswordTokenHash) throw new InvalidToken('Reset password token is invalid!');
-    if (hashedToken !== user.resetPasswordTokenHash) throw new InvalidToken('Reset password token is invalid!');
-    if (user.resetPasswordTokenExpires < Date.now()) throw new InvalidToken('Reset password token expiried!');
+    if (!user || !user?.resetPasswordTokenHash) throw new InvalidRequest('Reset password token is invalid!');
+    if (hashedToken !== user.resetPasswordTokenHash) throw new InvalidRequest('Reset password token is invalid!');
+    if (user.resetPasswordTokenExpires < Date.now()) throw new InvalidRequest('Reset password token is expiried!');
 
     // Change password and wipe tokens
     const hashedPassword = bcrypt.hashSync(password, 12);

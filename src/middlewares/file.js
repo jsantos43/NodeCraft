@@ -1,5 +1,7 @@
 import Path from 'path';
-import { NotFound, InvalidRequest, Unathorized } from '../errors/index.js';
+import {
+  NotFound, InvalidRequest, Forbidden,
+} from '../errors/index.js';
 import config from '../../config/config.js';
 import handleError from './handleError.js';
 import Service from '../services/File.js';
@@ -12,7 +14,7 @@ const verifyDirectoryTraversal = (path) => {
 const verifyAllowedPath = (instancePath, path) => {
   const fullPath = Path.resolve(Path.join(instancePath, path));
 
-  if (!fullPath.startsWith(instancePath)) throw new Unathorized(`${path} is forbidden!`);
+  if (!fullPath.startsWith(instancePath)) throw new Forbidden(`${path} is forbidden!`);
 };
 
 const verifyPathExists = async (instancePath, path) => {

@@ -1,5 +1,5 @@
 import config from '../../config/config.js';
-import { InvalidRequest, InvalidToken } from '../errors/index.js';
+import { InvalidRequest, Unathorized } from '../errors/index.js';
 import Service from '../services/Auth.js';
 
 class Auth {
@@ -36,7 +36,7 @@ class Auth {
     try {
       // Get refresh token from request
       const token = req?.cookies?.refreshToken;
-      if (!token) throw new InvalidToken('Refresh token is null!');
+      if (!token) throw new Unathorized('Refresh token is null!');
 
       const { user, accessToken, refreshToken } = await Service.refreshAuthentication(token);
 
@@ -93,7 +93,7 @@ class Auth {
   static async validateAccount(req, res, next) {
     try {
       const token = req?.body?.token;
-      if (typeof token !== 'string') throw new InvalidToken('Email token is invalid!');
+      if (typeof token !== 'string') throw new InvalidRequest('Email token is invalid!');
 
       const user = await Service.validateAccount(token.trim());
 
@@ -120,7 +120,7 @@ class Auth {
       const token = req?.body?.token;
       const password = req?.body?.password;
 
-      if (typeof token !== 'string') throw new InvalidToken();
+      if (typeof token !== 'string') throw new InvalidRequest('Reset password token is invalid!');
       if (!password) throw new InvalidRequest('Password cannot be null!');
 
       const user = await Service.resetPassword(token.trim(), password);

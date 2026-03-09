@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { Base } from '../src/errors/index.js';
+import { Internal } from '../src/errors/index.js';
 
 let io;
 
@@ -12,7 +12,7 @@ const initSocket = (server) => {
 };
 
 const getIO = () => {
-  if (!io) throw new Base('Socket.io not initialized!');
+  if (!io) throw new Internal('Socket.io not initialized!');
 
   return io;
 };

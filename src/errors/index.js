@@ -3,9 +3,9 @@ import Base from './Base.js';
 import InvalidRequest from './InvalidRequest.js';
 import Unathorized from './Unathorized.js';
 import Forbidden from './Forbidden.js';
-import InvalidToken from './InvalidToken.js';
 import ServiceUnavailable from './ServiceUnavailable.js';
 import mapSequelizeError from './SequelizeMap.js';
+import Internal from './Internal.js';
 
 export {
   mapSequelizeError,
@@ -13,7 +13,7 @@ export {
   Base,
   InvalidRequest,
   Unathorized,
-  InvalidToken,
   Forbidden,
   ServiceUnavailable,
+  Internal,
 };

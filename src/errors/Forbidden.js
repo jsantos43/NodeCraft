@@ -1,8 +1,8 @@
 import Base from './Base.js';
 
 class Forbidden extends Base {
-  constructor(message = "You don't have necessary permission!") {
-    super(message, 403, 'FORBIDDEN');
+  constructor(details = []) {
+    super("You don't have necessary permission!", 403, 'FORBIDDEN', details);
   }
 }
 

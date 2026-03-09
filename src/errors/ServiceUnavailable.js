@@ -1,8 +1,8 @@
 import Base from './Base.js';
 
 class ServiceUnavailable extends Base {
-  constructor(message = 'Service is unavailable!') {
-    super(message, 503, 'SERVICE_UNAVAILABLE');
+  constructor(details = []) {
+    super('Service is unavailable!', 503, 'SERVICE_UNAVAILABLE', details);
   }
 }
 

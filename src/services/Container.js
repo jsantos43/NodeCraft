@@ -3,7 +3,7 @@ import docker from '../../config/docker.js';
 import config from '../../config/config.js';
 import InstanceModel from '../models/Instance.js';
 import logger from '../../config/logger.js';
-import { Base } from '../errors/index.js';
+import { Internal } from '../errors/index.js';
 
 class Container {
   static async create(instance) {
@@ -105,7 +105,7 @@ class Container {
         ],
       };
     } else {
-      throw new Base('No container game type available!');
+      throw new Internal('No container game type available!');
     }
 
     const container = await docker.createContainer({

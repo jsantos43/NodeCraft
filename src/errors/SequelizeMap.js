@@ -8,7 +8,6 @@ import InvalidRequest from './InvalidRequest.js';
 const mapSequelizeError = (error) => {
   if (error instanceof ValidationError) {
     return new InvalidRequest(
-      'Invalid Data!',
       error.errors.map((e) => ({
         field: e.path,
         message: e.message,
@@ -18,7 +17,6 @@ const mapSequelizeError = (error) => {
 
   if (error instanceof UniqueConstraintError) {
     return new InvalidRequest(
-      'Duplicate registration',
       error.errors.map((e) => ({
         field: e.path,
         message: e.message,
@@ -28,7 +26,6 @@ const mapSequelizeError = (error) => {
 
   if (error instanceof ForeignKeyConstraintError) {
     return new InvalidRequest(
-      'Invalid reference',
       [{
         message: 'Invalid relationship',
       }],

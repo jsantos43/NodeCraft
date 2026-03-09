@@ -9,7 +9,7 @@ const validate = (schema, property = 'body') => (req, res, next) => {
     stripUnknown: true,
     convert: true,
   });
-  if (error) return handleError(new InvalidRequest('Invalid Request Body', error.details), req, res);
+  if (error) return handleError(new InvalidRequest(error.details), req, res);
 
   req[property] = value;
   return next();

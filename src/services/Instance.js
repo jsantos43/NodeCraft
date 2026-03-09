@@ -6,7 +6,7 @@ import {
   instanceInclude,
   Instance as Model,
 } from '../models/index.js';
-import { NotFound, Base } from '../errors/index.js';
+import { NotFound, Internal } from '../errors/index.js';
 import Container from './Container.js';
 import Link from './Link.js';
 import config from '../../config/config.js';
@@ -20,7 +20,7 @@ class Instance {
     // Select game model
     const gameType = instanceData.type;
     const TargetModel = gameModels[gameType];
-    if (!TargetModel) throw new Base('Game model not found!');
+    if (!TargetModel) throw new Internal('Game model not found!');
 
     // Pick up a server port
     const port = await Instance.selectPort();
@@ -166,7 +166,7 @@ class Instance {
 
     try {
       const Runtime = gameRuntimes[instance.type];
-      if (!Runtime) throw new Base('Instace game runtime not found!');
+      if (!Runtime) throw new Internal('Instace game runtime not found!');
 
       running[id] = new Runtime(instance, () => Instance.readOne(id));
       await instance.update({ status: 'running' });

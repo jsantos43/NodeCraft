@@ -28,7 +28,7 @@ const auth = (permission) => async (req, res, next) => {
     if (authorized) return next();
 
     // Throw forbidden error if user is not authorized
-    throw new Forbidden();
+    throw new Forbidden(`You need ${permission}!`);
   } catch (err) {
     return handleError(err, req, res);
   }

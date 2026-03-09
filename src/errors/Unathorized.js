@@ -1,8 +1,8 @@
 import Base from './Base.js';
 
 class Unathorized extends Base {
-  constructor(message = 'Unathorized!') {
-    super(message, 401, 'UNATHORIZED');
+  constructor(details = []) {
+    super('Unathorized!', 401, 'UNATHORIZED', details);
   }
 }
 
