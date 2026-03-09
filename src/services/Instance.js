@@ -118,9 +118,13 @@ class Instance {
 
     for (const instance of instances) {
       try {
+        const isRunning = instance.status === 'running';
+
         await Instance.stop(instance.id);
 
         await Backup.execute(instance);
+
+        if (isRunning) await Instance.run(instance.id);
       } catch (err) {
         logger.error({ err }, 'Error in an instance maintenance');
       }

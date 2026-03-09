@@ -1,10 +1,55 @@
 {
   "get": {
     "summary": "read all Links",
-    "responses": {},
     "tags": [
       "Link"
-    ]
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/link.json#/readAll"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "post": {
+    "summary": "create Link",
+    "tags": [
+      "Link"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/link.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/link.json#/default"
+    }
   },
   "parameters": [
     {
@@ -13,55 +58,7 @@
       "required": true,
       "deprecated": false,
       "schema": {},
-      "example": "dabf5afd-4011-4394-b7e7-67c8c12dc146"
+      "example": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd"
     }
-  ],
-  "post": {
-    "summary": "create Link",
-    "responses": {},
-    "tags": [
-      "Link"
-    ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "gamertags": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "color"
-                }
-              },
-              "permissions": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uri"
-                }
-              },
-              "privileges": {
-                "type": "boolean"
-              },
-              "access": {
-                "type": "string"
-              }
-            }
-          },
-          "example": {
-            "gamertags": [
-              "Cabace"
-            ],
-            "permissions": [
-              "instance:read"
-            ],
-            "privileges": true,
-            "access": "monitored"
-          }
-        }
-      }
-    }
-  }
+  ]
 }

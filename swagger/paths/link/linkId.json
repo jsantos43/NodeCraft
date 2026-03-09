@@ -1,10 +1,78 @@
 {
   "get": {
     "summary": "read a Link",
-    "responses": {},
     "tags": [
       "Link"
-    ]
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/link.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "put": {
+    "summary": "update link",
+    "tags": [
+      "Link"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/link.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/link.json#/default"
+    }
+  },
+  "delete": {
+    "summary": "delete Link",
+    "tags": [
+      "Link"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/link.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
   },
   "parameters": [
     {
@@ -14,7 +82,7 @@
       "schema": {
         "type": "string"
       },
-      "example": "f12a7f95-9d0d-4769-819f-c7d5fce31c06"
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
     },
     {
       "name": "linkId",
@@ -23,53 +91,7 @@
       "schema": {
         "type": "string"
       },
-      "example": "af344d9c-2fa6-4b49-89b2-70b0cdb2e25b"
+      "example": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd"
     }
-  ],
-  "put": {
-    "summary": "update link",
-    "responses": {},
-    "tags": [
-      "Link"
-    ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "javaGamertag": {
-                "type": "string"
-              },
-              "access": {
-                "type": "string"
-              },
-              "permissions": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uri"
-                }
-              }
-            }
-          },
-          "example": {
-            "javaGamertag": "JPGamerPlay",
-            "access": "super",
-            "permissions": [
-              "instance:update",
-              "instance:read"
-            ]
-          }
-        }
-      }
-    }
-  },
-  "delete": {
-    "summary": "delete Link",
-    "responses": {},
-    "tags": [
-      "Link"
-    ]
-  }
+  ]
 }

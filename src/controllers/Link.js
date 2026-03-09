@@ -8,7 +8,7 @@ class Link {
 
       const link = await Service.create(id, data);
 
-      return res.status(200).json({ success: true, link });
+      return res.status(201).json({ success: true, link });
     } catch (err) {
       return next(err);
     }

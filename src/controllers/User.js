@@ -1,6 +1,19 @@
 import Service from '../services/User.js';
 
 class User {
+  static async create(req, res, next) {
+    try {
+      const data = req.body;
+
+      const userId = await Service.create(data);
+      const user = await Service.readOne(userId);
+
+      return res.status(201).json({ success: true, user });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   static async read(req, res, next) {
     try {
       const { user } = req;
@@ -26,19 +39,6 @@ class User {
       const user = await Service.readOne(id);
 
       return res.status(200).json({ success: true, user });
-    } catch (err) {
-      return next(err);
-    }
-  }
-
-  static async create(req, res, next) {
-    try {
-      const data = req.body;
-
-      const userId = await Service.create(data);
-      const user = await Service.readOne(userId);
-
-      return res.status(201).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
