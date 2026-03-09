@@ -1,6 +1,6 @@
 {
   "post": {
-    "summary": "validate User",
+    "summary": "validate User account",
     "tags": [
       "Auth"
     ],
@@ -15,7 +15,7 @@
         "$ref": "../../components/responses/error.json#/Internal"
       },
       "503": {
-        "$ref": "../../components/responses/auth.json#/emailService"
+        "$ref": "../../components/responses/error.json#/UnavailableService"
       }
     },
     "requestBody": {

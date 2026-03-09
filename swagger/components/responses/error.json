@@ -19,29 +19,8 @@
         "example": {
           "success": false,
           "error": "UNATHORIZED",
-          "message": "Invalid Access Token!",
+          "message": "You aren't authorized!",
           "details": []
-        }
-      }
-    }
-  },
-  "DuplicateEmail": {
-    "description": "BAD_REQUEST",
-    "content": {
-      "application/json": {
-        "schema": {
-          "$ref": "../schemas/error.json"
-        },
-        "example": {
-          "success": false,
-          "error": "INVALID_REQUEST",
-          "message": "Invalid Data!",
-          "details": [
-            {
-              "field": "email",
-              "message": "email must be unique"
-            }
-          ]
         }
       }
     }
@@ -56,7 +35,7 @@
         "example": {
           "success": false,
           "error": "INVALID_REQUEST",
-          "message": "Invalid Data!",
+          "message": "You sent an invalid request!",
           "details": []
         }
       }
@@ -89,6 +68,22 @@
           "success": false,
           "error": "NOT_FOUND",
           "message": "Item not found!",
+          "details": []
+        }
+      }
+    }
+  },
+  "UnavailableService": {
+    "description": "SERVICE_UNAVAILABLE",
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "../schemas/error.json"
+        },
+        "example": {
+          "success": false,
+          "error": "SERVICE_UNAVAILABLE",
+          "message": "This service is unavailable!",
           "details": []
         }
       }

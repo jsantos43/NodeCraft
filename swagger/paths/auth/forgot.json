@@ -1,12 +1,12 @@
 {
   "post": {
-    "summary": "forgot User",
+    "summary": "forgot User password",
     "tags": [
       "Auth"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "404": {
         "$ref": "../../components/responses/error.json#/NotFound"
@@ -15,7 +15,7 @@
         "$ref": "../../components/responses/error.json#/Internal"
       },
       "503": {
-        "$ref": "../../components/responses/auth.json#/emailService"
+        "$ref": "../../components/responses/error.json#/UnavailableService"
       }
     },
     "requestBody": {

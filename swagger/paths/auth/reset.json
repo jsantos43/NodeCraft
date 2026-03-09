@@ -1,12 +1,12 @@
 {
   "post": {
-    "summary": "reset User",
+    "summary": "reset User password",
     "tags": [
       "Auth"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "400": {
         "$ref": "../../components/responses/error.json#/InvalidRequest"
@@ -18,7 +18,7 @@
         "$ref": "../../components/responses/error.json#/Internal"
       },
       "503": {
-        "$ref": "../../components/responses/auth.json#/emailService"
+        "$ref": "../../components/responses/error.json#/UnavailableService"
       }
     },
     "requestBody": {

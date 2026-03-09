@@ -1,15 +1,15 @@
 {
   "post": {
-    "summary": "refresh User",
+    "summary": "refresh User access token",
     "tags": [
       "Auth"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "401": {
-        "$ref": "../../components/responses/auth.json#/refreshError"
+        "$ref": "../../components/responses/error.json#/Unathorized"
       },
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"

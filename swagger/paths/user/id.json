@@ -6,7 +6,7 @@
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -26,7 +26,7 @@
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "400": {
         "$ref": "../../components/responses/error.json#/InvalidRequest"
@@ -55,7 +55,7 @@
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"

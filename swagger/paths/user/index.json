@@ -6,7 +6,7 @@
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -23,10 +23,13 @@
     ],
     "responses": {
       "201": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "400": {
-        "$ref": "../../components/responses/error.json#/DuplicateEmail"
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
       },
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
@@ -43,10 +46,13 @@
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "400": {
         "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
       },
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
@@ -63,7 +69,10 @@
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
       },
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"

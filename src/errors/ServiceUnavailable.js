@@ -2,7 +2,7 @@ import Base from './Base.js';
 
 class ServiceUnavailable extends Base {
   constructor(details = []) {
-    super('Service is unavailable!', 503, 'SERVICE_UNAVAILABLE', details);
+    super('This service is unavailable!', 503, 'SERVICE_UNAVAILABLE', details);
   }
 }
 

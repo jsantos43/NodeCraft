@@ -6,7 +6,7 @@
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json"
+        "$ref": "../../components/responses/user.json#/default"
       },
       "401": {
         "$ref": "../../components/responses/auth.json#/invalidLogin"

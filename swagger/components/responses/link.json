@@ -38,7 +38,7 @@
           }
         },
         "examples": {
-          "multipleLinks": {
+          "many Links": {
             "value": {
               "success": true,
               "links": [
@@ -72,7 +72,7 @@
               ]
             }
           },
-          "emptyList": {
+          "empty": {
             "value": {
               "success": true,
               "links": []
