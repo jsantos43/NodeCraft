@@ -14,7 +14,7 @@ const createInstance = Joi.object({
   memory: Joi.number().integer().min(512),
   cpu: Joi.number().integer().min(1),
   maxPlayers: Joi.number().integer().min(1).max(1000),
-  stauts: Joi.forbidden(),
+  status: Joi.forbidden(),
   history: Joi.forbidden(),
   game: Joi.when('type', {
     switch: [

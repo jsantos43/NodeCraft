@@ -15,9 +15,7 @@ class Instance {
 
       const instance = await Service.create(user.id, instanceData, gameData);
 
-      return res.status(201).json({
-        success: true, id: instance.id, instance,
-      });
+      return res.status(201).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -57,7 +55,7 @@ class Instance {
 
       const instance = await Service.update(id, instanceData, gameData);
 
-      return res.status(200).json({ success: true, updated: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -68,7 +66,7 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.delete(id);
 
-      return res.status(200).json({ success: true, deleted: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -79,7 +77,7 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.run(id);
 
-      return res.status(200).json({ success: true, running: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -90,7 +88,7 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.stop(id);
 
-      return res.status(200).json({ success: true, stopping: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -102,7 +100,7 @@ class Instance {
       await Service.stop(id);
       const instance = await Service.run(id);
 
-      return res.status(200).json({ success: true, restarting: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -114,9 +112,7 @@ class Instance {
       const port = await Service.selectPort();
       const instance = await Service.update(id, { port });
 
-      return res.status(200).json({
-        success: true, remapped: true, port, instance,
-      });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }

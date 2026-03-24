@@ -1,10 +1,32 @@
 {
   "post": {
     "summary": "backup Instance",
-    "responses": {},
     "tags": [
       "Instance"
-    ]
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/instance.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      },
+      "503": {
+        "$ref": "../../components/responses/error.json#/UnavailableService"
+      }
+    }
   },
   "parameters": [
     {

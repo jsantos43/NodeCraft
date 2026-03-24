@@ -1,68 +1,45 @@
 {
   "get": {
     "summary": "read all Instances",
-    "responses": {},
-    "tags": [
-      "Instance"
-    ]
-  },
-  "post": {
-    "summary": "create Instance",
-    "responses": {},
     "tags": [
       "Instance"
     ],
-    "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string"
-              },
-              "game": {
-                "type": "object",
-                "properties": {
-                  "software": {
-                    "type": "string"
-                  },
-                  "gamemode": {
-                    "type": "string"
-                  },
-                  "difficulty": {
-                    "type": "string"
-                  },
-                  "pvp": {
-                    "type": "boolean"
-                  },
-                  "forceGamemode": {
-                    "type": "boolean"
-                  },
-                  "maxPlayers": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          },
-          "example": {
-            "name": "Teste",
-            "type": "minecraft",
-            "game": {
-              "software": "paper",
-              "gamemode": "survival",
-              "difficulty": "normal",
-              "pvp": true,
-              "forceGamemode": true,
-              "maxPlayers": 3
-            }
-          }
-        }
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/instance.json#/readAll"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
       }
+    }
+  },
+  "post": {
+    "summary": "create Instance",
+    "tags": [
+      "Instance"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/instance.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/instance.json#/create"
     }
   }
 }
