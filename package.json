@@ -30,6 +30,7 @@
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
+    "mysql2": "^3.20.0",
     "nodemailer": "^8.0.1",
     "pino": "^10.3.1",
     "rcon-client": "^4.2.5",
