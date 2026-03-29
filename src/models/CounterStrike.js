@@ -109,7 +109,7 @@ CounterStrike.init({
     },
   },
   botDifficulty: {
-    type: DataTypes.NUMBER,
+    type: DataTypes.INTEGER,
     defaultValue: 1,
     allowNull: false,
     validate: {
@@ -124,7 +124,7 @@ CounterStrike.init({
     },
   },
   botQuota: {
-    type: DataTypes.NUMBER,
+    type: DataTypes.INTEGER,
     defaultValue: 10,
     allowNull: false,
     validate: {

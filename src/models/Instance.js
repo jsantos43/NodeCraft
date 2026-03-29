@@ -76,7 +76,7 @@ Instance.init({
     },
   },
   maxPlayers: {
-    type: DataTypes.NUMBER,
+    type: DataTypes.INTEGER,
     defaultValue: 10,
     allowNull: false,
     validate: {
@@ -91,7 +91,7 @@ Instance.init({
     },
   },
   status: {
-    type: DataTypes.BOOLEAN,
+    type: DataTypes.STRING,
     values: ['running', 'stopped', 'failed'],
     defaultValue: 'stopped',
     allowNull: false,

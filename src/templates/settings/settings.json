@@ -8,6 +8,13 @@
     "checkLost": 3600000,
     "checkTemp": 300000
   },
+  "database": {
+    "enable": false,
+    "host": null,
+    "username": null,
+    "password": null,
+    "name": null
+  },
   "email": {
     "enable": false,
     "host": null,

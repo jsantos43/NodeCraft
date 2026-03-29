@@ -129,7 +129,6 @@ const instanceInclude = [
 ];
 
 // await db.sync({ force: true });
-await db.query('PRAGMA foreign_keys = ON');
 
 export {
   db,
