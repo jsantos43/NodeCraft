@@ -172,10 +172,10 @@ Fluxo seguro e preparado para aplicações web e mobile.
 ## 🛣️ Roadmap
 
 * [x] Minecraft estável
-* [ ] Counter-Strike
-* [ ] Terraria
-* [ ] Kerbal Space Program
-* [ ] Hytale
+* [x] Counter-Strike
+* [x] Terraria
+* [x] Kerbal Space Program
+* [x] Hytale
 * [ ] Sistema de plugins por jogo
 * [ ] Painel web administrativo
 * [ ] Suporte a múltiplos bancos de dados

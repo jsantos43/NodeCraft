@@ -1,5 +1,5 @@
 import Service from '../services/Instance.js';
-import Validator from '../validators/Instance.js';
+import BackupService from '../services/Backup.js';
 
 class Instance {
   static async create(req, res, next) {
@@ -8,12 +8,14 @@ class Instance {
 
       // Verify user plan(future)
 
-      Validator(body, false, true);
-      const instance = await Service.create(body, user.id);
+      // Get instance data
+      const instanceData = { ...body };
+      delete instanceData.game;
+      const gameData = body?.game || {};
 
-      return res.status(201).json({
-        success: true, id: instance.id, building: true, instance,
-      });
+      const instance = await Service.create(user.id, instanceData, gameData);
+
+      return res.status(201).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -46,10 +48,14 @@ class Instance {
       const { id } = req.params;
       const { body } = req;
 
-      Validator(body, true);
-      const instance = await Service.update(id, body);
+      // Get instance data
+      const instanceData = { ...body };
+      delete instanceData.game;
+      const gameData = body?.game || {};
 
-      return res.status(200).json({ success: true, updated: true, instance });
+      const instance = await Service.update(id, instanceData, gameData);
+
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -60,7 +66,7 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.delete(id);
 
-      return res.status(200).json({ success: true, deleted: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -71,7 +77,7 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.run(id);
 
-      return res.status(200).json({ success: true, running: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -82,7 +88,7 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.stop(id);
 
-      return res.status(200).json({ success: true, stopping: true, instance });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -94,25 +100,7 @@ class Instance {
       await Service.stop(id);
       const instance = await Service.run(id);
 
-      return res.status(200).json({ success: true, restarting: true, instance });
-    } catch (err) {
-      return next(err);
-    }
-  }
-
-  static async updateVersion(req, res, next) {
-    try {
-      const { id } = req.params;
-      const force = req?.query?.force === 'true';
-      const instance = await Service.readOne(id);
-      const { info, updating } = await Service.install(instance, force);
-
-      return res.status(200).json({
-        success: true,
-        version: info.instanceVersion || null,
-        msg: updating ? 'Updating!' : 'All in date!',
-        info,
-      });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -124,9 +112,7 @@ class Instance {
       const port = await Service.selectPort();
       const instance = await Service.update(id, { port });
 
-      return res.status(200).json({
-        success: true, remapped: true, port, instance,
-      });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }
@@ -136,9 +122,10 @@ class Instance {
     try {
       const { id } = req.params;
 
-      await Service.backup(id);
+      const instance = await Service.readOne(id);
+      BackupService.execute(instance, true);
 
-      return res.status(200).json({ success: true });
+      return res.status(200).json({ success: true, instance });
     } catch (err) {
       return next(err);
     }

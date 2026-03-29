@@ -1,60 +1,70 @@
 import { Router } from 'express';
 import Controller from '../controllers/File.js';
-import Middleware from '../middlewares/File.js';
-import InstanceMiddleware from '../middlewares/Instance.js';
-import auth from '../middlewares/auth.js';
-import uploader from '../middlewares/uploader.js';
+import {
+  auth,
+  uploader,
+  verifyPath,
+  validate,
+  verifyNotRunning,
+} from '../middlewares/index.js';
+import { createFile, updateFile } from '../schemas/index.js';
 
 const router = Router();
 
 router
-  .get( // Read root files/folders
-    '/:id/file',
-    (req, res, next) => auth('instance:file:read', req, res, next),
-    Middleware.verifyPath,
+  .get( // [Query: path, download]
+    '/:id/files',
+    auth('instance:file:read'),
+    verifyPath(),
     Controller.read,
   )
-  .get( // Read content or Download files/folders
-    '/:id/file/*path',
-    // (req, res, next) => auth('instance:file:read', req, res, next),
-    Middleware.verifyPath,
-    Controller.read,
-  )
-  .post( // Unzip files
-    '/:id/file/*path/actions/unzip',
-    (req, res, next) => auth('instance:file:unzip', req, res, next),
-    Middleware.verifyPath,
-    Controller.unzip,
-  )
-  .post( // Create or Upload files/folders
-    '/:id/file/*path',
-    (req, res, next) => auth('instance:file:create', req, res, next),
-    InstanceMiddleware.verifyRunning,
-    Middleware.verifyNewPath,
-    uploader.single('file'),
+
+  .post( // [Body: type, content | Query: destiny]
+    '/:id/files/create',
+    auth('instance:file:write'),
+    verifyPath(true),
+    validate(createFile),
     Controller.create,
   )
-  .put( // Update files content
-    '/:id/file/*path',
-    (req, res, next) => auth('instance:file:update', req, res, next),
-    InstanceMiddleware.verifyRunning,
-    Middleware.verifyPath,
+
+  .post( // [Query: destiny]
+    '/:id/files/upload',
+    auth('instance:file:write'),
+    verifyPath(true),
+    uploader.single('file'),
+    Controller.upload,
+  )
+
+  .put( // [Body: content | Query: path]
+    '/:id/files/edit',
+    auth('instance:file:write'),
+    verifyNotRunning,
+    verifyPath(),
+    validate(updateFile),
     Controller.update,
   )
-  .delete( // Delete files/folders
-    '/:id/file/*path',
-    (req, res, next) => auth('instance:file:delete', req, res, next),
-    InstanceMiddleware.verifyRunning,
-    Middleware.verifyPath,
+
+  .delete( // [Query: path]
+    '/:id/files/delete',
+    auth('instance:file:write'),
+    verifyNotRunning,
+    verifyPath(),
     Controller.delete,
   )
-  .patch( // Move files/folders
-    '/:id/file/*path/to/*destiny',
-    (req, res, next) => auth('instance:file:move', req, res, next),
-    InstanceMiddleware.verifyRunning,
-    Middleware.verifyPath,
-    Middleware.verifyDestiny,
-    Controller.move,
+
+  .post( // [Query: path, destiny, actions(copy or move)]
+    '/:id/files/transfer',
+    auth('instance:file:transfer'),
+    verifyNotRunning,
+    verifyPath(true),
+    Controller.transfer,
+  )
+
+  .post( // [Query: path, destiny]
+    '/:id/files/unzip',
+    auth('instance:file:zip'),
+    verifyPath(true),
+    Controller.unzip,
   );
 
 export default router;

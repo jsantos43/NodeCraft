@@ -1,31 +1,43 @@
-import fs from 'fs';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import Container from './Container.js';
 import Instance from './Instance.js';
+import File from './File.js';
 import logger from '../../config/logger.js';
+import { ensureNetwork, ensureImage } from '../utils/ensureDocker.js';
+import db from '../../config/sequelize.js';
 
 class Maintenance {
-  static async ensureDefaultPaths() {
+  static async ensureEnviroment() {
+    // Ensure default paths
     try {
-      if (!fs.existsSync(config.instance.path)) fs.mkdirSync(config.instance.path);
-      if (!fs.existsSync(config.temp.path)) fs.mkdirSync(config.temp.path);
+      if (!(await File.verifyExists(config.instance.path))) {
+        await File.createOneDirectory(config.instance.path);
+      }
+
+      if (!(await File.verifyExists(config.temp.path))) {
+        await File.createOneDirectory(config.temp.path);
+      }
     } catch (err) {
       logger.error({ err }, 'Error to ensure default paths');
     }
-  }
 
-  static async ensureDocker() {
+    // Ensure docker
     try {
-      await Container.ensureImage('itzg/minecraft-server');
-      await Container.ensureNetwork('nodecraft-net');
+      await ensureNetwork('nodecraft-net');
 
-      await Instance.attachAll();
+      for (const [game, gameSettings] of Object.entries(config.games)) {
+        try {
+          await ensureImage(gameSettings.image);
+        } catch (err) {
+          logger.error({ err }, `Error to ensure docker ${game} image`);
+        }
+      }
     } catch (err) {
-      logger.error({ err }, 'Error to ensure docker and instances');
+      logger.error({ err }, 'Error to ensure docker');
     }
   }
 
-  static scheduleInstancesUpdate() {
+  static scheduleMaintenance() {
     let lastRunDate = null;
 
     setInterval(async () => {
@@ -39,94 +51,37 @@ class Maintenance {
         if (isThreeAM && lastRunDate !== today) {
           lastRunDate = today;
 
+          // Wipe sqlite3
+          await db.query('VACUUM');
+
           // Update all instances function
-          await Instance.updateAll();
+          await Instance.maintenanceAll();
         }
       } catch (err) {
-        logger.error({ err }, 'Error to update all instances');
+        logger.error({ err }, 'Error in maintenance');
       }
     }, config.interval.checkUpdate);
   }
 
-  static scheduleInstancesBackup() {
-    let lastRunDate = null;
-
-    setInterval(async () => {
-      try {
-        // Read time
-        const now = new Date();
-        const isFiveAM = now.getHours() === 5;
-        const today = now.toLocaleDateString('sv-SE');
-
-        // Verify if is 5 hour and backup was not executed today
-        if (isFiveAM && lastRunDate !== today) {
-          lastRunDate = today;
-
-          // Backup all instances function
-          await Instance.backupAll();
-        }
-      } catch (err) {
-        logger.error({ err }, 'Error to backup all instances');
-      }
-    }, config.interval.checkUpdate);
-  }
-
-  static scheduleRemoveOldTemp() {
-    const removeOldTemp = () => {
-      try {
-        // Verify if temporary path exists
-        if (!fs.existsSync(config.temp.path)) return;
-
-        // Read temporary path items
-        const items = fs.readdirSync(config.temp.path);
-
-        // Get timestamp
-        const now = Date.now();
-
-        for (const item of items) {
-          // Verify if item name is a timestamp
-          const createdAt = Number(item);
-          if (Number.isInteger(createdAt) && createdAt > 0) {
-            if (now - createdAt >= config.temp.lifetime) fs.rmSync(`${config.temp.path}/${item}`, { recursive: true, force: true });
-          } else {
-            fs.rmSync(`${config.temp.path}/${item}`, { recursive: true, force: true });
-          }
-        }
-      } catch (err) {
-        logger.error({ err }, 'Error to remove old temp paths');
-      }
-    };
-
-    // First run
-    removeOldTemp();
-
-    // Set periodically
-    setInterval(removeOldTemp, config.interval.checkTemp);
-  }
-
-  static scheduleRemoveLostInstances() {
+  static scheduleCleanup() {
     // First run
     Instance.verifyLost();
+    Container.removeLost();
+    File.removeOldTemp();
 
     // Set periodically
-    setInterval(Instance.verifyLost, config.interval.checkLost);
-  }
+    setInterval(() => {
+      Instance.verifyLost();
+      Container.removeLost();
+    }, config.interval.checkLost);
 
-  static scheduleRemoveLostContainers() {
-    // First run
-    Container.removeLostContainers();
-
-    // Set periodically
-    setInterval(Container.removeLostContainers, config.interval.checkLost);
+    setInterval(File.removeOldTemp, config.interval.checkTemp);
   }
 
   static scheduleJobs() {
     try {
-      Maintenance.scheduleInstancesUpdate();
-      Maintenance.scheduleInstancesBackup();
-      Maintenance.scheduleRemoveOldTemp();
-      Maintenance.scheduleRemoveLostInstances();
-      Maintenance.scheduleRemoveLostContainers();
+      Maintenance.scheduleCleanup();
+      Maintenance.scheduleMaintenance();
     } catch (err) {
       logger.error({ err }, 'Error to schedule instances jobs');
     }

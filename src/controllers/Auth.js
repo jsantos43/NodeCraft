@@ -1,5 +1,5 @@
-import config from '../../config/index.js';
-import { InvalidRequest, InvalidToken } from '../errors/index.js';
+import config from '../../config/config.js';
+import { InvalidRequest, Unathorized } from '../errors/index.js';
 import Service from '../services/Auth.js';
 
 class Auth {
@@ -7,7 +7,9 @@ class Auth {
     try {
       const data = req.body;
 
-      const { accessToken, refreshToken } = await Service.authenticate(data.email, data.password);
+      const {
+        user, accessToken, refreshToken,
+      } = await Service.authenticate(data.email, data.password);
 
       // Set accessToken in response cookie
       res.cookie('accessToken', accessToken, {
@@ -24,7 +26,7 @@ class Auth {
         path: '/auth/refresh',
       });
 
-      return res.status(200).json({ success: true, authenticated: true });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -34,9 +36,9 @@ class Auth {
     try {
       // Get refresh token from request
       const token = req?.cookies?.refreshToken;
-      if (!token) throw new InvalidToken('Refresh token is null!');
+      if (!token) throw new Unathorized('Refresh token is null!');
 
-      const { accessToken, refreshToken } = await Service.refreshAuthentication(token);
+      const { user, accessToken, refreshToken } = await Service.refreshAuthentication(token);
 
       // Set accessToken in response cookie
       res.cookie('accessToken', accessToken, {
@@ -53,7 +55,7 @@ class Auth {
         path: '/auth/refresh',
       });
 
-      return res.status(200).json({ success: true, refreshed: true });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -69,7 +71,7 @@ class Auth {
         path: '/auth/refresh',
       });
 
-      return res.status(200).json({ success: true, disconnected: true });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -82,7 +84,7 @@ class Auth {
 
       await Service.sendVerification(user);
 
-      return res.status(200).json({ success: true, msg: `Account verification sent to ${user.email}` });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -91,11 +93,11 @@ class Auth {
   static async validateAccount(req, res, next) {
     try {
       const token = req?.body?.token;
-      if (typeof token !== 'string') throw new InvalidToken();
+      if (typeof token !== 'string') throw new InvalidRequest('Email token is invalid!');
 
-      await Service.validateAccount(token.trim());
+      const user = await Service.validateAccount(token.trim());
 
-      return res.status(200).json({ success: true, msg: 'Account Verified!' });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -105,9 +107,9 @@ class Auth {
     try {
       const email = req?.body?.email;
 
-      await Service.forgotPassword(email);
+      const user = await Service.forgotPassword(email);
 
-      return res.status(200).json({ success: true, msg: `Reset password sent to ${email}` });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -118,12 +120,12 @@ class Auth {
       const token = req?.body?.token;
       const password = req?.body?.password;
 
-      if (typeof token !== 'string') throw new InvalidToken();
+      if (typeof token !== 'string') throw new InvalidRequest('Reset password token is invalid!');
       if (!password) throw new InvalidRequest('Password cannot be null!');
 
-      await Service.resetPassword(token.trim(), password);
+      const user = await Service.resetPassword(token.trim(), password);
 
-      return res.status(200).json({ success: true, msg: 'Password reseted!' });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }

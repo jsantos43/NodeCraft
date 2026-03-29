@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import Controller from '../controllers/Auth.js';
-import auth from '../middlewares/auth.js';
-import verifyService from '../middlewares/verifyService.js';
+import { auth, verifyService } from '../middlewares/index.js';
 
 const router = Router();
 
@@ -16,29 +15,29 @@ router
   )
   .post(
     '/auth/logout',
-    (req, res, next) => auth('logged', req, res, next),
+    auth('logged'),
     Controller.logout,
   )
   .post(
     '/auth/verify',
-    (req, res, next) => verifyService('email', req, res, next),
-    (req, res, next) => auth('logged', req, res, next),
+    verifyService('email'),
+    auth('logged'),
     Controller.sendVerification,
   )
   .post(
     '/auth/validate',
-    (req, res, next) => verifyService('email', req, res, next),
-    (req, res, next) => auth('logged', req, res, next),
+    verifyService('email'),
+    auth('logged'),
     Controller.validateAccount,
   )
   .post(
     '/auth/forgot',
-    (req, res, next) => verifyService('email', req, res, next),
+    verifyService('email'),
     Controller.forgotPassword,
   )
   .post(
     '/auth/reset',
-    (req, res, next) => verifyService('email', req, res, next),
+    verifyService('email'),
     Controller.resetPassword,
   );
 

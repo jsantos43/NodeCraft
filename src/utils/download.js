@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import FileService from '../services/File.js';
 
 const download = async (path, url) => {
   const response = await fetch(url);
@@ -8,7 +8,7 @@ const download = async (path, url) => {
   const arrayBuffer = await blob.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  writeFileSync(path, buffer);
+  await FileService.createOneFile(path, buffer);
 };
 
 export default download;

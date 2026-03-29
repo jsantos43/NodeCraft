@@ -1,31 +1,31 @@
 import multer from 'multer';
-import config from '../../config/index.js';
+import Path from 'path';
+import config from '../../config/config.js';
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    const { id } = req.params;
-    let path = req?.params?.path;
-    if (Array.isArray(path)) path = req.params.path.join('/');
+    try {
+      const destiny = req.query?.destiny;
 
-    const absolutePath = `${config.instance.path}/${id}/${path}`;
-    const pathSplited = path.split('/');
+      const istancePath = Path.join(config.instance.path, req.params.id);
+      const fullDestiny = Path.join(istancePath, destiny);
 
-    const filename = pathSplited[pathSplited.length - 1];
-    const destiny = absolutePath.replace(filename, '');
-    const location = path.replace(filename, '');
+      req.filename = Path.basename(fullDestiny);
+      req.saveUploadPath = Path.dirname(fullDestiny);
 
-    req.filename = filename;
-    req.destiny = destiny;
-    req.location = location;
-    cb(null, destiny);
+      cb(null, req.saveUploadPath);
+    } catch (err) {
+      cb(err);
+    }
   },
+
   filename(req, file, cb) {
-    cb(null, req.filename);
+    try {
+      cb(null, req.filename);
+    } catch (err) {
+      cb(err);
+    }
   },
 });
 
-const uploader = multer({
-  storage,
-});
-
-export default uploader;
+export default multer({ storage });

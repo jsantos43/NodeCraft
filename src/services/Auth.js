@@ -2,16 +2,14 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import {
-  BadRequest,
-  Unathorized,
-  InvalidToken,
+  NotFound, InvalidRequest, Unathorized,
 } from '../errors/index.js';
 import sendEmail from '../utils/sendEmail.js';
 import renderTemplate from '../utils/renderTemplate.js';
 import User from './User.js';
 import Instance from './Instance.js';
 import Link from './Link.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 
 class Auth {
   static hashToken(token) {
@@ -92,14 +90,14 @@ class Auth {
       return payload;
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
-        throw new InvalidToken('Token is expired!');
+        throw new Unathorized('Token is expired!');
       } else if (err.name === 'JsonWebTokenError') {
-        throw new InvalidToken('Token is invalid!');
+        throw new Unathorized('Token is invalid!');
       } else if (err.name === 'NotBeforeError') {
-        throw new InvalidToken('Token is not yet valid!');
+        throw new Unathorized('Token is not yet valid!');
       }
 
-      throw new InvalidToken();
+      throw new Unathorized('Token is invalid!');
     }
   }
 
@@ -114,22 +112,26 @@ class Auth {
     const refreshToken = Auth.generateRandomToken();
     await Auth.saveToken(user.id, refreshToken, 'refresh');
 
-    return { user, accessToken, refreshToken };
+    const safeUser = await User.readOne(user.id);
+
+    return { user: safeUser, accessToken, refreshToken };
   }
 
   static async refreshAuthentication(token) {
     const hashedToken = Auth.hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'refresh');
 
-    if (!user || !user?.refreshTokenHash) throw new InvalidToken('Refresh token is invalid!');
-    if (hashedToken !== user.refreshTokenHash) throw new InvalidToken('Refresh token is invalid!');
-    if (user.refreshTokenExpires < Date.now()) throw new InvalidToken('Refresh token expiried!');
+    if (!user || !user?.refreshTokenHash) throw new InvalidRequest('Refresh token is invalid!');
+    if (hashedToken !== user.refreshTokenHash) throw new InvalidRequest('Refresh token is invalid!');
+    if (user.refreshTokenExpires < Date.now()) throw new InvalidRequest('Refresh token is expiried!');
 
     const accessToken = Auth.generateAccessToken(user.id);
     const refreshToken = Auth.generateRandomToken();
     await Auth.saveToken(user.id, refreshToken, 'refresh');
 
-    return { user, accessToken, refreshToken };
+    const safeUser = await User.readOne(user.id);
+
+    return { user: safeUser, accessToken, refreshToken };
   }
 
   static async sendVerification(user) {
@@ -140,7 +142,7 @@ class Auth {
 
     // Send Email
     const link = `${config.site.validateUrl}?token=${token}`;
-    const html = renderTemplate('email/verify.html', {
+    const html = await renderTemplate('email/verify.html', {
       name: user.name || 'usuário',
       link,
       token,
@@ -159,18 +161,22 @@ class Auth {
     const hashedToken = Auth.hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'email');
 
-    if (!user || !user?.emailTokenHash) throw new InvalidToken('Email token is invalid!');
-    if (hashedToken !== user.emailTokenHash) throw new InvalidToken('Email token is invalid!');
-    if (user.emailTokenExpires < Date.now()) throw new InvalidToken('Email token expiried!');
+    if (!user || !user?.emailTokenHash) throw new InvalidRequest('Email token is invalid!');
+    if (hashedToken !== user.emailTokenHash) throw new InvalidRequest('Email token is invalid!');
+    if (user.emailTokenExpires < Date.now()) throw new InvalidRequest('Email token is expired!');
 
     // Set verified account and wipe tokens
     await User.update(user.id, { verified: true });
     await Auth.wipeToken(user.id, 'email');
+
+    const safeUser = await User.readOne(user.id);
+
+    return safeUser;
   }
 
   static async forgotPassword(email) {
     const user = await User.readAllAttributes(null, email);
-    if (!user) throw new BadRequest('User not found!');
+    if (!user) throw new NotFound('User not found!');
 
     const token = Auth.generateRandomToken();
 
@@ -180,7 +186,7 @@ class Auth {
     // Send Email
 
     const link = `${config.site.resetUrl}?token=${token}`;
-    const html = renderTemplate('email/reset.html', {
+    const html = await renderTemplate('email/reset.html', {
       name: user.name || 'usuário',
       link,
       token,
@@ -194,20 +200,28 @@ class Auth {
       html,
       text: `Link: ${link} | Token: ${token}`,
     });
+
+    const safeUser = await User.readOne(user.id);
+
+    return safeUser;
   }
 
   static async resetPassword(token, password) {
     const hashedToken = Auth.hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'password');
 
-    if (!user || !user?.resetPasswordTokenHash) throw new InvalidToken('Reset password token is invalid!');
-    if (hashedToken !== user.resetPasswordTokenHash) throw new InvalidToken('Reset password token is invalid!');
-    if (user.resetPasswordTokenExpires < Date.now()) throw new InvalidToken('Reset password token expiried!');
+    if (!user || !user?.resetPasswordTokenHash) throw new InvalidRequest('Reset password token is invalid!');
+    if (hashedToken !== user.resetPasswordTokenHash) throw new InvalidRequest('Reset password token is invalid!');
+    if (user.resetPasswordTokenExpires < Date.now()) throw new InvalidRequest('Reset password token is expiried!');
 
     // Change password and wipe tokens
     const hashedPassword = bcrypt.hashSync(password, 12);
     await User.update(user.id, { password: hashedPassword });
     await Auth.wipeToken(user.id, 'password');
+
+    const safeUser = await User.readOne(user.id);
+
+    return safeUser;
   }
 }
 

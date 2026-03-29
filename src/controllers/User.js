@@ -1,7 +1,19 @@
 import Service from '../services/User.js';
-import Validator from '../validators/User.js';
 
 class User {
+  static async create(req, res, next) {
+    try {
+      const data = req.body;
+
+      const userId = await Service.create(data);
+      const user = await Service.readOne(userId);
+
+      return res.status(201).json({ success: true, user });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   static async read(req, res, next) {
     try {
       const { user } = req;
@@ -32,29 +44,14 @@ class User {
     }
   }
 
-  static async create(req, res, next) {
-    try {
-      const data = req.body;
-
-      Validator(data, false, true);
-      const userId = await Service.create(data);
-      const user = await Service.readOne(userId);
-
-      return res.status(201).json({ success: true, created: true, user });
-    } catch (err) {
-      return next(err);
-    }
-  }
-
   static async update(req, res, next) {
     try {
       const data = req.body;
       const { user } = req;
 
-      Validator(data, true);
       const userUpdated = await Service.update(user.id, data);
 
-      return res.status(200).json({ success: true, updated: true, user: userUpdated });
+      return res.status(200).json({ success: true, user: userUpdated });
     } catch (err) {
       return next(err);
     }
@@ -65,10 +62,9 @@ class User {
       const data = req.body;
       const { id } = req.params;
 
-      Validator(data, true);
       const user = await Service.update(id, data);
 
-      return res.status(200).json({ success: true, updated: true, user });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -79,7 +75,7 @@ class User {
       const { user } = req;
       await Service.delete(user.id);
 
-      return res.status(200).json({ success: true, deleted: true, user });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }
@@ -90,7 +86,7 @@ class User {
       const { id } = req.params;
       const user = await Service.delete(id);
 
-      return res.status(200).json({ success: true, deleted: true, user });
+      return res.status(200).json({ success: true, user });
     } catch (err) {
       return next(err);
     }

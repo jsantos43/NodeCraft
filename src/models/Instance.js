@@ -37,72 +37,70 @@ Instance.init({
       },
     },
   },
-  software: {
+  type: {
     type: DataTypes.STRING,
-    values: ['vanilla', 'paper', 'purpur'],
-    defaultValue: 'vanilla',
+    values: ['minecraft', 'hytale', 'counterstrike', 'terraria', 'kerbal'],
+    defaultValue: 'minecraft',
     allowNull: false,
     validate: {
       isIn: {
-        args: [['vanilla', 'paper', 'purpur']],
-        msg: 'software field must be vanilla, paper or purpur!',
+        args: [['minecraft', 'hytale', 'counterstrike', 'terraria', 'kerbal']],
+        msg: 'type field must be a supported game!',
       },
     },
   },
-  bedrock: {
-    type: DataTypes.BOOLEAN,
+  port: {
+    type: DataTypes.INTEGER,
     allowNull: true,
-    defaultValue: false,
   },
-  maxHistory: {
+  memory: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 150,
+    defaultValue: 1024,
     validate: {
       min: {
-        args: [0],
-        msg: 'maxHistory field must be greater than or equal to 0!',
-      },
-      max: {
-        args: [10000],
-        msg: 'maxHistory field must be lower than or equal to 10000!',
+        args: [512],
+        msg: 'memory field must be greater than or equal to 512mb!',
       },
     },
   },
-  updateAlways: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
-  installed: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-  },
-  version: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: '',
-  },
-  build: {
+  cpu: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 0,
+    defaultValue: 2,
+    validate: {
+      min: {
+        args: [1],
+        msg: 'cpu field must be greater than or equal to 1!',
+      },
+    },
   },
-  geyserBuild: {
-    type: DataTypes.INTEGER,
+  maxPlayers: {
+    type: DataTypes.NUMBER,
+    defaultValue: 10,
     allowNull: false,
-    defaultValue: 0,
+    validate: {
+      min: {
+        args: [1],
+        msg: 'maxPlayers field must be greater than or equal to 1!',
+      },
+      max: {
+        args: [1000],
+        msg: 'maxPlayers field must be lower than or equal to 1000!',
+      },
+    },
   },
-  floodgateBuild: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-  },
-  running: {
+  status: {
     type: DataTypes.BOOLEAN,
+    values: ['running', 'stopped', 'failed'],
+    defaultValue: 'stopped',
     allowNull: false,
-    defaultValue: false,
+    validate: {
+      isIn: {
+        args: [['running', 'stopped', 'failed']],
+        msg: 'status field must have a valid value!',
+      },
+    },
   },
   history: {
     type: DataTypes.JSON,
@@ -119,190 +117,6 @@ Instance.init({
         }
       },
     },
-  },
-
-  // Properties
-  gamemode: {
-    type: DataTypes.STRING,
-    values: ['survival', 'creative', 'adventure'],
-    allowNull: false,
-    defaultValue: 'survival',
-    validate: {
-      isIn: {
-        args: [['survival', 'creative', 'adventure']],
-        msg: 'gamemode field must be survival, creative or adventure!',
-      },
-    },
-  },
-  difficulty: {
-    type: DataTypes.STRING,
-    values: ['peaceful', 'easy', 'normal', 'hard'],
-    allowNull: false,
-    defaultValue: 'normal',
-    validate: {
-      isIn: {
-        args: [['peaceful', 'easy', 'normal', 'hard']],
-        msg: 'difficulty field must be peaceful, easy, normal or hard!',
-      },
-    },
-  },
-  seed: {
-    type: DataTypes.STRING,
-    defaultValue: '',
-    allowNull: false,
-    validate: {
-      len: {
-        args: [0, 32],
-        msg: 'seed field must have a length between 0 and 32!',
-      },
-    },
-  },
-  motd: {
-    type: DataTypes.STRING,
-    defaultValue: '',
-    allowNull: false,
-    validate: {
-      len: {
-        args: [0, 50],
-        msg: 'motd field must have a length between 0 and 50!',
-      },
-    },
-  },
-  levelType: {
-    type: DataTypes.STRING,
-    defaultValue: 'minecraft:normal',
-    values: ['minecraft:normal', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified'],
-    allowNull: false,
-    validate: {
-      isIn: {
-        args: [['minecraft:normal', 'minecraft:flat', 'minecraft:large_biomes', 'minecraft:amplified']],
-        msg: 'levelType field must be minecraft:normal, minecraft:flat, minecraft:large_biomes or minecraft:amplified!',
-      },
-    },
-  },
-  maxPlayers: {
-    type: DataTypes.NUMBER,
-    defaultValue: 5,
-    allowNull: false,
-    validate: {
-      min: {
-        args: [1],
-        msg: 'maxPlayers field must be greater than or equal to 1!',
-      },
-      max: {
-        args: [10000],
-        msg: 'maxPlayers field must be lower than or equal to 10000!',
-      },
-    },
-  },
-  viewDistance: {
-    type: DataTypes.INTEGER,
-    defaultValue: 10,
-    allowNull: false,
-    validate: {
-      min: {
-        args: [3],
-        msg: 'viewDistance field must be greater than or equal to 3!',
-      },
-      max: {
-        args: [32],
-        msg: 'viewDistance field must be lower than or equal to 32!',
-      },
-    },
-  },
-  spawn: {
-    type: DataTypes.INTEGER,
-    defaultValue: 16,
-    allowNull: false,
-    validate: {
-      min: {
-        args: [0],
-        msg: 'spawn field must be greater than or equal to 0!',
-      },
-      max: {
-        args: [32],
-        msg: 'spawn field must be lower than or equal to 32!',
-      },
-    },
-  },
-  idle: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-    validate: {
-      min: {
-        args: [0],
-        msg: 'idle field must be greater than or equal to -1!',
-      },
-      max: {
-        args: [1440],
-        msg: 'idle field must be lower than or equal to 1440!',
-      },
-    },
-  },
-  commandBlock: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-  },
-  pvp: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
-  licensed: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
-  port: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },
-  allowlist: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-  },
-  nether: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-    allowNull: false,
-  },
-  secureProfile: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-    allowNull: false,
-  },
-  forceGamemode: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    allowNull: false,
-  },
-  hardcore: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    allowNull: false,
-  },
-  animals: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
-  monsters: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
-  npcs: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-  },
-  cheats: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
   },
 }, {
   tableName: 'instance',

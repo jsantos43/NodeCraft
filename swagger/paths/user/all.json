@@ -1,0 +1,22 @@
+{
+  "get": {
+    "summary": "read all Users",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/readAll"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  }
+}

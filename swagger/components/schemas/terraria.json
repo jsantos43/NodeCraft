@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "difficulty": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "example": 0
+    },
+    "password": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 32,
+      "example": ""
+    },
+    "motd": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 50,
+      "example": ""
+    }
+  }
+}

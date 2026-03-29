@@ -2,71 +2,70 @@ import { Router } from 'express';
 import Controller from '../controllers/Instance.js';
 import file from './file.js';
 import link from './link.js';
-import auth from '../middlewares/auth.js';
-import Middleware from '../middlewares/Instance.js';
+import {
+  auth, verifyRunning, verifyNotRunning, validate,
+} from '../middlewares/index.js';
+import { createInstance, updateInstance } from '../schemas/index.js';
 
 const router = Router();
 
 router
   .get(
     '/instance',
-    (req, res, next) => auth('logged', req, res, next),
+    auth('logged'),
     Controller.readAll,
   )
   .get(
     '/instance/:id',
-    (req, res, next) => auth('instance:read', req, res, next),
+    auth('instance:read'),
     Controller.readOne,
   )
   .post(
     '/instance',
-    (req, res, next) => auth('logged', req, res, next),
+    auth('logged'),
+    validate(createInstance),
     Controller.create,
   )
   .put(
     '/instance/:id',
-    (req, res, next) => auth('instance:update', req, res, next),
-    Middleware.verifyRunning,
+    auth('instance:update'),
+    verifyNotRunning,
+    validate(updateInstance),
     Controller.update,
   )
   .delete(
     '/instance/:id',
-    (req, res, next) => auth('instance:delete', req, res, next),
-    Middleware.verifyRunning,
+    auth('instance:delete'),
+    verifyNotRunning,
     Controller.delete,
   )
   .post(
     '/instance/:id/run',
-    (req, res, next) => auth('instance:execute', req, res, next),
-    Middleware.verifyRunning,
+    auth('instance:execute'),
+    verifyNotRunning,
     Controller.run,
   )
   .post(
     '/instance/:id/stop',
-    (req, res, next) => auth('instance:execute', req, res, next),
-    Middleware.verifyNotRunning,
+    auth('instance:execute'),
+    verifyRunning,
     Controller.stop,
   )
   .post(
     '/instance/:id/restart',
-    (req, res, next) => auth('instance:execute', req, res, next),
+    auth('instance:execute'),
     Controller.restart,
   )
   .post(
-    '/instance/:id/update',
-    (req, res, next) => auth('instance:update', req, res, next),
-    Middleware.verifyRunning,
-    Controller.updateVersion,
-  )
-  .post(
     '/instance/:id/backup',
-    (req, res, next) => auth('instance:backup', req, res, next),
+    auth('instance:backup'),
+    verifyNotRunning,
     Controller.backup,
   )
   .put(
-    '/instance/:id/remap/port',
-    (req, res, next) => auth('instance:update', req, res, next),
-    Middleware.verifyRunning,
+    '/instance/:id/remap',
+    auth('instance:update'),
+    verifyNotRunning,
     Controller.remapPort,
   )
   .use('/instance', file)

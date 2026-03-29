@@ -18,28 +18,33 @@
   "author": "João Pedro Tomaz dos Santos",
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.969.0",
-    "adm-zip": "^0.5.16",
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "@aws-sdk/client-s3": "^3.997.0",
     "archiver": "^7.0.1",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "dockerode": "^4.0.9",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "gamedig": "^5.3.2",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^2.0.1",
-    "nodemailer": "^7.0.12",
-    "pino": "^10.2.1",
+    "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
+    "nodemailer": "^8.0.1",
+    "pino": "^10.3.1",
     "rcon-client": "^4.2.5",
     "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "socket.io": "^4.8.3",
+    "sqlite3": "^5.1.7",
+    "swagger-ui-express": "^5.0.1",
+    "unzipper": "^0.12.3"
   },
   "devDependencies": {
     "@eslint/create-config": "eslint/create-config",
     "eslint": "^7.32.0 || ^8.2.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.25.2",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.3"
   }
 }

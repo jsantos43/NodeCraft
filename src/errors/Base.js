@@ -5,7 +5,12 @@ class Base extends Error {
     this.status = status;
     this.code = code;
     this.meta = meta;
-    this.details = details;
+
+    if (typeof details === 'string') {
+      this.details = [details];
+    } else {
+      this.details = details;
+    }
   }
 
   send(res) {

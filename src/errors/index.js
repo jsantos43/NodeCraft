@@ -1,13 +1,19 @@
-import BadRequest from './BadRequest.js';
+import NotFound from './NotFound.js';
 import Base from './Base.js';
 import InvalidRequest from './InvalidRequest.js';
 import Unathorized from './Unathorized.js';
-import InvalidToken from './InvalidToken.js';
+import Forbidden from './Forbidden.js';
+import ServiceUnavailable from './ServiceUnavailable.js';
+import mapSequelizeError from './SequelizeMap.js';
+import Internal from './Internal.js';
 
 export {
-  BadRequest,
+  mapSequelizeError,
+  NotFound,
   Base,
   InvalidRequest,
   Unathorized,
-  InvalidToken,
+  Forbidden,
+  ServiceUnavailable,
+  Internal,
 };

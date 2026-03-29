@@ -1,5 +1,4 @@
 import Service from '../services/Link.js';
-import Validator from '../validators/Link.js';
 
 class Link {
   static async create(req, res, next) {
@@ -7,10 +6,9 @@ class Link {
       const id = req?.params?.id;
       const data = req?.body;
 
-      Validator(data, false, true);
       const link = await Service.create(id, data);
 
-      return res.status(200).json({ success: true, link });
+      return res.status(201).json({ success: true, link });
     } catch (err) {
       return next(err);
     }
@@ -43,7 +41,6 @@ class Link {
       const linkId = req?.params?.linkId;
       const data = req?.body;
 
-      Validator(data, true);
       const link = await Service.update(linkId, data);
 
       return res.status(200).json({ success: true, link });

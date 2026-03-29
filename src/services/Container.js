@@ -1,79 +1,133 @@
-import { PassThrough } from 'stream';
+import Path from 'path';
 import docker from '../../config/docker.js';
-import instancesRunning from '../runtime/instancesRunning.js';
-import config from '../../config/index.js';
+import config from '../../config/config.js';
 import InstanceModel from '../models/Instance.js';
 import logger from '../../config/logger.js';
+import { Internal } from '../errors/index.js';
 
 class Container {
-  static ensureImage(imageName) {
-    return new Promise((resolve, reject) => {
-      docker.getImage(imageName).inspect()
-        .then(() => resolve())
-        .catch(() => {
-          docker.pull(imageName, (err, stream) => {
-            if (err) return reject(err);
-
-            return docker.modem.followProgress(
-              stream,
-              (errProgress) => (errProgress ? reject(errProgress) : resolve()),
-            );
-          });
-        });
-    });
-  }
-
-  static async ensureNetwork(networkName) {
-    const networks = await docker.listNetworks();
-
-    let exists = false;
-    networks.forEach((net) => {
-      if (net.Name === networkName) exists = true;
-    });
-
-    if (exists) return;
-
-    await docker.createNetwork({
-      Name: networkName,
-      Driver: 'bridge',
-      Internal: false,
-      Attachable: false,
-    });
-  }
-
   static async create(instance) {
-    await Container.ensureImage('itzg/minecraft-server');
-    await Container.ensureNetwork('nodecraft-net');
+    const existsContainer = await Container.get(instance.id);
+    if (existsContainer) return existsContainer;
 
-    const container = await docker.createContainer({
-      name: `Nodecraft_${instance.id}`,
-      Image: 'itzg/minecraft-server',
-      Env: [
+    const instancePath = Path.join(config.instance.path, instance.id);
+    let enviroment = [];
+    let binds = [];
+    let exposedPorts = {};
+    let portBindings = {};
+    let image = null;
+
+    if (instance.type === 'minecraft') {
+      const gameData = instance?.minecraft;
+      if (!gameData) throw new Error('instance has no minecraft config!');
+
+      enviroment = [
         'EULA=TRUE',
-        'TYPE=CUSTOM',
-        'CUSTOM_SERVER=server.jar',
-
-        // Rcon
         'ENABLE_RCON=true',
         'RCON_PASSWORD=nodecraft',
         'RCON_PORT=25575',
-      ],
+        'VERSION=latest',
+      ];
+      if (gameData.software === 'paper') enviroment.push('TYPE=paper');
+      else if (gameData.software === 'purpur') enviroment.push('TYPE=purpur');
+
+      image = config.games.minecraft.image;
+      binds = [`${instancePath}:/data`];
+      portBindings = {
+        '25565/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+        '25565/udp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else if (instance.type === 'counterstrike') {
+      const gameData = instance?.counterstrike;
+      if (!gameData) throw new Error('instance has no counterstrike config!');
+
+      enviroment = [
+        `SRCDS_TOKEN=${gameData.steamToken}`,
+        `CS2_RCONPW=${gameData.rconPassword}`,
+        `CS2_SERVERNAME=${gameData.servername}`,
+        `CS2_MAXPLAYERS=${gameData.maxPlayers}`,
+        'CS2_SERVER_HIBERNATE=1',
+      ];
+      if (gameData.password) enviroment.push(`CS2_PW="${gameData.password}"`);
+
+      image = config.games.counterstrike.image;
+      exposedPorts = {
+        '27015/udp': {},
+        '27015/tcp': {},
+      };
+      binds = [`${instancePath}:/home/steam/cs2-dedicated`];
+      portBindings = {
+        '27015/udp': [
+          { HostPort: String(instance.port) },
+        ],
+        '27015/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else if (instance.type === 'kerbal') {
+      image = config.games.kerbal.image;
+      exposedPorts = { '6702/tcp': {} };
+      binds = [
+        `${instancePath}/Config:/data/Config`,
+        `${instancePath}/Universe:/data/Universe`,
+        `${instancePath}/logs:/data/logs`,
+      ];
+      portBindings = {
+        '6702/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else if (instance.type === 'hytale') {
+      image = config.games.hytale.image;
+      exposedPorts = { '5520/udp': {} };
+      binds = [`${instancePath}:/data`];
+      portBindings = {
+        '5520/udp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else if (instance.type === 'terraria') {
+      image = config.games.terraria.image;
+      enviroment = [
+        'SERVERCONFIG=1',
+      ];
+      exposedPorts = { '7777/tcp': {} };
+      binds = [
+        `${instancePath}:/opt/terraria/config/`,
+      ];
+      portBindings = {
+        '7777/tcp': [
+          { HostPort: String(instance.port) },
+        ],
+      };
+    } else {
+      throw new Internal('No container game type available!');
+    }
+
+    const container = await docker.createContainer({
+      name: `Nodecraft_${instance.id}`,
+      Image: image,
+      Env: enviroment,
+
+      Tty: true,
+      OpenStdin: true,
+      AttachStdin: true,
+      AttachStdout: true,
+      AttachStderr: true,
+
+      ExposedPorts: exposedPorts,
 
       HostConfig: {
-        Binds: [`${config.instance.path}/${instance.id}:/data`],
-        PortBindings: {
-          '25565/tcp': [
-            { HostPort: String(instance.port) },
-          ],
-          '25565/udp': [
-            { HostPort: String(instance.port) },
-          ],
-        },
+        Binds: binds,
+        PortBindings: portBindings,
 
         NetworkMode: 'nodecraft-net',
-
-        Memory: 2048 * 1024 * 1024, // MB
-        NanoCpus: 2 * 1e9,
+        Memory: instance.memory * 1024 * 1024,
+        NanoCpus: instance.cpu * 1e9,
 
         // Secure
         // ReadonlyRootfs: true,
@@ -84,17 +138,6 @@ class Container {
     });
 
     return container;
-  }
-
-  static async delete(id) {
-    try {
-      const container = await Container.get(id);
-      if (!container) return;
-
-      await container.remove({ force: true });
-    } catch (err) {
-      logger.error({ err }, 'Error to delete docker container');
-    }
   }
 
   static async get(id) {
@@ -108,40 +151,9 @@ class Container {
     }
   }
 
-  static async getOrCreate(instance) {
-    // Read container
-    let container = await Container.get(instance.id);
-
-    // Create container if not exists
-    if (!container) container = await Container.create(instance);
-
-    return container;
-  }
-
-  static async isRunning(id) {
-    try {
-      const container = await Container.get(id);
-      const info = await container.inspect();
-
-      return info.State.Running;
-    } catch {
-      return false;
-    }
-  }
-
-  static async verifyRunning(container) {
-    try {
-      const info = await container.inspect();
-
-      return info.State.Running;
-    } catch {
-      return false;
-    }
-  }
-
   static async getIpAddress(id) {
     try {
-      const container = docker.getContainer(`Nodecraft_${id}`);
+      const container = await Container.get(id);
       const inspect = await container.inspect();
       const network = inspect.NetworkSettings.Networks['nodecraft-net'];
 
@@ -151,96 +163,57 @@ class Container {
     }
   }
 
-  static async run(container) {
+  static async delete(id) {
     try {
-      // Verify if container is not running
-      const isRunning = await Container.verifyRunning(container);
+      const container = await Container.get(id);
+      if (!container) return;
 
-      // Run container if it is not running
+      await container.remove({ force: true });
+    } catch (err) {
+      logger.error({ err }, 'Error to delete docker container');
+    }
+  }
+
+  static async run(id) {
+    try {
+      // Read container
+      const container = await Container.get(id);
+      if (!container) return;
+
+      // Get container info
+      const info = await container.inspect();
+      const isRunning = info.State.Running;
+
       if (!isRunning) await container.start();
     } catch (err) {
       logger.error({ err }, 'Error to start container');
     }
   }
 
-  static async listen(id, callback) {
+  static async stop(id) {
     try {
+      // Read container
       const container = await Container.get(id);
-      const since = Math.floor(Date.now() / 1000);
+      if (!container) return;
 
-      const stream = await container.logs({
-        stdout: true,
-        stderr: true,
-        follow: true,
-        since,
-        timestamps: false,
-      });
+      // Get container info
+      const info = await container.inspect();
+      const isRunning = info.State.Running;
 
-      const stdout = new PassThrough();
-      const stderr = new PassThrough();
-
-      container.modem.demuxStream(stream, stdout, stderr);
-
-      instancesRunning[id].stream = stream;
-
-      stdout.on('data', (chunk) => Container.handleChunk(chunk, id, callback));
-      stderr.on('data', (chunk) => Container.handleChunk(chunk, id, callback));
-    } catch (err) {
-      logger.error({ err }, 'Error to listen container');
-    }
-  }
-
-  static async handleChunk(chunk, id, callback) {
-    try {
-      let data = chunk.toString('utf8');
-      let buffer = instancesRunning[id]?.buffer;
-
-      // eslint-disable-next-line no-control-regex
-      data = data.replace(/\x1B\[[0-9;]*m/g, ''); // ANSI
-      data = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-      buffer += data;
-
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-
-      lines.forEach((line) => {
-        const cleanLine = line.trim();
-        if (!cleanLine) return;
-
-        const match = cleanLine.match(
-          /^\[(\d{2}:\d{2}:\d{2})\s+(INFO|WARN|ERROR|DEBUG|TRACE)\]:\s*(.*)$/,
-        );
-
-        const message = match ? match[3] : cleanLine;
-
-        callback(message);
-      });
-    } catch (err) {
-      logger.error({ err }, 'Error to handle container stream chunck');
-    }
-  }
-
-  static removeStream(id) {
-    try {
-      const stream = instancesRunning[id]?.stream;
-
-      if (stream) {
-        stream.removeAllListeners('data');
-        stream.removeAllListeners('error');
-        stream.removeAllListeners('end');
-
-        // Fecha o stream
-        if (typeof stream.destroy === 'function') {
-          stream.destroy();
+      // Stop container
+      if (isRunning) {
+        try {
+          await container.stop({ t: 20 }); // SIGTERM
+        } catch {
+          await container.kill(); // SIGKILL
         }
       }
     } catch (err) {
-      logger.error({ err }, 'Error to remove container stream');
+      logger.error({ err }, 'Error to stop container');
     }
   }
 
-  static async removeLostContainers() {
+  static async removeLost() {
     try {
       const instances = await InstanceModel.findAll({
         attributes: ['id'],
