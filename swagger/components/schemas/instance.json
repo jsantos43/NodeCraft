@@ -92,7 +92,7 @@
     "status": "stopped",
     "history": [],
     "minecraft": {
-      "software": "minecraft",
+      "software": "paper",
       "bedrock": false,
       "gamemode": "survival",
       "difficulty": "normal",

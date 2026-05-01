@@ -1,6 +1,9 @@
 {
   "get": {
     "summary": "read Files",
+    "tags": [
+      "Files"
+    ],
     "parameters": [
       {
         "name": "path",
@@ -8,7 +11,7 @@
         "schema": {
           "type": "string"
         },
-        "example": "/teste"
+        "example": "/world"
       },
       {
         "name": "download",
@@ -19,10 +22,26 @@
         "example": "false"
       }
     ],
-    "responses": {},
-    "tags": [
-      "Files"
-    ]
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/file.json#/read"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
   },
   "parameters": [
     {
