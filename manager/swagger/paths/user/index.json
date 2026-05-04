@@ -1,0 +1,82 @@
+{
+  "get": {
+    "summary": "read my User",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "post": {
+    "summary": "create User",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/user.json#/createUser"
+    }
+  },
+  "put": {
+    "summary": "update my User",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/user.json#/updateUser"
+    }
+  },
+  "delete": {
+    "summary": "delete my user",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  }
+}

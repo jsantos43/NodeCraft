@@ -1,0 +1,138 @@
+.Input{
+  width: 300px;
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border-radius: 2px;
+  margin-right: 20px;
+  margin-top: 20px;
+  border: none;
+}
+
+.Input__header{
+  background: #f0f0f0;
+  padding: 0px 8px;
+  border-top-right-radius: 2px;
+  border-top-left-radius: 2px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: var(--bold);
+  align-items: center;
+  flex-wrap: wrap;
+  flex-grow: 1;
+  gap: 10px;
+  
+  font-family: 'Minecraft Seven';
+}
+.Input input:focus, select:focus {
+  outline: none;
+}
+
+.Input__number {
+  background-color: var(--dark-color);
+  max-width: 72px;
+  height: 24px;
+  border: none;
+  color: var(--light-color);
+  display: flex;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.Input__text {
+  background-color: var(--dark-color);
+  max-width: 128px;
+  height: 24px;
+  border: none;
+  color: var(--light-color);
+  display: flex;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.Input__select {
+  background-color: var(--dark-color);
+  width: 128px;
+  height: 24px;
+  border: none;
+  color: var(--light-color);
+  display: flex;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.Input__select option{
+  background-color: var(--dark-color);
+  width: 128px;
+  height: 24px;
+  border: none;
+  color: var(--light-color);
+  display: flex;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.Input__check {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+}
+
+.Input__check-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.Input__check-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgb(185, 37, 37);
+  transition: 0.4s;
+  border-radius: 4px;
+}
+
+.Input__check-slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 0;
+}
+
+.Input__check-input:checked+.Input__check-slider {
+  background-color: #4caf50;
+}
+
+.Input__check-input:checked+.Input__check-slider:before {
+  transform: translateX(30px);
+}
+
+
+.Input__footer{
+  display: flex;
+  background: #2D3943 linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
+  font-variant-ligatures: none;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+  color: #aaa;
+  white-space: nowrap;
+  width: 100%;
+  box-sizing: border-box;
+}

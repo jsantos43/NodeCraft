@@ -1,0 +1,104 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/*
+==========================
+       My Styles
+==========================
+ */
+
+:root{
+  --primary-color: #1A4D1A;
+  --secondary-color: #3B8A3B;
+  --tertiary-color: #A2D8A2;
+  --dark-color: #2E2E2E;
+  --light-color: #F2F2F2;
+
+  /*
+    Minecraft Styles 
+   */
+
+  /* --primary-color:#313233; */
+  /* --secondary-color:#48494a; */
+
+  --accent-color:#d0d1d4;
+  --background-color:#48494a;
+  --text-color:#fff;
+  --text-dark-color:#000;
+  --link-color:#007bff;
+  --error-color:#dc3545;
+  --success-color:#28a745;
+  --warning-color:#ffc107;
+  --info-color:#17a2b8;
+  --selected-color:#48494a;
+  --hr-top-color:#333334;
+  --hr-bottom-color:#5a5b5c;
+  --btn-primary-inner-color:#3c8527;
+  --btn-primary-inner-hover-color:#2a641c;
+  --btn-primary-inner-shadow-color:#1d4d13;
+  --btn-primary-border-color:#1e1e1f;
+  --btn-primary-inner-border-lt-color:#4f913cbf;
+  --btn-primary-inner-border-br-color:#639d52;
+  --btn-primary-text-color:#fff;
+  --btn-secondary-inner-color:#7345e5;
+  --btn-secondary-inner-hover-color:#5d2cc6;
+  --btn-secondary-inner-shadow-color:#4a1cac;
+  --btn-secondary-border-color:#1e1e1f;
+  --btn-secondary-inner-border-lt-color:#a264f2bf;
+  --btn-secondary-inner-border-br-color:#8e49eb;
+  --btn-secondary-text-color:#fff;
+  --btn-tertiary-inner-color:#d0d1d4;
+  --btn-tertiary-inner-hover-color:#b1b2b5;
+  --btn-tertiary-inner-shadow-color:#58585a;
+  --btn-tertiary-border-color:#1e1e1f;
+  --btn-tertiary-inner-border-lt-color:#ecedeebf;
+  --btn-tertiary-inner-border-br-color:#e3e3e5;
+  --btn-tertiary-text-color:#000;
+  --btn-normal-inner-color:#c6c6c6;
+  --btn-normal-border-color:#131313;
+  --btn-normal-inner-border-lt-color:#f7f7f7bf;
+  --btn-normal-inner-border-br-color:#656465;
+  --btn-normal-text-color:#4c4c4c;
+  --btn-normal-inner-hover-color:#218306;
+  --btn-normal-border-hover-color:#fff;
+  --btn-normal-inner-border-lt-hover-color:#17cd07bf;
+  --btn-normal-inner-border-br-hover-color:#004e00;
+  --btn-normal-text-hover-color:#fff;
+}
+
+html, body{
+  width: 100%;
+  height: 100%;
+}
+
+body{
+  background: var(--light-color);
+}
+
+/* Remove as setas no Chrome, Edge, Safari */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove as setas no Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Remove no resto dos navegadores (fallback) */
+input[type="number"] {
+  appearance: none;
+}

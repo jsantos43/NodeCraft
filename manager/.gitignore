@@ -1,0 +1,10 @@
+node_modules
+.env
+instances
+*.sqlite
+temp
+package-lock.json
+yarn.lock
+config.json
+logs
+tests

@@ -1,0 +1,64 @@
+{
+  "get": {
+    "summary": "read all Links",
+    "tags": [
+      "Link"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/link.json#/readAll"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "post": {
+    "summary": "create Link",
+    "tags": [
+      "Link"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/link.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/link.json#/default"
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "deprecated": false,
+      "schema": {},
+      "example": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd"
+    }
+  ]
+}

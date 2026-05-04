@@ -1,0 +1,125 @@
+{
+  "type": "object",
+  "properties": {
+    "software": {
+      "type": "string",
+      "enum": [
+        "vanilla",
+        "paper",
+        "purpur"
+      ],
+      "example": "paper"
+    },
+    "bedrock": {
+      "type": "boolean",
+      "example": false
+    },
+    "gamemode": {
+      "type": "string",
+      "enum": [
+        "survival",
+        "creative",
+        "adventure"
+      ],
+      "example": "survival"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "peaceful",
+        "easy",
+        "normal",
+        "hard"
+      ],
+      "example": "normal"
+    },
+    "seed": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 50,
+      "example": ""
+    },
+    "motd": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 50,
+      "example": ""
+    },
+    "levelType": {
+      "type": "string",
+      "enum": [
+        "minecraft:normal",
+        "minecraft:flat",
+        "minecraft:large_biomes",
+        "minecraft:amplified"
+      ],
+      "example": "minecraft:normal"
+    },
+    "viewDistance": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 32,
+      "example": 10
+    },
+    "spawn": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 32,
+      "example": 16
+    },
+    "idle": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1440,
+      "example": 0
+    },
+    "commandBlock": {
+      "type": "boolean",
+      "example": false
+    },
+    "pvp": {
+      "type": "boolean",
+      "example": true
+    },
+    "licensed": {
+      "type": "boolean",
+      "example": true
+    },
+    "allowlist": {
+      "type": "boolean",
+      "example": false
+    },
+    "nether": {
+      "type": "boolean",
+      "example": true
+    },
+    "secureProfile": {
+      "type": "boolean",
+      "example": true
+    },
+    "forceGamemode": {
+      "type": "boolean",
+      "example": false
+    },
+    "hardcore": {
+      "type": "boolean",
+      "example": false
+    },
+    "animals": {
+      "type": "boolean",
+      "example": true
+    },
+    "monsters": {
+      "type": "boolean",
+      "example": true
+    },
+    "npcs": {
+      "type": "boolean",
+      "example": true
+    },
+    "cheats": {
+      "type": "boolean",
+      "example": false
+    }
+  }
+}
