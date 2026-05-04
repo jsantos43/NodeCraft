@@ -1,9 +1,0 @@
-{
-  "private": true,
-  "workspaces": ["manager", "worker", "web"],
-  "scripts": {
-    "dev:manager": "npm -w manager run dev",
-    "dev:worker": "npm -w worker run dev",
-    "dev:web": "npm -w web run dev"
-  }
-}

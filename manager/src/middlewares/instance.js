@@ -1,5 +1,5 @@
 import { InvalidRequest } from '../errors/index.js';
-import { running } from '../runtimes/index.js';
+import { running } from '../../../worker/runtimes/index.js';
 import handleError from './handleError.js';
 
 const verifyNotRunning = (req, res, next) => {

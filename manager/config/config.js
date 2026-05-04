@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+console.log("NAO")
+
 const syncWithTemplate = (template, current) => {
   // Verify if template is an object
   if (typeof template !== 'object' || template === null) {

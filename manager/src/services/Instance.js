@@ -12,7 +12,7 @@ import Link from './Link.js';
 import config from '../../config/config.js';
 import Backup from './Backup.js';
 import File from './File.js';
-import { running, gameRuntimes } from '../runtimes/index.js';
+import { running, gameRuntimes } from '../../../worker/runtimes/index.js';
 import logger from '../../config/logger.js';
 
 class Instance {

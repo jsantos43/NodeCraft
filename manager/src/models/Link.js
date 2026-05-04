@@ -1,8 +1,7 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
 import db from '../../config/sequelize.js';
 import config from '../../config/config.js';
-import { running } from '../runtimes/index.js';
-import logger from '../../config/logger.js';
+// import logger from '../../config/logger.js';
 
 class Link extends Model { }
 
@@ -91,27 +90,27 @@ Link.init({
   timestamps: false,
 });
 
-const updateBarrier = async (id) => {
-  try {
-    if (running[id]) await running[id].newBarrier();
-  } catch (err) {
-    logger.error({
-      err,
-      linkId: id,
-    }, 'Error to update instance barrier');
-  }
-};
+// const updateBarrier = async (id) => {
+//   try {
+//     if (running[id]) await running[id].newBarrier();
+//   } catch (err) {
+//     logger.error({
+//       err,
+//       linkId: id,
+//     }, 'Error to update instance barrier');
+//   }
+// };
 
-Link.addHook('afterCreate', async (link) => {
-  await updateBarrier(link.instanceId);
-});
+// Link.addHook('afterCreate', async (link) => {
+//   await updateBarrier(link.instanceId);
+// });
 
-Link.addHook('afterDestroy', async (link) => {
-  await updateBarrier(link.instanceId);
-});
+// Link.addHook('afterDestroy', async (link) => {
+//   await updateBarrier(link.instanceId);
+// });
 
-Link.addHook('afterUpdate', async (link) => {
-  await updateBarrier(link.instanceId);
-});
+// Link.addHook('afterUpdate', async (link) => {
+//   await updateBarrier(link.instanceId);
+// });
 
 export default Link;

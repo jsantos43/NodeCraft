@@ -48,40 +48,5 @@
       "instance:backup",
       "instance:console"
     ]
-  },
-  "temp": {
-    "path": null,
-    "lifetime": 900000
-  },
-  "storage": {
-    "enable": false,
-    "bucket": "",
-    "region": "",
-    "endpoint": "",
-    "forcePathStyle": false,
-    "accessKeyId": "",
-    "secretAccessKey": "",
-    "max": 100000
-  },
-  "games": {
-    "minecraft": {
-      "image": "itzg/minecraft-server:latest",
-      "geyser": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot",
-      "floodgate": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot",
-      "checkTime": 5000
-    },
-    "counterstrike": {
-      "image": "cm2network/cs2:latest",
-      "checkTime": 10000
-    },
-    "kerbal": {
-      "image": "ghcr.io/joaosantos2007/ksp:latest"
-    },
-    "hytale": {
-      "image": "ghcr.io/joaosantos2007/hytale:latest"
-    },
-    "terraria": {
-      "image": "ghcr.io/passivelemon/terraria-docker:latest"
-    }
   }
 }
