@@ -1,0 +1,3 @@
+{
+  "ignore": ["instances/", "temp/", "tests/", "app/", "config.json", "logs"]
+}

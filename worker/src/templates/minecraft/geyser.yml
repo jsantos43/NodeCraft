@@ -1,0 +1,64 @@
+bedrock:
+  address: 0.0.0.0
+  port: 19132
+  clone-remote-port: true
+
+java:
+  auth-type: online
+
+motd:
+  primary-motd: Nodecraft
+  secondary-motd: {{motd}}
+  passthrough-motd: true
+  max-players: {{maxPlayers}}
+  passthrough-player-counts: true
+  integrated-ping-passthrough: true
+  ping-passthrough-interval: 3
+
+gameplay:
+  server-name: {{name}}
+  show-cooldown: title
+  command-suggestions: true
+  show-coordinates: true
+  disable-bedrock-scaffolding: false
+  nether-roof-workaround: true
+  emotes-enabled: true
+  unusable-space-block: minecraft:barrier
+  enable-custom-content: true
+  force-resource-packs: true
+  enable-integrated-pack: true
+  forward-player-ping: false
+  xbox-achievements-enabled: true
+  max-visible-custom-skulls: 128
+  custom-skull-render-distance: 32
+
+default-locale: system
+log-player-ip-addresses: true
+
+saved-user-logins:
+  - ThisExampleUsernameShouldBeLongEnoughToNeverBeAnXboxUsername
+  - ThisOtherExampleUsernameShouldAlsoBeLongEnough
+
+pending-authentication-timeout: 120
+notify-on-new-bedrock-update: true
+
+advanced:
+  cache-images: 0
+  scoreboard-packet-threshold: 20
+  add-team-suggestions: true
+  resource-pack-urls: []
+  floodgate-key-file: key.pem
+  java:
+    use-haproxy-protocol: false
+    use-direct-connection: true
+    disable-compression: true
+  bedrock:
+    broadcast-port: 0
+    compression-level: 6
+    use-haproxy-protocol: false
+    mtu: 1400
+    validate-bedrock-login: true
+  
+debug-mode: false
+
+config-version: 5
