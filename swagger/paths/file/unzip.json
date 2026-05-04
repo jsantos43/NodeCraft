@@ -1,28 +1,49 @@
 {
   "post": {
     "summary": "unzip File",
+    "tags": [
+      "Files"
+    ],
     "parameters": [
       {
         "name": "path",
         "in": "query",
-        "required": false,
-        "deprecated": false,
-        "schema": {},
-        "example": "/versions/teste.zip"
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "/backup.zip"
       },
       {
         "name": "destiny",
         "in": "query",
-        "required": false,
-        "deprecated": false,
-        "schema": {},
-        "example": "/teste2"
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "/backup"
       }
     ],
-    "responses": {},
-    "tags": [
-      "Files"
-    ]
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/file.json#/unzip"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
   },
   "parameters": [
     {

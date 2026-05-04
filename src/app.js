@@ -9,13 +9,14 @@ const swaggerDocument = await SwaggerParser.bundle(
 );
 
 const app = express();
-routes(app);
-app.use(handleError);
 
 app.use(
   '/docs',
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocument),
 );
+
+routes(app);
+app.use(handleError);
 
 export default app;

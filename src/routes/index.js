@@ -4,12 +4,9 @@ import helmet from 'helmet';
 import user from './user.js';
 import instance from './instance.js';
 import auth from './auth.js';
+import root from './root.js';
 
 const routes = (app) => {
-  app.get('/', (req, res) => {
-    res.status(200).send('Welcome to NodeCraft API!');
-  });
-
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*'); // Allowed domains
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -28,6 +25,7 @@ const routes = (app) => {
     express.json(),
     cookieParser(),
     helmet(),
+    root,
     user,
     instance,
     auth,

@@ -1,20 +1,43 @@
 {
   "post": {
     "summary": "upload File",
+    "tags": [
+      "Files"
+    ],
     "parameters": [
       {
         "name": "destiny",
         "in": "query",
-        "required": false,
-        "deprecated": false,
-        "schema": {},
-        "example": "versions/teste123.zip"
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "world.zip"
       }
     ],
-    "responses": {},
-    "tags": [
-      "Files"
-    ]
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/file.json#/upload"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/file.json#/upload"
+    }
   },
   "parameters": [
     {

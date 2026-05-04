@@ -1,36 +1,62 @@
 {
   "post": {
-    "summary": "copy File",
+    "summary": "copy/move File",
+    "tags": [
+      "Files"
+    ],
     "parameters": [
       {
         "name": "path",
         "in": "query",
-        "required": false,
-        "deprecated": false,
-        "schema": {},
-        "example": "/versions"
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "/world"
       },
       {
         "name": "destiny",
         "in": "query",
-        "required": false,
-        "deprecated": false,
-        "schema": {},
-        "example": "/verao/teste"
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "/world-backup"
       },
       {
         "name": "actions",
         "in": "query",
-        "required": false,
-        "deprecated": false,
-        "schema": {},
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "copy",
+            "move"
+          ]
+        },
         "example": "copy"
       }
     ],
-    "responses": {},
-    "tags": [
-      "Files"
-    ]
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/file.json#/transfer"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
   },
   "parameters": [
     {

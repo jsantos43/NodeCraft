@@ -60,7 +60,6 @@ class File {
 
       return res.status(201).json({
         success: true,
-        created: true,
         destiny,
       });
     } catch (err) {
@@ -74,9 +73,7 @@ class File {
 
       return res.status(201).json({
         success: true,
-        uploaded: true,
         destiny,
-        name: req.filename,
       });
     } catch (err) {
       return next(err);
@@ -99,7 +96,6 @@ class File {
 
       return res.status(200).json({
         success: true,
-        updated: true,
         path,
         content,
       });
@@ -119,7 +115,6 @@ class File {
 
       return res.status(200).json({
         success: true,
-        deleted: true,
         path,
       });
     } catch (err) {

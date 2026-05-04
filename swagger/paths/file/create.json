@@ -1,40 +1,42 @@
 {
   "post": {
     "summary": "create File",
+    "tags": [
+      "Files"
+    ],
     "parameters": [
       {
         "name": "destiny",
         "in": "query",
-        "required": false,
-        "deprecated": false,
-        "schema": {},
-        "example": "/versions/teste.json"
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "/hello.txt"
       }
     ],
-    "responses": {},
-    "tags": [
-      "Files"
-    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/file.json#/create"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
     "requestBody": {
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string"
-              },
-              "content": {
-                "type": "string"
-              }
-            }
-          },
-          "example": {
-            "type": "directory",
-            "content": "Hello World!"
-          }
-        }
-      }
+      "$ref": "../../components/requestBody/file.json#/create"
     }
   },
   "parameters": [

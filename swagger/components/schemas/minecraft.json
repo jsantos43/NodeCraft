@@ -8,7 +8,7 @@
         "paper",
         "purpur"
       ],
-      "example": "minecraft"
+      "example": "paper"
     },
     "bedrock": {
       "type": "boolean",
