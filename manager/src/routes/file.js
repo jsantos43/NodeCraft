@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import Controller from '../controllers/File.js';
+import Controller from '../../../worker/src/controllers/File.js';
 import {
   auth,
   uploader,

@@ -1,5 +1,5 @@
 import Service from '../services/Instance.js';
-import BackupService from '../services/Backup.js';
+// import BackupService from '../services/Backup.js';
 
 class Instance {
   static async create(req, res, next) {
@@ -123,7 +123,7 @@ class Instance {
       const { id } = req.params;
 
       const instance = await Service.readOne(id);
-      BackupService.execute(instance, true);
+      // BackupService.execute(instance, true);
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {

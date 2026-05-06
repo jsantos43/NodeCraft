@@ -4,7 +4,9 @@ import Maintenance from './src/services/Maintenance.js';
 import Instance from './src/services/Instance.js';
 
 app.listen(config.app.port, async () => {
-  await Maintenance.ensureEnviroment();
-  await Instance.attachAll();
-  Maintenance.scheduleJobs();
+  // eslint-disable-next-line no-console
+  console.log(`Nodecraft API working on port ${config.app.port}`);
+  // await Maintenance.ensureEnviroment();
+  // await Instance.attachAll();
+  // Maintenance.scheduleJobs();
 });

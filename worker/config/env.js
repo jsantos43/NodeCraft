@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const ABSOLUTE_PATH = path.resolve(process.cwd());
 const PORT = process.env.PORT || 9184;
+const ABSOLUTE_PATH = path.resolve(process.cwd());
 const INSTANCE_PATH = process.env.INSTANCE_PATH || path.join(ABSOLUTE_PATH, 'instances');
 const TEMP_PATH = process.env.TEMP_PATH || path.join(ABSOLUTE_PATH, 'temp');
 const TEMP_LIFETIME = process.env.TEMP_LIFETIME || 900000;

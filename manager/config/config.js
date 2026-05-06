@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 
-console.log("NAO")
-
 const syncWithTemplate = (template, current) => {
   // Verify if template is an object
   if (typeof template !== 'object' || template === null) {
@@ -55,6 +53,5 @@ fs.writeFileSync(
 
 config.absoutePath = ABSOLUTE_PATH;
 config.instance.path ??= path.join(ABSOLUTE_PATH, 'instances');
-config.temp.path ??= path.join(ABSOLUTE_PATH, 'temp');
 
 export default Object.freeze(config);

@@ -1,6 +1,7 @@
 import User from './User.js';
 import Instance from './Instance.js';
 import Link from './Link.js';
+import Worker from './Worker.js';
 import db from '../../config/sequelize.js';
 import Minecraft from './Minecraft.js';
 import CounterStrike from './CounterStrike.js';
@@ -128,7 +129,7 @@ const instanceInclude = [
   },
 ];
 
-// await db.sync({ force: true });
+await db.sync({ alter: true });
 
 export {
   db,
@@ -137,4 +138,5 @@ export {
   User,
   Instance,
   Link,
+  Worker,
 };

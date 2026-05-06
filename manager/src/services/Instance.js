@@ -7,12 +7,12 @@ import {
   Instance as Model,
 } from '../models/index.js';
 import { NotFound, Internal } from '../errors/index.js';
-import Container from './Container.js';
+// import Container from './Container.js';
 import Link from './Link.js';
 import config from '../../config/config.js';
-import Backup from './Backup.js';
-import File from './File.js';
-import { running, gameRuntimes } from '../../../worker/runtimes/index.js';
+// import Backup from './Backup.js';
+// import File from './File.js';
+// import { running, gameRuntimes } from '../../../worker/runtimes/index.js';
 import logger from '../../config/logger.js';
 
 class Instance {
@@ -99,7 +99,7 @@ class Instance {
       }
     });
 
-    await Container.delete(id);
+    // await Container.delete(id);
 
     return instance;
   }
@@ -107,7 +107,7 @@ class Instance {
   static async delete(id) {
     const instance = await Instance.readOne(id, true);
     await instance.destroy();
-    Container.delete(id);
+    // Container.delete(id);
     File.delete(Path.join(config.instance.path, id));
 
     return instance;
@@ -122,7 +122,7 @@ class Instance {
 
         await Instance.stop(instance.id);
 
-        await Backup.execute(instance);
+        // await Backup.execute(instance);
 
         if (isRunning) await Instance.run(instance.id);
       } catch (err) {
@@ -162,34 +162,34 @@ class Instance {
 
   static async run(id) {
     const instance = await Instance.readOne(id);
-    await Container.create(instance);
+    // await Container.create(instance);
 
-    try {
-      const Runtime = gameRuntimes[instance.type];
-      if (!Runtime) throw new Internal('Instace game runtime not found!');
+    // try {
+    //   const Runtime = gameRuntimes[instance.type];
+    //   if (!Runtime) throw new Internal('Instace game runtime not found!');
 
-      running[id] = new Runtime(instance, () => Instance.readOne(id));
-      await instance.update({ status: 'running' });
-    } catch (err) {
-      await Instance.stop(id);
+    //   running[id] = new Runtime(instance, () => Instance.readOne(id));
+    //   await instance.update({ status: 'running' });
+    // } catch (err) {
+    //   await Instance.stop(id);
 
-      throw err;
-    }
+    //   throw err;
+    // }
 
     return instance;
   }
 
   static async stop(id) {
-    const instance = await Instance.readOne(id);
-    await Container.stop(id);
+    // const instance = await Instance.readOne(id);
+    // await Container.stop(id);
 
-    // Stop runtime instance
-    if (running[id]) running[id].finish();
-    delete running[id];
-    await Container.delete(id);
+    // // Stop runtime instance
+    // if (running[id]) running[id].finish();
+    // delete running[id];
+    // await Container.delete(id);
 
-    await instance.update({ status: 'stopped' });
-    return instance;
+    // await instance.update({ status: 'stopped' });
+    // return instance;
   }
 
   static async attachAll() {

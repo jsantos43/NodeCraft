@@ -3,11 +3,6 @@
     "port": 9183,
     "stage": "PROD"
   },
-  "interval": {
-    "checkUpdate": 300000,
-    "checkLost": 3600000,
-    "checkTemp": 300000
-  },
   "database": {
     "enable": false,
     "host": null,

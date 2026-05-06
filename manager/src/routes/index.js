@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import user from './user.js';
 import instance from './instance.js';
+import worker from './worker.js';
 import auth from './auth.js';
 import root from './root.js';
 
@@ -29,6 +30,7 @@ const routes = (app) => {
     user,
     instance,
     auth,
+    worker,
   );
 };
 

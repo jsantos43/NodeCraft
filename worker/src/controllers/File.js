@@ -1,5 +1,5 @@
 import Path from 'path';
-import config from '../../config/config.js';
+import config from '../../../manager/config/config.js';
 import Service from '../services/File.js';
 import { InvalidRequest } from '../errors/index.js';
 

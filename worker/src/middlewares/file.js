@@ -2,7 +2,7 @@ import Path from 'path';
 import {
   NotFound, InvalidRequest, Forbidden,
 } from '../errors/index.js';
-import config from '../../config/config.js';
+import config from '../../../manager/config/config.js';
 import handleError from './handleError.js';
 import Service from '../services/File.js';
 
