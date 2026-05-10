@@ -4,7 +4,7 @@ const logger = pino({
   transport: {
     target: 'pino/file',
     options: {
-      destination: './logs/app.log',
+      destination: './logs/manager.log',
       mkdir: true,
     },
   },

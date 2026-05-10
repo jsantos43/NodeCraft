@@ -1,57 +1,57 @@
-import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
 
-const syncWithTemplate = (template, current) => {
-  // Verify if template is an object
-  if (typeof template !== 'object' || template === null) {
-    // If settings.json exists, keep it
-    return current !== undefined ? current : template;
-  }
+dotenv.config();
 
-  // Keep template array
-  if (Array.isArray(template)) {
-    return template;
-  }
-
-  // Objects
-  const result = {};
-
-  for (const key of Object.keys(template)) {
-    result[key] = syncWithTemplate(
-      template[key],
-      current ? current[key] : undefined,
-    );
-  }
-
-  return result;
+const config = {
+  app: {
+    port: process.env.PORT || 9183,
+    stage: process.env.STAGE || 'PROD',
+  },
+  database: {
+    enable: process.env.DATABASE_ENABLE || false,
+    host: process.env.DATABASE_HOST || null,
+    username: process.env.DATABASE_USER || null,
+    password: process.env.DATABASE_PASSWORD || null,
+    name: process.env.DATABASE_NAME || null,
+  },
+  email: {
+    enable: process.env.EMAIL_ENABLE || false,
+    host: process.env.EMAIL_HOST || null,
+    port: process.env.EMAIL_PORT || null,
+    secure: process.env.EMAIL_SECURE || null,
+    user: process.env.EMAIL_USER || null,
+    password: process.env.EMAIL_PASSWORD || null,
+  },
+  site: {
+    url: process.env.SITE_URL || null,
+    validateUrl: process.env.SITE_VALIDATE_URL || null,
+    resetUrl: process.env.SITE_RESET_URL || null,
+  },
+  token: {
+    jwtSecret: '4246e8f9e71b0b086b3b194a4bcb5d07c94dd773dddb51752183f7e9c82c543f',
+    accessLifetime: 900000,
+    emailLifetime: 86400000,
+    resetPasswordLifetime: 1200000,
+    refreshLifetime: 259200000,
+  },
+  instance: {
+    path: null,
+    maxHistory: 10,
+    minPort: 5621,
+    maxPort: 5671,
+    lifetime: 172800000,
+    permissions: [
+      'instance:read',
+      'instance:update',
+      'instance:execute',
+      'instance:backup',
+      'instance:console',
+    ],
+  },
 };
 
 // Resolve paths
-const ABSOLUTE_PATH = path.resolve(process.cwd());
-const SETTINGS_PATH = path.join(ABSOLUTE_PATH, 'config.json');
-const TEMPLATE_PATH = path.join(ABSOLUTE_PATH, 'src', 'templates', 'settings', 'settings.json');
-
-// Read settings.json template
-const template = JSON.parse(fs.readFileSync(TEMPLATE_PATH, 'utf8'));
-
-// Get settings.json actual state
-let currentConfig = {};
-if (fs.existsSync(SETTINGS_PATH)) {
-  try {
-    currentConfig = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
-  } catch {
-    throw new Error('settings.json is corrupt!');
-  }
-}
-
-// Sync config.json with template
-const config = syncWithTemplate(template, currentConfig);
-fs.writeFileSync(
-  SETTINGS_PATH,
-  JSON.stringify(config, null, 2),
-);
-
-config.absoutePath = ABSOLUTE_PATH;
-config.instance.path ??= path.join(ABSOLUTE_PATH, 'instances');
+config.absoutePath = path.resolve(process.cwd());
 
 export default Object.freeze(config);

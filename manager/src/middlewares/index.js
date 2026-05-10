@@ -4,7 +4,6 @@ import uploader from './uploader.js';
 import validate from './validate.js';
 import verifyService from './verifyService.js';
 import { verifyRunning, verifyNotRunning } from './instance.js';
-import verifyPath from '../../../worker/src/middlewares/file.js';
 
 export {
   auth,
@@ -14,5 +13,4 @@ export {
   verifyService,
   verifyRunning,
   verifyNotRunning,
-  verifyPath,
 };
