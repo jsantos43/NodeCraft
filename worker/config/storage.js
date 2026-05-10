@@ -1,14 +1,14 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import env from './env.js';
+import config from './config.js';
 
 const s3Config = {
-  endpoint: env.STORAGE_ENDPOINT || undefined,
-  forcePathStyle: env.STORAGE_FORCE_PATHSTYLE === 'true',
+  endpoint: config.storage.endpoint || undefined,
+  forcePathStyle: config.storage.forcePathStyle === 'true',
   credentials: {
-    accessKeyId: env.STORAGE_ID,
-    secretAccessKey: env.STORAGE_SECRET,
+    accessKeyId: config.storage.id,
+    secretAccessKey: config.storage.secret,
   },
-  ...(env.STORAGE_REGION && { region: env.STORAGE_REGION }),
+  ...(config.storage.region && { region: config.storage.region }),
 };
 
 const s3Client = new S3Client(s3Config);

@@ -1,7 +1,7 @@
 import Path from 'path';
 import { Rcon } from 'rcon-client';
 import Container from '../services/Container.js';
-import env from '../../config/env.js';
+import config from '../../config/config.js';
 import logger from '../../config/logger.js';
 import { getIO } from '../../config/socket.js';
 
@@ -9,7 +9,7 @@ class Instance {
   constructor(instance, readFunction) {
     this.id = instance.id;
     this.instance = instance;
-    this.instancePath = Path.join(env.INSTANCE_PATH, instance.id);
+    this.instancePath = Path.join(config.paths.instances, instance.id);
     this.stream = null;
     this.buffer = '';
     this.readFunction = readFunction;

@@ -33,6 +33,7 @@
     "pino": "^10.3.1",
     "rcon-client": "^4.2.5",
     "socket.io": "^4.8.3",
+    "systeminformation": "^5.31.6",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {

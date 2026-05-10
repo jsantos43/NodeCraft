@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import Controller from '../controllers/Worker.js';
 import { auth } from '../middlewares/index.js';
+import event from './event.js';
 
 const router = Router();
 
@@ -27,8 +28,9 @@ router
   )
   .delete(
     '/worker/:id',
-    // auth('admin'),
+    auth('admin'),
     Controller.delete,
-  );
+  )
+  .use('/worker', event);
 
 export default router;

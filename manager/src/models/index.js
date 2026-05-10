@@ -129,7 +129,7 @@ const instanceInclude = [
   },
 ];
 
-await db.sync({ alter: true });
+// await db.sync({ alter: true });
 
 export {
   db,

@@ -2,22 +2,22 @@ import Path from 'path';
 import docker from '../../config/docker.js';
 import logger from '../../config/logger.js';
 import { Internal } from '../errors/index.js';
-import env from '../../config/env.js';
+import config from '../../config/config.js';
 
 const dockerImages = {
-  'minecraft': 'itzg/minecraft-server:latest',
-  'counterstrike': 'cm2network/cs2:latest',
-  'kerbal': 'ghcr.io/joaosantos2007/ksp:latest',
-  'hytale': 'ghcr.io/joaosantos2007/hytale:latest',
-  'terraria': 'ghcr.io/passivelemon/terraria-docker:latest',
-}
+  minecraft: 'itzg/minecraft-server:latest',
+  counterstrike: 'cm2network/cs2:latest',
+  kerbal: 'ghcr.io/joaosantos2007/ksp:latest',
+  hytale: 'ghcr.io/joaosantos2007/hytale:latest',
+  terraria: 'ghcr.io/passivelemon/terraria-docker:latest',
+};
 
 class Container {
   static async create(instance) {
     const existsContainer = await Container.get(instance.id);
     if (existsContainer) return existsContainer;
 
-    const instancePath = Path.join(env.INSTANCE_PATH, instance.id);
+    const instancePath = Path.join(config.paths.instances, instance.id);
     let enviroment = [];
     let binds = [];
     let exposedPorts = {};

@@ -2,8 +2,8 @@ import Path from 'path';
 import logger from '../../config/logger.js';
 import StorageProvider from '../providers/Storage.js';
 import { Internal } from '../errors/index.js';
-import env from '../../config/env.js';
 import File from './File.js';
+import config from '../../config/config.js';
 
 class Backup {
   static async verifyAvailableSpace(backupSize) {
@@ -65,7 +65,7 @@ class Backup {
 
   static async execute(instance, force = false) {
     try {
-      if (!env.STORAGE_ENABLE) return;
+      if (!config.storage.enable) return;
       if (instance.type === 'counterstrike') return;
 
       // Verify need backups

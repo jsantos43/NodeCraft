@@ -1,9 +1,9 @@
 import Path from 'path';
 import FileService from '../services/File.js';
-import env from '../../config/env.js';
+import config from '../../config/config.js';
 
 const renderTemplate = async (templateName, variables = {}) => {
-  const filePath = Path.resolve(env.ABSOLUTE_PATH, 'src', 'templates', templateName);
+  const filePath = Path.resolve(config.paths.absolute, 'src', 'templates', templateName);
   let template = await FileService.readOneFile(filePath);
 
   for (const [key, value] of Object.entries(variables)) {

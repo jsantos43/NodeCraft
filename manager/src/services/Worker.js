@@ -30,7 +30,7 @@ class Worker {
 
   static async update(id, data) {
     const worker = await Worker.readOne(id);
-    await worker.update({ name: data?.name });
+    await worker.update(data);
 
     return worker;
   }
@@ -40,6 +40,28 @@ class Worker {
     await worker.destroy();
 
     return worker;
+  }
+
+  static async updateHeartBeat(id, data) {
+    const info = {
+      healthy: true,
+      lastSeenAt: Date.now(),
+      cpuUsage: data.cpuUsage,
+      memorieTotal: data.memorieTotal,
+      memorieUsed: data.memorieUsed,
+      diskTotal: data.diskTotal,
+      diskUsed: data.diskUsed,
+    };
+
+    const worker = await Worker.update(id, info);
+
+    return worker;
+  }
+
+  static async compareApiKey(apiKey, storedApiKey) {
+    const hashedApiKey = Auth.hashToken(apiKey);
+
+    return hashedApiKey === storedApiKey;
   }
 }
 

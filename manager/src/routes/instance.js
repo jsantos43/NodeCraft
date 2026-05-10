@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import Controller from '../controllers/Instance.js';
-import file from './file.js';
+// import file from './file.js';
 import link from './link.js';
 import {
   auth, verifyRunning, verifyNotRunning, validate,
@@ -68,7 +68,7 @@ router
     verifyNotRunning,
     Controller.remapPort,
   )
-  .use('/instance', file)
+  // .use('/instance', file)
   .use('/instance', link);
 
 export default router;

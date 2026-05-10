@@ -61,6 +61,19 @@ class Worker {
       return next(err);
     }
   }
+
+  static async heartbeat(req, res, next) {
+    try {
+      const id = req?.params?.id;
+      const body = req?.body;
+
+      await Service.updateHeartBeat(id, body);
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return next(err);
+    }
+  }
 }
 
 export default Worker;

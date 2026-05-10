@@ -14,8 +14,10 @@ import * as unzipper from 'unzipper';
 import { createWriteStream, createReadStream } from 'node:fs';
 import Path from 'path';
 import archiver from 'archiver';
-import env from '../../config/env.js';
 import logger from '../../config/logger.js';
+import config from '../../config/config.js';
+
+const TEMP_LIFETIME = 900000;
 
 class File {
   static async verifyExists(path) {
@@ -90,7 +92,7 @@ class File {
 
   static async createTemp() {
     const timestamp = new Date().getTime();
-    const tempPath = Path.join(env.TEMP_PATH, String(timestamp));
+    const tempPath = Path.join(config.paths.temp, String(timestamp));
 
     await File.createOneDirectory(tempPath);
     return tempPath;
@@ -153,7 +155,7 @@ class File {
 
   static async removeOldTemp() {
     try {
-      const tempPath = env.TEMP_PATH;
+      const tempPath = config.paths.temp;
 
       // Verify if temporary path exists
       if (!(await File.verifyExists(tempPath))) return;
@@ -167,7 +169,7 @@ class File {
       for (const item of items) {
         const createdAt = Number(item);
 
-        if (!Number.isInteger(createdAt) || now - createdAt >= env.TEMP_LIFETIME) {
+        if (!Number.isInteger(createdAt) || now - createdAt >= TEMP_LIFETIME) {
           await File.delete(Path.join(tempPath, item));
         }
       }
@@ -252,7 +254,7 @@ class File {
   }
 
   static async makeBackup(instance) {
-    const instancePath = Path.join(env.INSTANCE_PATH, String(instance.id));
+    const instancePath = Path.join(config.paths.instances, String(instance.id));
 
     const tempPath = await File.createTemp();
     const backupName = `backup-${Date.now()}.zip`;

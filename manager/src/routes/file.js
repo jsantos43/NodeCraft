@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import Controller from '../../../worker/src/controllers/File.js';
+// import Controller from '../../../worker/src/controllers/File.js';
 import {
   auth,
   uploader,
-  verifyPath,
+  // verifyPath,
   validate,
   verifyNotRunning,
 } from '../middlewares/index.js';

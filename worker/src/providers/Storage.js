@@ -6,12 +6,12 @@ import {
 } from '@aws-sdk/client-s3';
 import { createReadStream } from 'fs';
 import s3Client from '../../config/storage.js';
-import env from '../../config/env.js';
+import config from '../../config/config.js';
 
 class Storage {
   static async list(prefix) {
     const { Contents } = await s3Client.send(
-      new ListObjectsV2Command({ Bucket: env.STORAGE_BUCKET, Prefix: prefix }),
+      new ListObjectsV2Command({ Bucket: config.storage.bucket, Prefix: prefix }),
     );
 
     return Contents || [];
@@ -19,7 +19,7 @@ class Storage {
 
   static async upload(key, path) {
     await s3Client.send(new PutObjectCommand({
-      Bucket: env.STORAGE_BUCKET,
+      Bucket: config.storage.bucket,
       Key: key,
       Body: createReadStream(path),
       Metadata: {
@@ -31,14 +31,14 @@ class Storage {
 
   static async delete(key) {
     await s3Client.send(
-      new DeleteObjectCommand({ Bucket: env.STORAGE_BUCKET, Key: key }),
+      new DeleteObjectCommand({ Bucket: config.storage.bucket, Key: key }),
     );
   }
 
   static async getStorageUsage(prefix = '') {
     const paginatorConfig = { client: s3Client, pageSize: 1000 };
     const commandInput = {
-      Bucket: env.STORAGE_BUCKET,
+      Bucket: config.storage.bucket,
       Prefix: prefix,
     };
 
@@ -58,7 +58,7 @@ class Storage {
     }
 
     const sizeMB = (totalSize / 1024 / 1024).toFixed(2);
-    const maxSpace = env.STORAGE_MAX;
+    const maxSpace = config.storage.max;
     const freeMB = Number(maxSpace) - Number(sizeMB);
 
     return {

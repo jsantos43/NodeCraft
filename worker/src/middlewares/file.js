@@ -2,7 +2,7 @@ import Path from 'path';
 import {
   NotFound, InvalidRequest, Forbidden,
 } from '../errors/index.js';
-import config from '../../../manager/config/config.js';
+import config from '../../config/config.js';
 import handleError from './handleError.js';
 import Service from '../services/File.js';
 
@@ -38,7 +38,7 @@ const verifyPathIsDirectory = async (instancePath, path) => {
 
 const verifyPath = (verifyDestiny = false) => async (req, res, next) => {
   try {
-    const instancePath = Path.join(config.instance.path, req.params.id);
+    const instancePath = Path.join(config.paths.instance, req.params.id);
     const path = req?.query?.path || '';
     const destiny = req?.query?.destiny || '';
 
