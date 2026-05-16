@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import server from './server.js';
 
 const routes = (app) => {
   app.use((req, res, next) => {
@@ -21,6 +22,7 @@ const routes = (app) => {
     express.json(),
     cookieParser(),
     helmet(),
+    server,
   );
 };
 

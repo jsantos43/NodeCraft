@@ -1,13 +1,15 @@
 import { InvalidRequest } from '../errors/index.js';
-// import { running } from '../../../worker/runtimes/index.js';
+import Service from '../services/Instance.js';
 import handleError from './handleError.js';
 
-const verifyNotRunning = (req, res, next) => {
+const verifyNotRunning = async (req, res, next) => {
   try {
     const id = req?.params?.id;
 
-    // const runtime = running[id];
-    if (runtime) throw new InvalidRequest('You cannot do this while instance is running!');
+    const instance = await Service.readOne(id);
+    const running = instance.status === 'running';
+
+    if (running) throw new InvalidRequest('You cannot do this while instance is running!');
 
     return next();
   } catch (err) {
@@ -15,12 +17,14 @@ const verifyNotRunning = (req, res, next) => {
   }
 };
 
-const verifyRunning = (req, res, next) => {
+const verifyRunning = async (req, res, next) => {
   try {
     const id = req?.params?.id;
 
-    // const runtime = running[id];
-    if (!runtime) throw new InvalidRequest('You cannot do this while instance is not running!');
+    const instance = await Service.readOne(id);
+    const running = instance.status === 'running';
+
+    if (!running) throw new InvalidRequest('You cannot do this while instance is not running!');
 
     return next();
   } catch (err) {

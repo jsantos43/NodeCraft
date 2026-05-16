@@ -9,6 +9,14 @@ Instance.init({
     defaultValue: Sequelize.UUIDV4,
     primaryKey: true,
   },
+  workerId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'worker',
+      key: 'id',
+    },
+  },
   owner: {
     type: DataTypes.UUID,
     allowNull: false,

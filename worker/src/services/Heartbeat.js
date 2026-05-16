@@ -1,13 +1,16 @@
 import si from 'systeminformation';
 import config from '../../config/config.js';
+import logger from '../../config/logger.js';
+
+const HEART_BEAT_TIME = 15000;
 
 class Hearbeat {
   static async define() {
     await Hearbeat.pulse();
 
-    setInterval(() => {
-      Hearbeat.pulse();
-    }, 15000);
+    setInterval(async () => {
+      await Hearbeat.pulse();
+    }, HEART_BEAT_TIME);
   }
 
   static async makeData() {
@@ -24,34 +27,30 @@ class Hearbeat {
     const toMB = (bytes) => parseFloat((bytes / 1024 ** 2).toFixed(2));
 
     return {
+      port: config.app.port,
       cpuUsage: parseFloat(cpu.currentLoad.toFixed(2)),
       memorieTotal: toMB(mem.total),
       memorieUsed: toMB(mem.active),
-      diskTotal: toMB(rootDisk?.size) ?? null,
-      diskUsed: toMB(rootDisk?.used) ?? null,
+      diskAvailable: toMB(rootDisk.size - rootDisk.used),
     };
   }
 
   static async pulse() {
     try {
       const requestUrl = `${config.manager.url}/worker/${config.app.id}/heartbeat`;
-
-      const data = await Hearbeat.makeData();
-
+      const info = await Hearbeat.makeData();
       const headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.manager.apiKey}`,
       };
 
-      const result = await fetch(requestUrl, {
+      await fetch(requestUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(info),
       });
-
-      console.log('Sent Heartbeat');
     } catch (err) {
-      console.log('Fail to hearbeat');
+      logger.error({ err }, 'Error to make heartbeat');
     }
   }
 }

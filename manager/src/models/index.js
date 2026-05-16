@@ -47,6 +47,19 @@ Instance.belongsTo(User, {
   as: 'ownerUser',
 });
 
+// worker <-> instance
+Worker.hasMany(Instance, {
+  foreignKey: 'workerId',
+  as: 'instances',
+  onDelete: 'SET NULL',
+  hooks: true,
+});
+
+Instance.belongsTo(Worker, {
+  foreignKey: 'workerId',
+  as: 'worker',
+});
+
 // instance <--> minecraft
 Instance.hasOne(Minecraft, {
   foreignKey: 'instanceId',

@@ -12,9 +12,9 @@ const dockerImages = {
   terraria: 'ghcr.io/passivelemon/terraria-docker:latest',
 };
 
-class Container {
+class Docker {
   static async create(instance) {
-    const existsContainer = await Container.get(instance.id);
+    const existsContainer = await Docker.get(instance.id);
     if (existsContainer) return existsContainer;
 
     const instancePath = Path.join(config.paths.instances, instance.id);
@@ -160,7 +160,7 @@ class Container {
 
   static async getIpAddress(id) {
     try {
-      const container = await Container.get(id);
+      const container = await Docker.get(id);
       const inspect = await container.inspect();
       const network = inspect.NetworkSettings.Networks['nodecraft-net'];
 
@@ -172,7 +172,7 @@ class Container {
 
   static async delete(id) {
     try {
-      const container = await Container.get(id);
+      const container = await Docker.get(id);
       if (!container) return;
 
       await container.remove({ force: true });
@@ -184,7 +184,7 @@ class Container {
   static async run(id) {
     try {
       // Read container
-      const container = await Container.get(id);
+      const container = await Docker.get(id);
       if (!container) return;
 
       // Get container info
@@ -200,7 +200,7 @@ class Container {
   static async stop(id) {
     try {
       // Read container
-      const container = await Container.get(id);
+      const container = await Docker.get(id);
       if (!container) return;
 
       // Get container info
@@ -241,7 +241,7 @@ class Container {
 
         const instanceId = cleanName.replace('Nodecraft_', '');
         if (!instancesId.includes(instanceId)) {
-          await Container.delete(instanceId);
+          await Docker.delete(instanceId);
         }
       }
     } catch (err) {
@@ -250,4 +250,4 @@ class Container {
   }
 }
 
-export default Container;
+export default Docker;

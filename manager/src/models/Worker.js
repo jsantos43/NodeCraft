@@ -31,6 +31,10 @@ Worker.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+  secret: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   healthy: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
@@ -49,8 +53,8 @@ Worker.init({
     allowNull: true,
     validate: {
       min: {
-        args: [512],
-        msg: 'memory field must be greater than or equal to 512mb!',
+        args: [0],
+        msg: 'memorieTotal field must be greater than or equal to 0mb!',
       },
     },
   },
@@ -59,28 +63,18 @@ Worker.init({
     allowNull: true,
     validate: {
       min: {
-        args: [512],
-        msg: 'memory field must be greater than or equal to 512mb!',
+        args: [0],
+        msg: 'memorieUsed field must be greater than or equal to 0mb!',
       },
     },
   },
-  diskTotal: {
+  diskAvailable: {
     type: DataTypes.INTEGER,
     allowNull: true,
     validate: {
       min: {
-        args: [512],
-        msg: 'memory field must be greater than or equal to 512mb!',
-      },
-    },
-  },
-  diskUsed: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    validate: {
-      min: {
-        args: [512],
-        msg: 'memory field must be greater than or equal to 512mb!',
+        args: [0],
+        msg: 'diskAvailable field must be greater than or equal to 0mb!',
       },
     },
   },
