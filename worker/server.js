@@ -1,7 +1,7 @@
 import http from 'http';
 import app from './src/app.js';
 import config from './config/config.js';
-// import Maintenance from './src/services/Maintenance.js';
+import Maintenance from './src/services/Maintenance.js';
 // import Instance from './src/services/Instance.js';
 import { initSocket } from './config/socket.js';
 import setupWebsocket from './src/websocket/index.js';
@@ -17,7 +17,7 @@ server.listen(config.app.port, async () => {
   console.log(`Worker is running on port ${config.app.port}`);
 
   await Heartbeat.define();
-  // await Maintenance.ensureEnviroment();
+  await Maintenance.ensureEnviroment();
   // await Instance.attachAll();
   // Maintenance.scheduleJobs();
 });

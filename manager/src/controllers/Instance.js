@@ -1,7 +1,6 @@
 import { InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import WorkerService from '../services/Worker.js';
-// import BackupService from '../services/Backup.js';
 
 class Instance {
   static async create(req, res, next) {
@@ -86,8 +85,6 @@ class Instance {
       const worker = await WorkerService.readOne(instance.workerId);
 
       const route = `${worker.url}/server/${id}/run`;
-
-      console.log(route);
       const rawData = await fetch(route, {
         method: 'POST',
         headers: {
@@ -109,7 +106,22 @@ class Instance {
   static async stop(req, res, next) {
     try {
       const { id } = req.params;
-      const instance = await Service.stop(id);
+
+      const instance = await Service.readOne(id);
+      const worker = await WorkerService.readOne(instance.workerId);
+
+      const route = `${worker.url}/server/${id}/stop`;
+      const rawData = await fetch(route, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${worker.secret}`,
+        },
+        body: JSON.stringify({ instance }),
+      });
+
+      const result = await rawData.json();
+      console.log(result);
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {
@@ -120,8 +132,23 @@ class Instance {
   static async restart(req, res, next) {
     try {
       const { id } = req.params;
-      await Service.stop(id);
-      const instance = await Service.run(id);
+
+      const instance = await Service.readOne(id);
+      const running = instance?.status === 'running';
+      if (running) throw new InvalidRequest('You cannot do this while instance is running!');
+
+      const worker = await WorkerService.readOne(instance.workerId);
+      const route = `${worker.url}/server/${id}/restart`;
+      const rawData = await fetch(route, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${worker.secret}`,
+        },
+        body: JSON.stringify({ instance }),
+      });
+
+      const result = await rawData.json();
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {

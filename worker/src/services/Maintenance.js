@@ -1,32 +1,25 @@
 import config from '../../config/config.js';
-import Docker from './Docker.js';
-import Instance from './Instance.js';
+import Container from './Container.js';
 import File from './File.js';
 import logger from '../../config/logger.js';
-import { ensureNetwork, ensureImage } from '../utils/ensureDocker.js';
 
 class Maintenance {
-  static async ensureEnviroment() {
-    // Ensure default paths
+  static async createDefaultPaths() {
     try {
-      if (!(await File.verifyExists(config.paths.instances))) {
-        await File.createOneDirectory(config.paths.instances);
-      }
-
-      if (!(await File.verifyExists(config.paths.temp))) {
-        await File.createOneDirectory(config.paths.temp);
-      }
+      await File.createOneDirectory(config.paths.instances);
+      await File.createOneDirectory(config.paths.temp);
     } catch (err) {
-      logger.error({ err }, 'Error to ensure default paths');
+      logger.error({ err }, 'Error to create default paths');
     }
+  }
 
-    // Ensure docker
+  static async checkDocker() {
     try {
-      await ensureNetwork('nodecraft-net');
+      await Container.ensureNetwork('nodecraft-net');
 
-      for (const [game, gameSettings] of Object.entries(config.games)) {
+      for (const [game, image] of Object.entries(config.images)) {
         try {
-          await ensureImage(gameSettings.image);
+          await Container.ensureImage(image);
         } catch (err) {
           logger.error({ err }, `Error to ensure docker ${game} image`);
         }
@@ -34,6 +27,11 @@ class Maintenance {
     } catch (err) {
       logger.error({ err }, 'Error to ensure docker');
     }
+  }
+
+  static async ensureEnviroment() {
+    await Maintenance.createDefaultPaths();
+    await Maintenance.checkDocker();
   }
 
   static scheduleMaintenance() {
@@ -62,13 +60,13 @@ class Maintenance {
   static scheduleCleanup() {
     // First run
     Instance.verifyLost();
-    Docker.removeLost();
+    Container.removeLost();
     File.removeOldTemp();
 
     // Set periodically
     setInterval(() => {
       Instance.verifyLost();
-      Docker.removeLost();
+      Container.removeLost();
     }, config.interval.checkLost);
 
     setInterval(File.removeOldTemp, config.interval.checkTemp);

@@ -91,13 +91,11 @@ class Instance {
       }
     });
 
-    // await Container.delete(id);
-
     return instance;
   }
 
   static async delete(id) {
-    const instance = await Instance.readOne(id, true);
+    const instance = await Instance.readOne(id);
     await instance.destroy();
 
     return instance;

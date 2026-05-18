@@ -34,12 +34,12 @@ class Instance {
 
       // Wipe old lines
       const historyLength = history.length;
-      const maxHistoryLength = config.instance.maxHistory || 0;
+      // const maxHistoryLength = config.instance.maxHistory || 0;
       if (historyLength > maxHistoryLength) {
         history = history.slice(historyLength - maxHistoryLength);
       }
 
-      await instance.update({ history });
+      // await instance.update({ history });
     } catch (err) {
       logger.error({ err }, 'Error to update instance history');
     }
@@ -58,7 +58,7 @@ class Instance {
       if (!message) return;
 
       // Update instance history field
-      await this.updateHistory(message);
+      // await this.updateHistory(message);
 
       // Send server output to socket.io
       if (this.io) this.io.to(`instance:${this.id}`).emit('instance-output', message);
@@ -67,6 +67,7 @@ class Instance {
       if (callback) callback(message);
 
       // eslint-disable-next-line no-console
+      console.log(message);
       if (config.app.stage === 'DEV') console.log(message);
     } catch (err) {
       logger.error({ err }, 'Error to handle container message');
@@ -177,8 +178,8 @@ class Instance {
       if (checkerInterval) clearInterval(checkerInterval);
 
       // Set instance status as stopped
-      const instance = this?.instance;
-      if (instance) await instance.update({ status: 'stopped' });
+      // const instance = this?.instance;
+      // if (instance) await instance.update({ status: 'stopped' });
 
       delete this;
     } catch (err) {

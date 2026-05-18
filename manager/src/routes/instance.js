@@ -3,7 +3,7 @@ import Controller from '../controllers/Instance.js';
 // import file from './file.js';
 import link from './link.js';
 import {
-  auth, verifyRunning, verifyNotRunning, validate,
+  auth, verifyNotRunning, validate,
 } from '../middlewares/index.js';
 import { createInstance, updateInstance } from '../schemas/index.js';
 
@@ -42,13 +42,11 @@ router
   .post(
     '/instance/:id/run',
     auth('instance:execute'),
-    verifyNotRunning,
     Controller.run,
   )
   .post(
     '/instance/:id/stop',
     auth('instance:execute'),
-    verifyRunning,
     Controller.stop,
   )
   .post(

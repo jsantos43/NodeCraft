@@ -31,6 +31,13 @@ const config = {
     secret: process.env.STORAGE_SECRET,
     max: process.env.STORAGE_MAX,
   },
+  images: {
+    minecraft: 'itzg/minecraft-server:latest',
+    counterstrike: 'cm2network/cs2:latest',
+    kerbal: 'ghcr.io/joaosantos2007/ksp:latest',
+    hytale: 'ghcr.io/joaosantos2007/hytale:latest',
+    terraria: 'ghcr.io/passivelemon/terraria-docker:latest',
+  },
 };
 
 export default Object.freeze(config);

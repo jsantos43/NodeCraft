@@ -3,38 +3,48 @@ import Container from './Container.js';
 import Backup from './Backup.js';
 import File from './File.js';
 import { running, gameRuntimes } from '../runtimes/index.js';
+import { Internal } from '../errors/index.js';
 import logger from '../../config/logger.js';
+import config from '../../config/config.js';
 
 class Server {
   static async run(instance) {
-    await Container.create(instance);
-
     try {
+      const instancePath = `${config.paths.instances}/${instance.id}`;
+
+      await File.createOneDirectory(instancePath);
+      await Container.create(instance);
+
       const Runtime = gameRuntimes[instance.type];
       if (!Runtime) throw new Internal('Instace game runtime not found!');
 
-      running[id] = new Runtime(instance, () => Instance.readOne(id));
-      await instance.update({ status: 'running' });
+      running[instance.id] = new Runtime(instance);
     } catch (err) {
-      await Instance.stop(id);
-
-      throw err;
+      Server.stop(instance);
+      logger.error({ err }, `Error to run instance ${instance?.id}`);
     }
-
-    return instance;
   }
 
-  static async stop(id) {
-    const instance = await Instance.readOne(id);
-    await Container.stop(id);
+  static async stop(instance) {
+    try {
+      await Container.stop(instance.id);
 
-    // Stop runtime instance
-    if (running[id]) running[id].finish();
-    delete running[id];
-    await Container.delete(id);
+      // Stop runtime instance
+      if (running[instance.id]) running[instance.id].finish();
+      delete running[instance.id];
+      await Container.delete(instance.id);
+    } catch (err) {
+      logger.error({ err }, `Error to stop instance ${instance?.id}`);
+    }
+  }
 
-    await instance.update({ status: 'stopped' });
-    return instance;
+  static async restart(instance) {
+    try {
+      await Server.stop(instance);
+      await Server.run(instance);
+    } catch (err) {
+      logger.error({ err }, `Error to restart instance ${instance?.id}`);
+    }
   }
 
   static async maintenanceAll() {

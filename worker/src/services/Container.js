@@ -4,121 +4,174 @@ import logger from '../../config/logger.js';
 import { Internal } from '../errors/index.js';
 import config from '../../config/config.js';
 
-const dockerImages = {
-  minecraft: 'itzg/minecraft-server:latest',
-  counterstrike: 'cm2network/cs2:latest',
-  kerbal: 'ghcr.io/joaosantos2007/ksp:latest',
-  hytale: 'ghcr.io/joaosantos2007/hytale:latest',
-  terraria: 'ghcr.io/passivelemon/terraria-docker:latest',
-};
+const dockerImages = config.images;
 
-class Docker {
+class Container {
+  static defineMinecraft(instance, path) {
+    const gameData = instance?.minecraft;
+    if (!gameData) throw new Error('instance has no minecraft config!');
+
+    const enviroment = [
+      'EULA=TRUE',
+      'ENABLE_RCON=true',
+      'RCON_PASSWORD=nodecraft',
+      'RCON_PORT=25575',
+      'VERSION=latest',
+    ];
+    if (gameData.software === 'paper') enviroment.push('TYPE=paper');
+    else if (gameData.software === 'purpur') enviroment.push('TYPE=purpur');
+
+    const image = dockerImages.minecraft;
+    const binds = [`${path}:/data`];
+    const portBindings = {
+      '25565/tcp': [
+        { HostPort: String(instance.port) },
+      ],
+      '25565/udp': [
+        { HostPort: String(instance.port) },
+      ],
+    };
+
+    return {
+      enviroment,
+      binds,
+      image,
+      portBindings,
+    };
+  }
+
+  static defineCounterStrike(instance, path) {
+    const gameData = instance?.counterstrike;
+    if (!gameData) throw new Error('instance has no counterstrike config!');
+
+    const enviroment = [
+      `SRCDS_TOKEN=${gameData.steamToken}`,
+      `CS2_RCONPW=${gameData.rconPassword}`,
+      `CS2_SERVERNAME=${gameData.servername}`,
+      `CS2_MAXPLAYERS=${gameData.maxPlayers}`,
+      'CS2_SERVER_HIBERNATE=1',
+    ];
+    if (gameData.password) enviroment.push(`CS2_PW="${gameData.password}"`);
+
+    const image = dockerImages.counterstrike;
+    const exposedPorts = {
+      '27015/udp': {},
+      '27015/tcp': {},
+    };
+    const binds = [`${path}:/home/steam/cs2-dedicated`];
+    const portBindings = {
+      '27015/udp': [
+        { HostPort: String(instance.port) },
+      ],
+      '27015/tcp': [
+        { HostPort: String(instance.port) },
+      ],
+    };
+
+    return {
+      enviroment,
+      binds,
+      image,
+      portBindings,
+      exposedPorts,
+    };
+  }
+
+  static defineKerbal(instance, path) {
+    const image = dockerImages.kerbal;
+    const exposedPorts = { '6702/tcp': {} };
+    const binds = [
+      `${path}/Config:/data/Config`,
+      `${path}/Universe:/data/Universe`,
+      `${path}/logs:/data/logs`,
+    ];
+    const portBindings = {
+      '6702/tcp': [
+        { HostPort: String(instance.port) },
+      ],
+    };
+
+    return {
+      binds,
+      image,
+      portBindings,
+      exposedPorts,
+    };
+  }
+
+  static async defineHytale(instance, path) {
+    const image = dockerImages.hytale;
+    const exposedPorts = { '5520/udp': {} };
+    const binds = [`${path}:/data`];
+    const portBindings = {
+      '5520/udp': [
+        { HostPort: String(instance.port) },
+      ],
+    };
+
+    return {
+      binds,
+      image,
+      portBindings,
+      exposedPorts,
+    };
+  }
+
+  static defineTerraria(instance, path) {
+    const image = dockerImages.terraria;
+    const enviroment = [
+      'SERVERCONFIG=1',
+    ];
+    const exposedPorts = { '7777/tcp': {} };
+    const binds = [
+      `${path}:/opt/terraria/config/`,
+    ];
+    const portBindings = {
+      '7777/tcp': [
+        { HostPort: String(instance.port) },
+      ],
+    };
+
+    return {
+      binds,
+      image,
+      enviroment,
+      portBindings,
+      exposedPorts,
+    };
+  }
+
   static async create(instance) {
-    const existsContainer = await Docker.get(instance.id);
+    const existsContainer = await Container.get(instance.id);
     if (existsContainer) return existsContainer;
 
     const instancePath = Path.join(config.paths.instances, instance.id);
-    let enviroment = [];
-    let binds = [];
-    let exposedPorts = {};
-    let portBindings = {};
-    let image = null;
+    let info = null;
 
-    if (instance.type === 'minecraft') {
-      const gameData = instance?.minecraft;
-      if (!gameData) throw new Error('instance has no minecraft config!');
-
-      enviroment = [
-        'EULA=TRUE',
-        'ENABLE_RCON=true',
-        'RCON_PASSWORD=nodecraft',
-        'RCON_PORT=25575',
-        'VERSION=latest',
-      ];
-      if (gameData.software === 'paper') enviroment.push('TYPE=paper');
-      else if (gameData.software === 'purpur') enviroment.push('TYPE=purpur');
-
-      image = dockerImages.minecraft;
-      binds = [`${instancePath}:/data`];
-      portBindings = {
-        '25565/tcp': [
-          { HostPort: String(instance.port) },
-        ],
-        '25565/udp': [
-          { HostPort: String(instance.port) },
-        ],
-      };
-    } else if (instance.type === 'counterstrike') {
-      const gameData = instance?.counterstrike;
-      if (!gameData) throw new Error('instance has no counterstrike config!');
-
-      enviroment = [
-        `SRCDS_TOKEN=${gameData.steamToken}`,
-        `CS2_RCONPW=${gameData.rconPassword}`,
-        `CS2_SERVERNAME=${gameData.servername}`,
-        `CS2_MAXPLAYERS=${gameData.maxPlayers}`,
-        'CS2_SERVER_HIBERNATE=1',
-      ];
-      if (gameData.password) enviroment.push(`CS2_PW="${gameData.password}"`);
-
-      image = dockerImages.counterstrike;
-      exposedPorts = {
-        '27015/udp': {},
-        '27015/tcp': {},
-      };
-      binds = [`${instancePath}:/home/steam/cs2-dedicated`];
-      portBindings = {
-        '27015/udp': [
-          { HostPort: String(instance.port) },
-        ],
-        '27015/tcp': [
-          { HostPort: String(instance.port) },
-        ],
-      };
-    } else if (instance.type === 'kerbal') {
-      image = dockerImages.kerbal;
-      exposedPorts = { '6702/tcp': {} };
-      binds = [
-        `${instancePath}/Config:/data/Config`,
-        `${instancePath}/Universe:/data/Universe`,
-        `${instancePath}/logs:/data/logs`,
-      ];
-      portBindings = {
-        '6702/tcp': [
-          { HostPort: String(instance.port) },
-        ],
-      };
-    } else if (instance.type === 'hytale') {
-      image = dockerImages.hytale;
-      exposedPorts = { '5520/udp': {} };
-      binds = [`${instancePath}:/data`];
-      portBindings = {
-        '5520/udp': [
-          { HostPort: String(instance.port) },
-        ],
-      };
-    } else if (instance.type === 'terraria') {
-      image = dockerImages.terraria;
-      enviroment = [
-        'SERVERCONFIG=1',
-      ];
-      exposedPorts = { '7777/tcp': {} };
-      binds = [
-        `${instancePath}:/opt/terraria/config/`,
-      ];
-      portBindings = {
-        '7777/tcp': [
-          { HostPort: String(instance.port) },
-        ],
-      };
-    } else {
-      throw new Internal('No container game type available!');
+    switch (instance.type) {
+      case 'minecraft':
+        info = Container.defineMinecraft(instance, instancePath);
+        break;
+      case 'counterstrike':
+        info = Container.defineCounterStrike(instance, instancePath);
+        break;
+      case 'kerbal':
+        info = Container.defineKerbal(instance, instancePath);
+        break;
+      case 'hytale':
+        info = Container.defineHytale(instance, instancePath);
+        break;
+      case 'terraria':
+        info = Container.defineTerraria(instance, instancePath);
+        break;
+      default:
+        throw new Internal('No container game type available!');
     }
 
     const container = await docker.createContainer({
       name: `Nodecraft_${instance.id}`,
-      Image: image,
-      Env: enviroment,
+      Image: info.image,
+      Env: info.enviroment,
 
       Tty: true,
       OpenStdin: true,
@@ -126,11 +179,11 @@ class Docker {
       AttachStdout: true,
       AttachStderr: true,
 
-      ExposedPorts: exposedPorts,
+      ExposedPorts: info.exposedPorts,
 
       HostConfig: {
-        Binds: binds,
-        PortBindings: portBindings,
+        Binds: info.binds,
+        PortBindings: info.portBindings,
 
         NetworkMode: 'nodecraft-net',
         Memory: instance.memory * 1024 * 1024,
@@ -160,7 +213,7 @@ class Docker {
 
   static async getIpAddress(id) {
     try {
-      const container = await Docker.get(id);
+      const container = await Container.get(id);
       const inspect = await container.inspect();
       const network = inspect.NetworkSettings.Networks['nodecraft-net'];
 
@@ -172,7 +225,7 @@ class Docker {
 
   static async delete(id) {
     try {
-      const container = await Docker.get(id);
+      const container = await Container.get(id);
       if (!container) return;
 
       await container.remove({ force: true });
@@ -184,7 +237,7 @@ class Docker {
   static async run(id) {
     try {
       // Read container
-      const container = await Docker.get(id);
+      const container = await Container.get(id);
       if (!container) return;
 
       // Get container info
@@ -200,7 +253,7 @@ class Docker {
   static async stop(id) {
     try {
       // Read container
-      const container = await Docker.get(id);
+      const container = await Container.get(id);
       if (!container) return;
 
       // Get container info
@@ -241,13 +294,48 @@ class Docker {
 
         const instanceId = cleanName.replace('Nodecraft_', '');
         if (!instancesId.includes(instanceId)) {
-          await Docker.delete(instanceId);
+          await Container.delete(instanceId);
         }
       }
     } catch (err) {
       logger.error({ err }, 'Error to remove lost containers');
     }
   }
+
+  static ensureImage(imageName) {
+    return new Promise((resolve, reject) => {
+      docker.getImage(imageName).inspect()
+        .then(() => resolve())
+        .catch(() => {
+          docker.pull(imageName, (err, stream) => {
+            if (err) return reject(err);
+
+            return docker.modem.followProgress(
+              stream,
+              (errProgress) => (errProgress ? reject(errProgress) : resolve()),
+            );
+          });
+        });
+    });
+  }
+
+  static async ensureNetwork(networkName) {
+    const networks = await docker.listNetworks();
+
+    let exists = false;
+    networks.forEach((net) => {
+      if (net.Name === networkName) exists = true;
+    });
+
+    if (exists) return;
+
+    await docker.createNetwork({
+      Name: networkName,
+      Driver: 'bridge',
+      Internal: false,
+      Attachable: false,
+    });
+  }
 }
 
-export default Docker;
+export default Container;

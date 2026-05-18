@@ -74,7 +74,7 @@ class Minecraft extends Instance {
   }
 
   async sync() {
-    const instance = this.instance.get({ plain: true });
+    const instance = this?.instance;
 
     try {
       // Sync database with server.properties
@@ -150,7 +150,7 @@ class Minecraft extends Instance {
 
   async updateBarrier() {
     try {
-      const instancePlain = this.instance.get({ plain: true });
+      const instancePlain = this.instance;
 
       // Avoid players kicking while updating
       this.barrier.updating = true;
