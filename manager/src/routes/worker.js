@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import Controller from '../controllers/Worker.js';
-import { auth } from '../middlewares/index.js';
-import event from './event.js';
+import { auth, workerAuth } from '../middlewares/index.js';
 
 const router = Router();
 
@@ -31,6 +30,20 @@ router
     auth('admin'),
     Controller.delete,
   )
-  .use('/worker', event);
+  .post(
+    '/worker/:id/heartbeat',
+    workerAuth(),
+    Controller.heartbeat,
+  )
+  .get(
+    '/worker/:id/instances',
+    workerAuth(),
+    Controller.readInstances,
+  )
+  .put(
+    '/worker/:workerId/instances/:instanceId',
+    workerAuth(),
+    Controller.updateInstance,
+  );
 
 export default router;

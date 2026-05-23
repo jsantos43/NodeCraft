@@ -1,4 +1,5 @@
 import Service from '../services/Worker.js';
+import InstanceService from '../services/Instance.js';
 
 class Worker {
   static async readAll(req, res, next) {
@@ -67,7 +68,31 @@ class Worker {
       const id = req?.params?.id;
       const body = req?.body;
 
-      await Service.updateHeartBeat(id, body);
+      await Service.receiveHeartbeat(id, body);
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async readInstances(req, res, next) {
+    try {
+      const id = req?.params?.id;
+      const instances = await Service.readInstancesByWorker(id);
+
+      return res.status(200).json({ success: true, instances });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async updateInstance(req, res, next) {
+    try {
+      const id = req?.params?.instanceId;
+      const data = req?.body;
+
+      await InstanceService.update(id, data);
 
       return res.status(200).json({ success: true });
     } catch (err) {

@@ -273,17 +273,8 @@ class Container {
     }
   }
 
-  static async removeLost() {
+  static async removeLost(instancesId) {
     try {
-      const instances = await InstanceModel.findAll({
-        attributes: ['id'],
-        raw: true,
-      }) || [];
-      const instancesId = [];
-      for (const instance of instances) {
-        instancesId.push(instance.id);
-      }
-
       const containers = await docker.listContainers({ all: true });
       for (const container of containers) {
         const name = container.Names?.[0];
@@ -292,10 +283,8 @@ class Container {
         const cleanName = name.replace(/^\//, '');
         if (!cleanName.startsWith('Nodecraft_')) continue;
 
-        const instanceId = cleanName.replace('Nodecraft_', '');
-        if (!instancesId.includes(instanceId)) {
-          await Container.delete(instanceId);
-        }
+        const id = cleanName.replace('Nodecraft_', '');
+        if (!instancesId.includes(id)) await Container.delete(id);
       }
     } catch (err) {
       logger.error({ err }, 'Error to remove lost containers');

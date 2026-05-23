@@ -1,5 +1,5 @@
 import Auth from './Auth.js';
-import { Worker as Model } from '../models/index.js';
+import { Worker as Model, Instance as InstanceModel, instanceInclude } from '../models/index.js';
 import { NotFound } from '../errors/index.js';
 
 class Worker {
@@ -42,20 +42,30 @@ class Worker {
     return worker;
   }
 
-  static async updateHeartBeat(id, data) {
+  static async receiveHeartbeat(id, data) {
     const info = {
       healthy: true,
       lastSeenAt: Date.now(),
       cpuUsage: data.cpuUsage,
       memorieTotal: data.memorieTotal,
       memorieUsed: data.memorieUsed,
-      diskTotal: data.diskTotal,
-      diskUsed: data.diskUsed,
+      diskAvailable: data.diskAvailable,
     };
 
     const worker = await Worker.update(id, info);
 
     return worker;
+  }
+
+  static async readInstancesByWorker(id) {
+    const instances = await InstanceModel.findAll({
+      where: {
+        workerId: id,
+      },
+      include: instanceInclude,
+    });
+
+    return instances;
   }
 
   static async compareApiKey(apiKey, storedApiKey) {

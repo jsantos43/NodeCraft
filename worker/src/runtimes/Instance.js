@@ -4,6 +4,7 @@ import Container from '../services/Container.js';
 import config from '../../config/config.js';
 import logger from '../../config/logger.js';
 import { getIO } from '../../config/socket.js';
+import Manager from '../services/Manager.js';
 
 class Instance {
   constructor(instance, readFunction) {
@@ -20,29 +21,7 @@ class Instance {
       interval: null,
     };
     this.io = null;
-  }
-
-  async updateHistory(message) {
-    try {
-      // Get instance in registry
-      const instance = this?.instance;
-      if (!instance) return;
-
-      // Copy instance history array
-      let history = [...instance.history];
-      history.push(message);
-
-      // Wipe old lines
-      const historyLength = history.length;
-      // const maxHistoryLength = config.instance.maxHistory || 0;
-      if (historyLength > maxHistoryLength) {
-        history = history.slice(historyLength - maxHistoryLength);
-      }
-
-      // await instance.update({ history });
-    } catch (err) {
-      logger.error({ err }, 'Error to update instance history');
-    }
+    this.history = [];
   }
 
   async handleMessage(chunk, callback) {
@@ -54,11 +33,10 @@ class Instance {
       data = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
       const message = data.trim();
-
       if (!message) return;
 
-      // Update instance history field
-      // await this.updateHistory(message);
+      // Update instance history
+      this.history.push(message);
 
       // Send server output to socket.io
       if (this.io) this.io.to(`instance:${this.id}`).emit('instance-output', message);
@@ -67,7 +45,6 @@ class Instance {
       if (callback) callback(message);
 
       // eslint-disable-next-line no-console
-      console.log(message);
       if (config.app.stage === 'DEV') console.log(message);
     } catch (err) {
       logger.error({ err }, 'Error to handle container message');
@@ -156,6 +133,12 @@ class Instance {
   async start() {
     try {
       this.io = getIO();
+
+      // Send to manager that instance is running
+      await Manager.sendInstanceDetails(this.id, {
+        status: 'running',
+        history: this?.history,
+      });
     } catch (err) {
       this.io = null;
     }
@@ -173,13 +156,15 @@ class Instance {
         this.stream = null;
       }
 
-      // remoce check interval
+      // remove check interval
       const checkerInterval = this?.checker?.interval;
       if (checkerInterval) clearInterval(checkerInterval);
 
-      // Set instance status as stopped
-      // const instance = this?.instance;
-      // if (instance) await instance.update({ status: 'stopped' });
+      // Send to manager that instance has stopped
+      await Manager.sendInstanceDetails(this.id, {
+        status: 'stopped',
+        history: this?.history,
+      });
 
       delete this;
     } catch (err) {

@@ -6,6 +6,7 @@ import { running, gameRuntimes } from '../runtimes/index.js';
 import { Internal } from '../errors/index.js';
 import logger from '../../config/logger.js';
 import config from '../../config/config.js';
+import Manager from './Manager.js';
 
 class Server {
   static async run(instance) {
@@ -31,7 +32,6 @@ class Server {
 
       // Stop runtime instance
       if (running[instance.id]) running[instance.id].finish();
-      delete running[instance.id];
       await Container.delete(instance.id);
     } catch (err) {
       logger.error({ err }, `Error to stop instance ${instance?.id}`);
@@ -44,6 +44,25 @@ class Server {
       await Server.run(instance);
     } catch (err) {
       logger.error({ err }, `Error to restart instance ${instance?.id}`);
+    }
+  }
+
+  // Start instances that were running before worker shutdown
+  static async wakeUp() {
+    try {
+      const instances = await Manager.getInstances();
+
+      for (const instance of instances) {
+        try {
+          if (instance.status === 'running') {
+            await Server.run(instance);
+          }
+        } catch (err) {
+          logger.error({ err }, 'Error to wake up an instance');
+        }
+      }
+    } catch (err) {
+      logger.error({ err }, 'Error to wake up instances');
     }
   }
 
@@ -61,18 +80,6 @@ class Server {
         if (isRunning) await Instance.run(instance.id);
       } catch (err) {
         logger.error({ err }, 'Error in an instance maintenance');
-      }
-    }
-  }
-
-  static async attachAll() {
-    const instances = await Instance.readAll();
-
-    for (const instance of instances) {
-      try {
-        if (instance.status === 'running') await Instance.run(instance.id);
-      } catch (err) {
-        logger.error({ err }, 'Error to attach an instance');
       }
     }
   }

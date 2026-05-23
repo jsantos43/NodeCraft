@@ -1,4 +1,4 @@
-import { InvalidRequest } from '../errors/index.js';
+import { Internal, InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import WorkerService from '../services/Worker.js';
 
@@ -95,7 +95,7 @@ class Instance {
       });
 
       const result = await rawData.json();
-      console.log(result);
+      if (!result?.success) throw new Internal('Failed the run request to worker!');
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {
@@ -121,7 +121,7 @@ class Instance {
       });
 
       const result = await rawData.json();
-      console.log(result);
+      if (!result?.success) throw new Internal('Failed the stop request to worker!');
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {
@@ -149,6 +149,7 @@ class Instance {
       });
 
       const result = await rawData.json();
+      if (!result?.success) throw new Internal('Failed the restart request to worker!');
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {
