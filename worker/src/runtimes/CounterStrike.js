@@ -68,7 +68,7 @@ class CounterStrike extends Instance {
       await this.start();
 
       // Listen container
-      this.listen();
+      this.listenStreamEvents();
     } catch (err) {
       logger.error({ err }, 'Error to setup counterstrike instance');
     }

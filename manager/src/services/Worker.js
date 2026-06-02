@@ -1,6 +1,9 @@
 import Auth from './Auth.js';
 import { Worker as Model, Instance as InstanceModel, instanceInclude } from '../models/index.js';
 import { NotFound } from '../errors/index.js';
+import Instance from './Instance.js';
+
+const MAX_INSTANCE_HISTORY = 15;
 
 class Worker {
   static async create(data) {
@@ -66,6 +69,22 @@ class Worker {
     });
 
     return instances;
+  }
+
+  static async updateInstanceDetails(id, data) {
+    const instance = await Instance.readOne(id);
+    const workerHistory = data?.history || [];
+
+    // Wipe old lines
+    let history = [...instance.history, ...workerHistory];
+    if (history.length > MAX_INSTANCE_HISTORY) {
+      history = history.slice(history.length - MAX_INSTANCE_HISTORY);
+    }
+
+    await instance.update({
+      status: data?.status,
+      history,
+    });
   }
 
   static async compareApiKey(apiKey, storedApiKey) {

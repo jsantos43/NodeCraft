@@ -1,5 +1,4 @@
 import Service from '../services/Worker.js';
-import InstanceService from '../services/Instance.js';
 
 class Worker {
   static async readAll(req, res, next) {
@@ -92,7 +91,7 @@ class Worker {
       const id = req?.params?.instanceId;
       const data = req?.body;
 
-      await InstanceService.update(id, data);
+      await Service.updateInstanceDetails(id, data);
 
       return res.status(200).json({ success: true });
     } catch (err) {

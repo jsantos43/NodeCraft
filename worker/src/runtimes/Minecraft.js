@@ -6,19 +6,18 @@ import logger from '../../config/logger.js';
 import FileService from '../services/File.js';
 
 class Minecraft extends Instance {
-  constructor(instance, readFunction) {
-    super(instance, readFunction);
+  constructor(instance) {
+    super(instance);
 
     this.paths = {
-      instance: this.instancePath,
-      allowlist: Path.join(this.instancePath, 'whitelist.json'),
-      ops: Path.join(this.instancePath, 'ops.json'),
-      properties: Path.join(this.instancePath, 'server.properties'),
-      plugins: Path.join(this.instancePath, 'plugins'),
-      geyser: Path.join(this.instancePath, 'plugins', 'Geyser-Spigot', 'config.yml'),
-      floodgate: Path.join(this.instancePath, 'plugins', 'floodgate', 'config.yml'),
-      sessionLock: Path.join(this.instancePath, 'world', 'session.lock'),
-      usercache: Path.join(this.instancePath, 'usercache.json'),
+      allowlist: Path.join(this.path, 'whitelist.json'),
+      ops: Path.join(this.path, 'ops.json'),
+      properties: Path.join(this.path, 'server.properties'),
+      plugins: Path.join(this.path, 'plugins'),
+      geyser: Path.join(this.path, 'plugins', 'Geyser-Spigot', 'config.yml'),
+      floodgate: Path.join(this.path, 'plugins', 'floodgate', 'config.yml'),
+      sessionLock: Path.join(this.path, 'world', 'session.lock'),
+      usercache: Path.join(this.path, 'usercache.json'),
     };
 
     this.state = {
@@ -302,7 +301,7 @@ class Minecraft extends Instance {
       await this.start();
 
       // listen container
-      this.listen((msg) => {
+      this.listenStreamEvents((msg) => {
         if (msg.includes('joined the game') || msg.includes('left the game')) {
           this.monitor();
         }

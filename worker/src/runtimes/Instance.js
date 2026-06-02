@@ -7,24 +7,28 @@ import { getIO } from '../../config/socket.js';
 import Manager from '../services/Manager.js';
 
 class Instance {
-  constructor(instance, readFunction) {
+  constructor(instance) {
     this.id = instance.id;
+    this.path = Path.join(config.paths.instances, instance.id);
     this.instance = instance;
-    this.instancePath = Path.join(config.paths.instances, instance.id);
+    this.status = 'stopped';
     this.stream = null;
-    this.buffer = '';
-    this.readFunction = readFunction;
-    this.rcon = null;
-    this.tryingRconConnection = false;
+    this.io = null;
+    this.rcon = {
+      service: null,
+      tryingConnection: false,
+    };
     this.checker = {
       lastRun: 0,
       interval: null,
     };
-    this.io = null;
-    this.history = [];
+    this.synchronizer = { // Update instance details
+      interval: null,
+      history: [],
+    };
   }
 
-  async handleMessage(chunk, callback) {
+  async processStreamOutput(chunk, callback) {
     try {
       let data = chunk.toString('utf8');
 
@@ -36,7 +40,7 @@ class Instance {
       if (!message) return;
 
       // Update instance history
-      this.history.push(message);
+      this.synchronizer.history.push(message);
 
       // Send server output to socket.io
       if (this.io) this.io.to(`instance:${this.id}`).emit('instance-output', message);
@@ -51,12 +55,12 @@ class Instance {
     }
   }
 
-  async listen(callback) {
+  // Catch stream output
+  async listenStreamEvents(callback) {
     try {
       if (this.stream) return;
 
       const container = await Container.get(this.id);
-
       this.stream = await container.attach({
         stream: true,
         stdin: true,
@@ -65,7 +69,8 @@ class Instance {
       });
       this.stream.setEncoding('utf8');
 
-      this.stream.on('data', (chunk) => this.handleMessage(chunk, callback));
+      // Define stream events
+      this.stream.on('data', (chunk) => this.processStreamOutput(chunk, callback));
       this.stream.once('end', this.finish);
       this.stream.once('close', this.finish);
       this.stream.once('error', this.finish);
@@ -78,9 +83,9 @@ class Instance {
 
   async initRcon(port, password, callback) {
     try {
-      if (!!this.rcon && !this.tryingRconConnection) return;
+      if (!!this.rcon.service && !this.rcon.tryingConnection) return;
 
-      this.tryingRconConnection = true;
+      this.rcon.tryingConnection = true;
 
       const containerIpAddress = await Container.getIpAddress(this.id);
       const rcon = await Rcon.connect({
@@ -89,12 +94,12 @@ class Instance {
         password: password || 'nodecraft',
       });
 
-      this.rcon = rcon;
-      this.tryingRconConnection = false;
+      this.rcon.service = rcon;
+      this.rcon.tryingConnection = false;
       await callback();
     } catch (err) {
-      this.rcon = null;
-      this.tryingRconConnection = false;
+      this.rcon.service = null;
+      this.rcon.tryingConnection = false;
     }
   }
 
@@ -103,8 +108,8 @@ class Instance {
     let result = '';
 
     try {
-      if (this.rcon) {
-        result = await this.rcon.send(command);
+      if (this.rcon.service) {
+        result = await this.rcon.service.send(command);
         sent = true;
       } else {
         sent = false;
@@ -122,6 +127,7 @@ class Instance {
     try {
       const { sent } = await this.sendRcon(command);
 
+      // Verify if rcon message not worked and stream exits
       if (!sent && this.stream && !this.stream.destroyed) {
         this.stream.write(`${command}\r\n`);
       }
@@ -130,15 +136,26 @@ class Instance {
     }
   }
 
+  async sendInstanceDetails() {
+    try {
+      await Manager.sendInstanceDetails(this.id, {
+        status: this.status === 'running' ? this.status : 'stopped',
+        history: this?.synchronizer?.history || [],
+      });
+
+      if (this?.synchronizer?.history) this.synchronizer.history = [];
+    } catch (err) {
+      logger.error({ err }, 'Error to send instance details');
+    }
+  }
+
   async start() {
     try {
       this.io = getIO();
 
-      // Send to manager that instance is running
-      await Manager.sendInstanceDetails(this.id, {
-        status: 'running',
-        history: this?.history,
-      });
+      this.status = 'running';
+      await this.sendInstanceDetails();
+      this.synchronizer.interval = setInterval(this.sendInstanceDetails, 15000);
     } catch (err) {
       this.io = null;
     }
@@ -160,10 +177,14 @@ class Instance {
       const checkerInterval = this?.checker?.interval;
       if (checkerInterval) clearInterval(checkerInterval);
 
+      // remove manager interval
+      const synchronizerInterval = this?.synchronizer?.interval;
+      if (synchronizerInterval) clearInterval(synchronizerInterval);
+
       // Send to manager that instance has stopped
       await Manager.sendInstanceDetails(this.id, {
         status: 'stopped',
-        history: this?.history,
+        history: this?.synchronizer?.history || [],
       });
 
       delete this;
