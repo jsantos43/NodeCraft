@@ -49,7 +49,6 @@ class File {
 
   static async create(req, res, next) {
     try {
-      console.log('ok');
       const { destiny } = req.query;
       const body = req?.body;
 

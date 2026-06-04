@@ -14,7 +14,7 @@ setupWebsocket(io);
 
 server.listen(config.app.port, async () => {
   // eslint-disable-next-line no-console
-  console.log(`Worker is running on port ${config.app.port}`);
+  console.log(`NodeCraft Worker is running on port ${config.app.port}`);
 
   await Heartbeat.define();
   await Maintenance.ensureEnviroment();

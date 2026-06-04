@@ -3,5 +3,5 @@ import config from './config/config.js';
 
 app.listen(config.app.port, async () => {
   // eslint-disable-next-line no-console
-  console.log(`Nodecraft API working on port ${config.app.port}`);
+  console.log(`Nodecraft API is running on port ${config.app.port}`);
 });
