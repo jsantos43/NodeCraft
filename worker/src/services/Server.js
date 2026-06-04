@@ -66,21 +66,24 @@ class Server {
     }
   }
 
-  static async maintenanceAll() {
-    const instances = await Instance.readAll();
+  static async backupAll() {
+    try {
+      const instances = await Manager.getInstances();
 
-    for (const instance of instances) {
-      try {
-        const isRunning = instance.status === 'running';
+      for (const instance of instances) {
+        try {
+          const isRunning = instance.status === 'running';
 
-        await Instance.stop(instance.id);
+          await Server.stop(instance);
+          await Backup.execute(instance);
 
-        await Backup.execute(instance);
-
-        if (isRunning) await Instance.run(instance.id);
-      } catch (err) {
-        logger.error({ err }, 'Error in an instance maintenance');
+          if (isRunning) await Server.run(instance);
+        } catch (err) {
+          logger.error({ err }, 'Error in an instance maintenance');
+        }
       }
+    } catch (err) {
+      logger.error({ err }, 'Error to backup all instances');
     }
   }
 

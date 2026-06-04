@@ -2,6 +2,7 @@ import config from '../../config/config.js';
 import Container from './Container.js';
 import File from './File.js';
 import logger from '../../config/logger.js';
+import Server from './Server.js';
 
 class Maintenance {
   static async createDefaultPaths() {
@@ -48,8 +49,8 @@ class Maintenance {
         if (isThreeAM && lastRunDate !== today) {
           lastRunDate = today;
 
-          // Update all instances function
-          await Instance.maintenanceAll();
+          // Backup all instances function
+          await Server.backupAll();
         }
       } catch (err) {
         logger.error({ err }, 'Error in maintenance');

@@ -9,12 +9,17 @@ import root from './root.js';
 
 const routes = (app) => {
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*'); // Allowed domains
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
-    res.header('Access-Control-Allow-Credentials', 'true'); // Allow cookies send
+    const origin = req.headers.origin;
+    const allowed = (process.env.CORS_ORIGIN || 'http://localhost:3030').split(',').map(s => s.trim());
 
-    // Answer OPTIONS requests (preflight)
+    if (origin && allowed.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
+
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
+    res.header('Access-Control-Allow-Credentials', 'true');
+
     if (req.method === 'OPTIONS') {
       return res.status(204).end();
     }

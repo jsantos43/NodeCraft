@@ -1,104 +1,88 @@
-body {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+}
+
+:root {
+  --bg-base: #0A0A0A;
+  --bg-subtle: #111113;
+  --bg-card: #18181B;
+  --bg-card-hover: #1C1C21;
+  --bg-input: #0F0F12;
+
+  --border: #27272A;
+  --border-hover: #3F3F46;
+  --border-focus: #52525B;
+
+  --accent: #22C55E;
+  --accent-hover: #16A34A;
+  --accent-dim: rgba(34, 197, 94, 0.12);
+  --accent-text: #4ADE80;
+
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #52525B;
+
+  --red: #EF4444;
+  --red-dim: rgba(239, 68, 68, 0.12);
+  --red-text: #F87171;
+  --yellow: #F59E0B;
+  --yellow-dim: rgba(245, 158, 11, 0.12);
+  --yellow-text: #FCD34D;
+  --blue: #3B82F6;
+  --blue-dim: rgba(59, 130, 246, 0.12);
+  --blue-text: #93C5FD;
+  --purple: #8B5CF6;
+  --purple-dim: rgba(139, 92, 246, 0.12);
+  --purple-text: #C4B5FD;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+
+  --sidebar-width: 232px;
+  --header-height: 54px;
+
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+
+  --transition: 150ms ease;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-/*
-==========================
-       My Styles
-==========================
- */
-
-:root{
-  --primary-color: #1A4D1A;
-  --secondary-color: #3B8A3B;
-  --tertiary-color: #A2D8A2;
-  --dark-color: #2E2E2E;
-  --light-color: #F2F2F2;
-
-  /*
-    Minecraft Styles 
-   */
-
-  /* --primary-color:#313233; */
-  /* --secondary-color:#48494a; */
-
-  --accent-color:#d0d1d4;
-  --background-color:#48494a;
-  --text-color:#fff;
-  --text-dark-color:#000;
-  --link-color:#007bff;
-  --error-color:#dc3545;
-  --success-color:#28a745;
-  --warning-color:#ffc107;
-  --info-color:#17a2b8;
-  --selected-color:#48494a;
-  --hr-top-color:#333334;
-  --hr-bottom-color:#5a5b5c;
-  --btn-primary-inner-color:#3c8527;
-  --btn-primary-inner-hover-color:#2a641c;
-  --btn-primary-inner-shadow-color:#1d4d13;
-  --btn-primary-border-color:#1e1e1f;
-  --btn-primary-inner-border-lt-color:#4f913cbf;
-  --btn-primary-inner-border-br-color:#639d52;
-  --btn-primary-text-color:#fff;
-  --btn-secondary-inner-color:#7345e5;
-  --btn-secondary-inner-hover-color:#5d2cc6;
-  --btn-secondary-inner-shadow-color:#4a1cac;
-  --btn-secondary-border-color:#1e1e1f;
-  --btn-secondary-inner-border-lt-color:#a264f2bf;
-  --btn-secondary-inner-border-br-color:#8e49eb;
-  --btn-secondary-text-color:#fff;
-  --btn-tertiary-inner-color:#d0d1d4;
-  --btn-tertiary-inner-hover-color:#b1b2b5;
-  --btn-tertiary-inner-shadow-color:#58585a;
-  --btn-tertiary-border-color:#1e1e1f;
-  --btn-tertiary-inner-border-lt-color:#ecedeebf;
-  --btn-tertiary-inner-border-br-color:#e3e3e5;
-  --btn-tertiary-text-color:#000;
-  --btn-normal-inner-color:#c6c6c6;
-  --btn-normal-border-color:#131313;
-  --btn-normal-inner-border-lt-color:#f7f7f7bf;
-  --btn-normal-inner-border-br-color:#656465;
-  --btn-normal-text-color:#4c4c4c;
-  --btn-normal-inner-hover-color:#218306;
-  --btn-normal-border-hover-color:#fff;
-  --btn-normal-inner-border-lt-hover-color:#17cd07bf;
-  --btn-normal-inner-border-br-hover-color:#004e00;
-  --btn-normal-text-hover-color:#fff;
-}
-
-html, body{
-  width: 100%;
+#root {
   height: 100%;
 }
 
-body{
-  background: var(--light-color);
-}
+a { color: inherit; text-decoration: none; }
 
-/* Remove as setas no Chrome, Edge, Safari */
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+input, select, textarea { font-family: inherit; font-size: inherit; }
+
 input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: none; }
 
-/* Remove as setas no Firefox */
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-/* Remove no resto dos navegadores (fallback) */
-input[type="number"] {
-  appearance: none;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-focus); }
