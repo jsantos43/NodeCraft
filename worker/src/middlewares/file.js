@@ -38,7 +38,7 @@ const verifyPathIsDirectory = async (instancePath, path) => {
 
 const verifyPath = (verifyDestiny = false) => async (req, res, next) => {
   try {
-    const instancePath = Path.join(config.paths.instance, req.params.id);
+    const instancePath = Path.join(config.paths.instances, req.params.id);
     const path = req?.query?.path || '';
     const destiny = req?.query?.destiny || '';
 

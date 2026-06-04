@@ -85,7 +85,7 @@ class Instance {
       const worker = await WorkerService.readOne(instance.workerId);
 
       const route = `${worker.url}/server/${id}/run`;
-      const rawData = await fetch(route, {
+      const response = await fetch(route, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,8 +94,7 @@ class Instance {
         body: JSON.stringify({ instance }),
       });
 
-      const result = await rawData.json();
-      if (!result?.success) throw new Internal('Failed the run request to worker!');
+      if (!response.ok) throw new Internal('Failed the run request to worker!');
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {
@@ -111,7 +110,7 @@ class Instance {
       const worker = await WorkerService.readOne(instance.workerId);
 
       const route = `${worker.url}/server/${id}/stop`;
-      const rawData = await fetch(route, {
+      const response = await fetch(route, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,8 +119,7 @@ class Instance {
         body: JSON.stringify({ instance }),
       });
 
-      const result = await rawData.json();
-      if (!result?.success) throw new Internal('Failed the stop request to worker!');
+      if (!response.ok) throw new Internal('Failed the stop request to worker!');
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {
@@ -139,7 +137,7 @@ class Instance {
 
       const worker = await WorkerService.readOne(instance.workerId);
       const route = `${worker.url}/server/${id}/restart`;
-      const rawData = await fetch(route, {
+      const response = await fetch(route, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,8 +146,7 @@ class Instance {
         body: JSON.stringify({ instance }),
       });
 
-      const result = await rawData.json();
-      if (!result?.success) throw new Internal('Failed the restart request to worker!');
+      if (!response.ok) throw new Internal('Failed the restart request to worker!');
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {

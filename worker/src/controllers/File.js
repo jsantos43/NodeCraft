@@ -1,5 +1,5 @@
 import Path from 'path';
-import config from '../../../manager/config/config.js';
+import config from '../../config/config.js';
 import Service from '../services/File.js';
 import { InvalidRequest } from '../errors/index.js';
 
@@ -8,10 +8,10 @@ class File {
     try {
       const query = req?.query;
 
-      const path = query?.path;
+      const path = query?.path || '';
       const toDownload = query?.download === 'true';
 
-      const instancePath = Path.join(config.instance.path, req.params.id);
+      const instancePath = Path.join(config.paths.instances, req.params.id);
       const fullPath = Path.join(instancePath, path);
 
       const pathType = await Service.getType(fullPath);
@@ -49,10 +49,11 @@ class File {
 
   static async create(req, res, next) {
     try {
+      console.log('ok');
       const { destiny } = req.query;
       const body = req?.body;
 
-      const instancePath = Path.join(config.instance.path, req.params.id);
+      const instancePath = Path.join(config.paths.instances, req.params.id);
       const fullDestiny = Path.join(instancePath, destiny);
 
       if (body.type === 'file') await Service.createOneFile(fullDestiny, body.content);
@@ -85,7 +86,7 @@ class File {
       const { path } = req.query;
       const { content } = req.body;
 
-      const instancePath = Path.join(config.instance.path, req.params.id);
+      const instancePath = Path.join(config.paths.instances, req.params.id);
       const fullPath = Path.join(instancePath, path);
 
       const pathType = await Service.getType(fullPath);
@@ -108,7 +109,7 @@ class File {
     try {
       const { path } = req.query;
 
-      const instancePath = Path.join(config.instance.path, req.params.id);
+      const instancePath = Path.join(config.paths.instances, req.params.id);
       const fullPath = Path.join(instancePath, path);
 
       await Service.delete(fullPath);
@@ -125,9 +126,9 @@ class File {
   static async transfer(req, res, next) {
     try {
       const { path, destiny } = req.query;
-      const actions = req.query?.actions;
+      const actions = req.query?.actions || '';
 
-      const instancePath = Path.join(config.instance.path, req.params.id);
+      const instancePath = Path.join(config.paths.instances, req.params.id);
       const fullPath = Path.join(instancePath, path);
       const fullDestiny = Path.join(instancePath, destiny);
 
@@ -149,7 +150,7 @@ class File {
     try {
       const { path, destiny } = req.query;
 
-      const instancePath = Path.join(config.instance.path, req.params.id);
+      const instancePath = Path.join(config.paths.instances, req.params.id);
       const fullPath = Path.join(instancePath, path);
       const fullDestiny = Path.join(instancePath, destiny);
 

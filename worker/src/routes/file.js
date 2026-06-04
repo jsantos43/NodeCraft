@@ -17,30 +17,27 @@ router
     Controller.create,
   )
 
-  .post( // [Query: destiny]
-    '/:id/files/upload',
-    verifyPath(true),
-    uploader.single('file'),
-    Controller.upload,
-  )
+  // .post( // [Query: destiny]
+  //   '/:id/files/upload',
+  //   verifyPath(true),
+  //   uploader.single('file'),
+  //   Controller.upload,
+  // )
 
   .put( // [Body: content | Query: path]
     '/:id/files/edit',
-    verifyNotRunning,
     verifyPath(),
     Controller.update,
   )
 
   .delete( // [Query: path]
     '/:id/files/delete',
-    verifyNotRunning,
     verifyPath(),
     Controller.delete,
   )
 
   .post( // [Query: path, destiny, actions(copy or move)]
     '/:id/files/transfer',
-    verifyNotRunning,
     verifyPath(true),
     Controller.transfer,
   )
