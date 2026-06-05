@@ -26,30 +26,50 @@ class Instance {
       interval: null,
       history: [],
     };
+    this.buffer = '';
+  }
+
+  static cleanLine(raw) {
+    // eslint-disable-next-line no-control-regex
+    const noAnsi = raw.replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
+
+    // Strip binary/non-printable bytes (Docker multiplexed stream frame header, etc.)
+    // eslint-disable-next-line no-control-regex
+    const noBinary = noAnsi.replace(/[\x00-\x08\x0B-\x1F\x7F]/g, '');
+
+    // Strip Minecraft log prefix: [HH:MM:SS INFO]: or [HH:MM:SS] [Thread/INFO]:
+    const noPrefix = noBinary.replace(
+      /^\[\d{2}:\d{2}:\d{2}(?:\s+[\w/]+)?\](?:\s*\[[^\]]+\])*:\s*/,
+      '',
+    );
+
+    // Strip console prompt artifact "> "
+    return noPrefix.replace(/^>\s*/, '').trim();
   }
 
   async processStreamOutput(chunk, callback) {
     try {
-      let data = chunk.toString('utf8');
+      this.buffer += chunk.toString('utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-      // eslint-disable-next-line no-control-regex
-      data = data.replace(/\x1B\[[0-9;]*m/g, '');
-      data = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const lines = this.buffer.split('\n');
+      this.buffer = lines.pop();
 
-      const message = data.trim();
-      if (!message) return;
+      for (const raw of lines) {
+        const message = Instance.cleanLine(raw);
+        if (!message || /^[.\s]+$/.test(message)) continue;
 
-      // Update instance history
-      this.synchronizer.history.push(message);
+        // Push line to history
+        this.synchronizer.history.push(message);
 
-      // Send server output to socket.io
-      if (this.io) this.io.to(`instance:${this.id}`).emit('instance-output', message);
+        // Send message to socket.io
+        if (this.io) this.io.to(`instance:${this.id}`).emit('instance-output', message);
 
-      // Run callback if needed
-      if (callback) callback(message);
+        // Exec callback if it exists
+        if (callback) callback(message);
 
-      // eslint-disable-next-line no-console
-      if (config.app.stage === 'DEV') console.log(message);
+        // eslint-disable-next-line no-console
+        if (config.app.stage === 'DEV') console.log(message);
+      }
     } catch (err) {
       logger.error({ err }, 'Error to handle container message');
     }
@@ -155,7 +175,9 @@ class Instance {
 
       this.status = 'running';
       await this.sendInstanceDetails();
-      this.synchronizer.interval = setInterval(this.sendInstanceDetails, 15000);
+      this.synchronizer.interval = setInterval(() => {
+        this.sendInstanceDetails();
+      }, 15000);
     } catch (err) {
       this.io = null;
     }

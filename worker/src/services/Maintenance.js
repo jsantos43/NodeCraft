@@ -3,6 +3,10 @@ import Container from './Container.js';
 import File from './File.js';
 import logger from '../../config/logger.js';
 import Server from './Server.js';
+import Manager from './Manager.js';
+
+const FIFTEEN_MINUTES = 15 * 60 * 1000;
+const ONE_HOUR = 1 * 60 * 60 * 1000;
 
 class Maintenance {
   static async createDefaultPaths() {
@@ -35,7 +39,7 @@ class Maintenance {
     await Maintenance.checkDocker();
   }
 
-  static scheduleMaintenance() {
+  static scheduleBackup() {
     let lastRunDate = null;
 
     setInterval(async () => {
@@ -55,30 +59,26 @@ class Maintenance {
       } catch (err) {
         logger.error({ err }, 'Error in maintenance');
       }
-    }, config.interval.checkUpdate);
+    }, FIFTEEN_MINUTES);
   }
 
-  static scheduleCleanup() {
-    // First run
-    Instance.verifyLost();
-    Container.removeLost();
-    File.removeOldTemp();
-
-    // Set periodically
-    setInterval(() => {
-      Instance.verifyLost();
-      Container.removeLost();
-    }, config.interval.checkLost);
-
-    setInterval(File.removeOldTemp, config.interval.checkTemp);
-  }
-
-  static scheduleJobs() {
+  static async cleanUp() {
     try {
-      Maintenance.scheduleCleanup();
-      Maintenance.scheduleMaintenance();
+      const instances = await Manager.getInstances();
+
+      await Server.removeLost(instances);
+      await Container.removeLost(instances);
+      await File.removeOldTemp();
+
+      // Set periodically
+      setInterval(async () => {
+        await Server.removeLost(instances);
+        await Container.removeLost(instances);
+      }, ONE_HOUR);
+
+      setInterval(File.removeOldTemp, FIFTEEN_MINUTES);
     } catch (err) {
-      logger.error({ err }, 'Error to schedule instances jobs');
+      logger.error({ err }, 'Error to cleanUp!');
     }
   }
 }

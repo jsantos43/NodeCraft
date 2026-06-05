@@ -87,43 +87,47 @@ class Server {
     }
   }
 
-  static async verifyLost() {
-    const instancesId = await File.readOneDirectory(config.instance.path);
+  static async removeLost(instances) {
+    const instancesId = await File.readOneDirectory(config.paths.instances);
     if (!instancesId) return;
+
+    // Instance lifetime as 5 days
+    const INSTANCE_LIFETIME = 5 * 24 * 60 * 60 * 1000;
 
     for (const id of instancesId) {
       try {
-        const instancePath = Path.join(config.instance.path, id);
-        const pendingDeletePath = Path.join(instancePath, '.delete-pending.json');
-        const existsPendingDelete = await File.verifyExists(pendingDeletePath);
+        const instancePath = Path.join(config.paths.instances, id);
+        const pendingDelete = Path.join(instancePath, '.delete.json');
 
-        // Verify if instances exists in database, delete pending process and return
-        try {
-          const instance = await Model.findByPk(id);
-          if (instance) {
-            await File.delete(pendingDeletePath);
-            continue;
-          }
-        } catch (err) {
+        const existsPendingDelete = await File.verifyExists(pendingDelete);
+
+        let instanceExists = false;
+        for (const instance of instances) {
+          if (id === instance.id) instanceExists = true;
+        }
+
+        // Verify if instances exists in database and delete pending process and return
+        if (instanceExists) {
+          await File.delete(pendingDelete);
           continue;
         }
 
         // Verify if pending delete process exists
         if (existsPendingDelete) {
-          // Try to read .delete-pending.json
-          const rawData = await File.readOneFile(pendingDeletePath);
+          // Try to read .delete.json
+          const rawData = await File.readOneFile(pendingDelete);
           const data = JSON.parse(rawData);
 
           const time = Number(data?.time);
           const now = Date.now();
 
-          if (!time || now - time >= config.instance.lifetime) {
+          if (!time || now - time >= INSTANCE_LIFETIME) {
             // Delete pending instance
             await File.delete(instancePath);
           }
         } else {
-          // Write .delete-pending.json
-          await File.createOneFile(pendingDeletePath, `{"time":${Date.now()}}`);
+          // Write .delete.json
+          await File.createOneFile(pendingDelete, `{"time":${Date.now()}}`);
         }
       } catch (err) {
         logger.error({ err }, 'Error to verify lost instance');

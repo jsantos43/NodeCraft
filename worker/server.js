@@ -19,5 +19,6 @@ server.listen(config.app.port, async () => {
   await Heartbeat.define();
   await Maintenance.ensureEnviroment();
   await Server.wakeUp();
-  // Maintenance.scheduleJobs();
+  await Maintenance.cleanUp();
+  await Maintenance.scheduleBackup();
 });
