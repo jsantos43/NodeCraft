@@ -69,12 +69,12 @@ class Storage {
     };
   }
 
-  static async prune(prefix) {
+  static async prune(prefix, limit = 1) {
     const objects = await Storage.list(prefix);
-    if (objects.length <= 1) return;
+    if (objects.length <= limit) return;
 
     const sortedObjects = objects.sort((a, b) => b.LastModified - a.LastModified);
-    const objectsToDelete = sortedObjects.slice(1);
+    const objectsToDelete = sortedObjects.slice(limit);
 
     for (const object of objectsToDelete) {
       await Storage.delete(object.Key);

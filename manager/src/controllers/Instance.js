@@ -171,7 +171,19 @@ class Instance {
       const { id } = req.params;
 
       const instance = await Service.readOne(id);
-      // BackupService.execute(instance, true);
+      const worker = await WorkerService.readOne(instance.workerId);
+
+      const route = `${worker.url}/server/${id}/backup`;
+      const response = await fetch(route, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${worker.secret}`,
+        },
+        body: JSON.stringify({ instance }),
+      });
+
+      if (!response.ok) throw new Internal('Failed the backup request to worker!');
 
       return res.status(200).json({ success: true, instance });
     } catch (err) {

@@ -98,6 +98,19 @@ class Worker {
       return next(err);
     }
   }
+
+  static async reportBackupResult(req, res, next) {
+    try {
+      const instanceId = req?.params?.instanceId;
+      const data = req?.body;
+
+      await Service.updateInstanceBackupStatus(instanceId, data);
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return next(err);
+    }
+  }
 }
 
 export default Worker;

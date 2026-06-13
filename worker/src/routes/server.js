@@ -21,6 +21,11 @@ router
     verifyManager,
     Controller.restart,
   )
+  .post(
+    '/server/:instanceId/backup',
+    verifyManager,
+    Controller.backup,
+  )
   .use('/server', file);
 
 export default router;

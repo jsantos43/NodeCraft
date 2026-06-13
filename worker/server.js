@@ -20,5 +20,4 @@ server.listen(config.app.port, async () => {
   await Maintenance.ensureEnviroment();
   await Server.wakeUp();
   await Maintenance.cleanUp();
-  await Maintenance.scheduleBackup();
 });

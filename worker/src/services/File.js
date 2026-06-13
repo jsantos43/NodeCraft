@@ -256,12 +256,8 @@ class File {
   static async makeBackup(instance) {
     const instancePath = Path.join(config.paths.instances, String(instance.id));
 
-    const tempPath = await File.createTemp();
-    const backupName = `backup-${Date.now()}.zip`;
-    const backupPath = Path.join(tempPath, backupName);
-
-    if (instance.type === 'minecraft') {
-      await File.makeZip(backupPath, [
+    const backupPaths = {
+      minecraft: [
         Path.join(instancePath, 'world'),
         Path.join(instancePath, 'world_nether'),
         Path.join(instancePath, 'world_the_end'),
@@ -269,29 +265,32 @@ class File {
         Path.join(instancePath, 'spigot.yml'),
         Path.join(instancePath, 'bukkit.yml'),
         Path.join(instancePath, 'config'),
-      ]);
-    } else if (instance.type === 'terraria') {
-      await File.makeZip(backupPath, [
+      ],
+      terraria: [
         Path.join(instancePath, 'Worlds'),
-      ]);
-    } else if (instance.type === 'kerbal') {
-      await File.makeZip(backupPath, [
+      ],
+      kerbal: [
         Path.join(instancePath, 'Universe'),
         Path.join(instancePath, 'Config'),
-      ]);
-    } else if (instance.type === 'hytale') {
-      await File.makeZip(backupPath, [
+      ],
+      hytale: [
         Path.join(instancePath, 'universe'),
         Path.join(instancePath, 'config.json'),
-      ]);
-    }
+      ],
+    };
+
+    const paths = backupPaths[instance.type];
+    if (!paths) throw new Error(`No backup paths defined for game type: ${instance.type}`);
+
+    const tempPath = await File.createTemp();
+    const backupName = `backup-${Date.now()}.zip`;
+    const backupPath = Path.join(tempPath, backupName);
+
+    await File.makeZip(backupPath, paths);
 
     const backupSize = await File.getSize(backupPath);
 
-    return {
-      backupPath,
-      backupSize,
-    };
+    return { backupPath, backupSize };
   }
 }
 

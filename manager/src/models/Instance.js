@@ -126,6 +126,24 @@ Instance.init({
       },
     },
   },
+  lastActivityAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  lastBackupAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  lastBackupStatus: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      isIn: {
+        args: [['success', 'failed', 'skipped']],
+        msg: 'lastBackupStatus must be success, failed or skipped!',
+      },
+    },
+  },
 }, {
   tableName: 'instance',
   sequelize: db,

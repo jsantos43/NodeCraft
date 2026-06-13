@@ -84,7 +84,12 @@ class Worker {
     await instance.update({
       status: data?.status,
       history,
+      ...(data?.status === 'running' ? { lastActivityAt: new Date() } : {}),
     });
+  }
+
+  static async updateInstanceBackupStatus(instanceId, data) {
+    await Instance.updateBackupStatus(instanceId, data);
   }
 
   static async compareApiKey(apiKey, storedApiKey) {

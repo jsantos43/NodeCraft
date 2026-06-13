@@ -39,29 +39,6 @@ class Maintenance {
     await Maintenance.checkDocker();
   }
 
-  static scheduleBackup() {
-    let lastRunDate = null;
-
-    setInterval(async () => {
-      try {
-        // Read time
-        const now = new Date();
-        const isThreeAM = now.getHours() === 3;
-        const today = now.toLocaleDateString('sv-SE');
-
-        // Verify if is 3 hour and update was not executed today
-        if (isThreeAM && lastRunDate !== today) {
-          lastRunDate = today;
-
-          // Backup all instances function
-          await Server.backupAll();
-        }
-      } catch (err) {
-        logger.error({ err }, 'Error in maintenance');
-      }
-    }, FIFTEEN_MINUTES);
-  }
-
   static async cleanUp() {
     try {
       const instances = await Manager.getInstances();

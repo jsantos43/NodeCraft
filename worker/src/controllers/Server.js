@@ -36,6 +36,18 @@ class Server {
       return next(err);
     }
   }
+
+  static async backup(req, res, next) {
+    try {
+      const instance = req?.body?.instance;
+
+      Service.backup(instance);
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return next(err);
+    }
+  }
 }
 
 export default Server;

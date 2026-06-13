@@ -5,6 +5,9 @@ import { Internal } from '../errors/index.js';
 import File from './File.js';
 import config from '../../config/config.js';
 
+const DAILY_RETENTION = 7;
+const WEEKLY_RETENTION = 4;
+
 class Backup {
   static async verifyAvailableSpace(backupSize) {
     const result = await StorageProvider.getStorageUsage();
@@ -15,7 +18,7 @@ class Backup {
 
   static async verifyNeeds(id) {
     const ONE_DAY = 23 * 60 * 60 * 1000;
-    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000 - 300000;
+    const ONE_WEEK = (6 * 24 + 20) * 60 * 60 * 1000;
 
     const info = {
       needDaily: true,
@@ -45,28 +48,24 @@ class Backup {
   static async send({
     id, path, size, daily, weekly,
   }) {
-    try {
-      const totalSize = (daily && weekly) ? (2 * size) : size;
-      const availableSpace = await Backup.verifyAvailableSpace(totalSize);
-      if (!availableSpace) throw new Internal('No space available to backups');
+    const totalSize = (daily && weekly) ? (2 * size) : size;
+    const availableSpace = await Backup.verifyAvailableSpace(totalSize);
+    if (!availableSpace) throw new Internal('No space available to backups');
 
-      const filename = Path.basename(path);
-      if (daily) await StorageProvider.upload(`${id}/daily/${filename}`, path);
-      if (weekly) await StorageProvider.upload(`${id}/weekly/${filename}`, path);
-    } catch (err) {
-      logger.error({ err }, 'Error to send backup');
-    }
+    const filename = Path.basename(path);
+    if (daily) await StorageProvider.upload(`${id}/daily/${filename}`, path);
+    if (weekly) await StorageProvider.upload(`${id}/weekly/${filename}`, path);
   }
 
   static async cleanup(id) {
-    await StorageProvider.prune(`${id}/daily/`);
-    await StorageProvider.prune(`${id}/weekly/`);
+    await StorageProvider.prune(`${id}/daily/`, DAILY_RETENTION);
+    await StorageProvider.prune(`${id}/weekly/`, WEEKLY_RETENTION);
   }
 
   static async execute(instance, force = false) {
     try {
-      if (!config.storage.enable) return;
-      if (instance.type === 'counterstrike') return;
+      if (!config.storage.enable) return { status: 'skipped' };
+      if (instance.type === 'counterstrike') return { status: 'skipped' };
 
       // Verify need backups
       const info = await Backup.verifyNeeds(instance.id);
@@ -86,8 +85,11 @@ class Backup {
 
       // Cleanup old backups
       await Backup.cleanup(instance.id);
+
+      return { status: 'success', executedAt: new Date().toISOString() };
     } catch (err) {
       logger.error({ err }, 'Error while backuping an instance');
+      return { status: 'failed' };
     }
   }
 }

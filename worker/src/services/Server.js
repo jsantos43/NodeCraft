@@ -47,6 +47,21 @@ class Server {
     }
   }
 
+  static async backup(instance) {
+    try {
+      const isRunning = instance.status === 'running';
+      if (isRunning) await Server.stop(instance);
+
+      const result = await Backup.execute(instance, true);
+
+      if (isRunning) await Server.run(instance);
+      await Manager.reportBackupResult(instance.id, result);
+    } catch (err) {
+      logger.error({ err }, `Error to backup instance ${instance?.id}`);
+      await Manager.reportBackupResult(instance.id, { status: 'failed' });
+    }
+  }
+
   // Start instances that were running before worker shutdown
   static async wakeUp() {
     try {
@@ -63,27 +78,6 @@ class Server {
       }
     } catch (err) {
       logger.error({ err }, 'Error to wake up instances');
-    }
-  }
-
-  static async backupAll() {
-    try {
-      const instances = await Manager.getInstances();
-
-      for (const instance of instances) {
-        try {
-          const isRunning = instance.status === 'running';
-
-          await Server.stop(instance);
-          await Backup.execute(instance);
-
-          if (isRunning) await Server.run(instance);
-        } catch (err) {
-          logger.error({ err }, 'Error in an instance maintenance');
-        }
-      }
-    } catch (err) {
-      logger.error({ err }, 'Error to backup all instances');
     }
   }
 

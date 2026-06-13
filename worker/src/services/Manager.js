@@ -44,6 +44,24 @@ class Manager {
       logger.error({ err }, 'Error to send instance details to Manager');
     }
   }
+
+  static async reportBackupResult(instanceId, result) {
+    try {
+      const requestUrl = `${config.manager.url}/worker/${config.app.id}/instances/${instanceId}/backup`;
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.manager.apiKey}`,
+      };
+
+      await fetch(requestUrl, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(result),
+      });
+    } catch (err) {
+      logger.error({ err }, 'Error to report backup result to Manager');
+    }
+  }
 }
 
 export default Manager;

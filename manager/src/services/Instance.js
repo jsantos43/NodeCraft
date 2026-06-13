@@ -101,6 +101,15 @@ class Instance {
     return instance;
   }
 
+  static async updateBackupStatus(id, data) {
+    const instance = await Instance.readOne(id);
+
+    await instance.update({
+      lastBackupStatus: data.status,
+      lastBackupAt: data.status !== 'skipped' ? new Date() : instance.lastBackupAt,
+    });
+  }
+
   static async selectPort() {
     const instances = await Instance.readAll();
     const usedPorts = [];

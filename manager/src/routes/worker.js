@@ -17,12 +17,12 @@ router
   )
   .post(
     '/worker',
-    // auth('admin'),
+    auth('admin'),
     Controller.create,
   )
   .put(
     '/worker/:id',
-    // auth('admin'),
+    auth('admin'),
     Controller.update,
   )
   .delete(
@@ -44,6 +44,11 @@ router
     '/worker/:workerId/instances/:instanceId',
     workerAuth(),
     Controller.updateInstance,
+  )
+  .put(
+    '/worker/:workerId/instances/:instanceId/backup',
+    workerAuth(),
+    Controller.reportBackupResult,
   );
 
 export default router;
