@@ -1,0 +1,85 @@
+{
+  "get": {
+    "summary": "read another User",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "put": {
+    "summary": "update another User",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/user.json#/updateAnotherUser"
+    }
+  },
+  "delete": {
+    "summary": "delete another User",
+    "tags": [
+      "User"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "1e7ca2e6-519d-45af-ba5f-18305979ac8b"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "read": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "path": {
+              "type": "string",
+              "example": "/world"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "file",
+                "directory"
+              ],
+              "example": "directory"
+            },
+            "content": {
+              "type": "array",
+              "example": [
+                {
+                  "name": "advancements",
+                  "type": "directory"
+                },
+                {
+                  "name": "data",
+                  "type": "directory"
+                },
+                {
+                  "name": "entities",
+                  "type": "directory"
+                },
+                {
+                  "name": "level.dat",
+                  "type": "file"
+                },
+                {
+                  "name": "paper-world.yml",
+                  "type": "file"
+                },
+                {
+                  "name": "playerdata",
+                  "type": "directory"
+                },
+                {
+                  "name": "session.lock",
+                  "type": "file"
+                },
+                {
+                  "name": "stats",
+                  "type": "directory"
+                },
+                {
+                  "name": "uid.dat",
+                  "type": "file"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "create": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "destiny": {
+              "type": "string",
+              "example": "/hello.txt"
+            }
+          }
+        }
+      }
+    }
+  },
+  "edit": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "path": {
+              "type": "string",
+              "example": "eula.txt"
+            },
+            "content": {
+              "type": "string",
+              "example": "eula=true"
+            }
+          }
+        }
+      }
+    }
+  },
+  "delete": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "path": {
+              "type": "string",
+              "example": "/cache"
+            }
+          }
+        }
+      }
+    }
+  },
+  "transfer": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "path": {
+              "type": "string",
+              "example": "/world"
+            },
+            "destiny": {
+              "type": "string",
+              "example": "/world-backup"
+            }
+          }
+        }
+      }
+    }
+  },
+  "unzip": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "uncompressing": {
+              "type": "boolean",
+              "example": true
+            },
+            "path": {
+              "type": "string",
+              "example": "/backup.zip"
+            },
+            "destiny": {
+              "type": "string",
+              "example": "/backup"
+            }
+          }
+        }
+      }
+    }
+  },
+  "upload": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "destiny": {
+              "type": "string",
+              "example": "/world.zip"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.stat-card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon-green  { background: var(--accent-dim); color: var(--accent-text); }
+.stat-icon-red    { background: var(--red-dim);    color: var(--red-text);    }
+.stat-icon-yellow { background: var(--yellow-dim); color: var(--yellow-text); }
+.stat-icon-blue   { background: var(--blue-dim);   color: var(--blue-text);   }
+.stat-icon-purple { background: var(--purple-dim); color: var(--purple-text); }
+
+.stat-card-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.stat-card-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stat-card-trend {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.trend-up   { color: var(--accent-text); }
+.trend-down { color: var(--red-text); }

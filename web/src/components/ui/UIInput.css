@@ -1,0 +1,68 @@
+.ui-input-wrap { display: flex; flex-direction: column; gap: 5px; }
+
+.ui-input-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ui-input-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition);
+}
+
+.ui-input-field:focus-within {
+  border-color: var(--border-focus);
+}
+
+.ui-input-field.has-error {
+  border-color: var(--red);
+}
+
+.ui-input-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.ui-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.ui-input.has-icon { padding-left: 32px; }
+
+.ui-input-field.has-icon .ui-input { padding-left: 32px; }
+
+.ui-input::placeholder { color: var(--text-muted); }
+
+.ui-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.ui-select option { background: var(--bg-card); }
+
+.ui-textarea {
+  resize: vertical;
+  min-height: 80px;
+  align-self: stretch;
+}
+
+.ui-input-error { font-size: 11px; color: var(--red-text); }
+.ui-input-hint  { font-size: 11px; color: var(--text-muted); }

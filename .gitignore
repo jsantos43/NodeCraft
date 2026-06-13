@@ -20,3 +20,5 @@ yarn-error.log*
 config.json
 logs
 tests
+.claude
+CLAUDE.md

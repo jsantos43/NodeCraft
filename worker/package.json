@@ -1,0 +1,47 @@
+{
+  "name": "worker",
+  "version": "1.0.0",
+  "description": "Worker from nodecraft api",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node ./server.js",
+    "dev": "nodemon ./server.js"
+  },
+  "keywords": [
+    "api",
+    "minecraft",
+    "server",
+    "node",
+    "docker"
+  ],
+  "author": "João Pedro Tomaz dos Santos",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.997.0",
+    "archiver": "^7.0.1",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dockerode": "^4.0.9",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "gamedig": "^5.3.2",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
+    "pino": "^10.3.1",
+    "rcon-client": "^4.2.5",
+    "socket.io": "^4.8.3",
+    "systeminformation": "^5.31.6",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@eslint/create-config": "eslint/create-config",
+    "eslint": "^7.32.0 || ^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.3"
+  }
+}

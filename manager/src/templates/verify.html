@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Verificação de conta</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:24px;">
+          <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:6px;overflow:hidden;">
+            
+            <!-- Header -->
+            <tr>
+              <td style="background:#000000;padding:20px;text-align:center;">
+                <span style="color:#ffffff;font-size:20px;font-weight:bold;">
+                  Nodecraft
+                </span>
+              </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+              <td style="padding:24px;color:#333333;">
+                <p style="font-size:16px;margin:0 0 16px;">
+                  Olá, {{name}} 👋
+                </p>
+
+                <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">
+                  Obrigado por criar sua conta na <strong>Nodecraft</strong>.
+                  Para finalizar seu cadastro, precisamos confirmar seu endereço de email.
+                </p>
+
+                <p style="font-size:14px;line-height:1.6;margin:0 0 24px;">
+                  Clique no botão abaixo para verificar sua conta:
+                </p>
+
+                <p style="text-align:center;margin:0 0 24px;">
+                  <a href="{{link}}"
+                     style="
+                       display:inline-block;
+                       background:#000000;
+                       color:#ffffff;
+                       text-decoration:none;
+                       padding:12px 24px;
+                       border-radius:4px;
+                       font-weight:bold;
+                     ">
+                    Verificar conta
+                  </a>
+                </p>
+
+                <p style="font-size:12px;color:#666666;line-height:1.4;margin:0 0 16px;">
+                  Se preferir, copie e cole o token abaixo no aplicativo:
+                </p>
+
+                <p
+                  style="
+                    font-size:12px;
+                    color:#333333;
+                    background:#f2f2f2;
+                    padding:8px;
+                    border-radius:4px;
+                    word-break:break-all;
+                    font-family:monospace;
+                    margin:0 0 24px;
+                  "
+                >
+                  {{token}}
+                </p>
+
+                <p style="font-size:12px;color:#666666;line-height:1.4;margin:0;">
+                  Este link é válido por 24 horas.  
+                  Se você não criou uma conta, pode ignorar este email.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:16px;text-align:center;font-size:12px;color:#999999;">
+                © {{year}} Nodecraft. Todos os direitos reservados.
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

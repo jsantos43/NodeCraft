@@ -1,0 +1,55 @@
+{
+  "create": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "directory",
+                "file"
+              ],
+              "example": "directory"
+            },
+            "content": {
+              "type": "string",
+              "example": "Hello World!"
+            }
+          }
+        }
+      }
+    }
+  },
+  "upload": {
+    "content": {
+      "multipart/form-data": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      }
+    }
+  },
+  "edit": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "example": "eula=true"
+            }
+          }
+        }
+      }
+    }
+  }
+}

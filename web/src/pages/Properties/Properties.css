@@ -1,0 +1,19 @@
+.instance{
+  width: 100%;
+  height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: row;
+}
+
+.instance-form{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: start;
+  align-items: start;
+  margin: 50px 50px;
+  width: 100%;
+  border-radius: 10px;
+  background-color: var(--tertiary-color);
+  padding: 20px 20px;
+}

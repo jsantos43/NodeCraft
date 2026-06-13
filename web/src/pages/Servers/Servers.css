@@ -1,0 +1,175 @@
+.servers-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.servers-search {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px 7px 32px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.search-input:focus { border-color: var(--border-focus); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.servers-loading, .servers-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 56px 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.empty-icon { opacity: 0.3; }
+
+.servers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.servers-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.servers-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.servers-row {
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.servers-row:hover { background: rgba(255,255,255,0.025); }
+
+.servers-row:last-child td { border-bottom: none; }
+
+.server-name-cell { display: flex; align-items: center; gap: 10px; }
+
+.server-game-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-green  { background: var(--accent); }
+.dot-yellow { background: var(--yellow); }
+.dot-blue   { background: var(--blue); }
+.dot-purple { background: var(--purple); }
+.dot-red    { background: var(--red); }
+.dot-gray   { background: var(--text-muted); }
+
+.server-name { font-weight: 500; color: var(--text-primary); }
+
+.server-game, .server-uptime { color: var(--text-secondary); }
+
+.server-worker { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; }
+
+.server-mem { color: var(--text-secondary); }
+
+.server-port {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(255,255,255,0.06);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.server-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+.action-btn:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+
+.action-run:hover  { background: var(--accent-dim); color: var(--accent-text); }
+.action-stop:hover { background: var(--red-dim);    color: var(--red-text); }
+
+.action-menu-wrap { position: relative; }
+
+.action-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-width: 140px;
+  box-shadow: var(--shadow);
+  z-index: 50;
+  overflow: hidden;
+  animation: menu-in 0.1s ease;
+}
+
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.action-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: background var(--transition);
+  text-align: left;
+}
+
+.action-menu-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+
+.action-menu-danger { color: var(--red-text); }
+.action-menu-danger:hover { background: var(--red-dim); color: var(--red-text); }

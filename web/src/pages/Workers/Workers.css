@@ -1,0 +1,82 @@
+.workers-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.workers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.worker-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.worker-card:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-card-hover);
+}
+
+.worker-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.worker-card-meta { display: flex; flex-direction: column; gap: 2px; }
+
+.worker-card-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+.worker-card-id { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+.worker-metrics { display: flex; flex-direction: column; gap: 10px; }
+
+.worker-card-footer {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.worker-footer-item { display: flex; flex-direction: column; gap: 2px; }
+
+.footer-label { font-size: 10px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.footer-value { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+/* API Key */
+.api-key-notice {
+  padding: 10px 12px;
+  background: var(--yellow-dim);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--yellow-text);
+}
+
+.api-key-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  overflow: auto;
+}
+
+.api-key {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-text);
+  word-break: break-all;
+}

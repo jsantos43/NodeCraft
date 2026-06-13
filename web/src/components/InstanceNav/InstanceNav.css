@@ -1,0 +1,13 @@
+.instanceNavbar{
+  width: 72px;
+  height: 100%;
+  background-color: var(--primary-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.instanceNavbar svg{
+  cursor: pointer;
+}

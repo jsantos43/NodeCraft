@@ -1,0 +1,91 @@
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dash-row {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dash-chart-card { min-height: 260px; }
+
+.dash-recent-card { min-height: 260px; overflow: hidden; }
+
+.dash-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--text-muted);
+}
+
+.dash-empty {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.dash-server-list { display: flex; flex-direction: column; }
+
+.dash-server-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-server-row:last-child { border-bottom: none; }
+
+.dash-server-info { display: flex; flex-direction: column; gap: 1px; }
+
+.dash-server-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+
+.dash-server-type { font-size: 11px; color: var(--text-muted); }
+
+/* Worker overview */
+.worker-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.worker-overview-item {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.worker-ov-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.worker-ov-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+
+.worker-ov-metrics {
+  display: flex;
+  gap: 12px;
+}
+
+.worker-ov-metric { display: flex; flex-direction: column; gap: 2px; }
+
+.wov-label { font-size: 10px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.wov-value { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+@media (max-width: 900px) {
+  .dash-row { grid-template-columns: 1fr; }
+  .dash-grid { grid-template-columns: repeat(2, 1fr); }
+}

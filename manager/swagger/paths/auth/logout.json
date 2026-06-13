@@ -1,0 +1,19 @@
+{
+  "post": {
+    "summary": "logout User",
+    "tags": [
+      "Auth"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/user.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    },
+    "owner": {
+      "type": "string",
+      "example": "1e7ca2e6-519d-45af-ba5f-18305979ac8b"
+    },
+    "name": {
+      "type": "string",
+      "example": "Meu mundo de minecraft"
+    },
+    "type": {
+      "type": "string",
+      "example": "minecraft"
+    },
+    "port": {
+      "type": "number",
+      "example": 5634
+    },
+    "memory": {
+      "type": "integer",
+      "example": 2048
+    },
+    "cpu": {
+      "type": "integer",
+      "example": 2
+    },
+    "maxPlayers": {
+      "type": "integer",
+      "example": 10
+    },
+    "status": {
+      "type": "string",
+      "example": "stopped"
+    },
+    "history": {
+      "type": "array",
+      "example": []
+    },
+    "minecraft": {
+      "$ref": "./minecraft.json"
+    },
+    "counterstrike": {
+      "example": null,
+      "$ref": "./counterstrike.json"
+    },
+    "kerbal": {
+      "$ref": "./kerbal.json",
+      "example": null
+    },
+    "hytale": {
+      "$ref": "./hytale.json",
+      "example": null
+    },
+    "terraria": {
+      "$ref": "./terraria.json",
+      "example": null
+    },
+    "players": {
+      "type": "array",
+      "example": [
+        {
+          "id": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd",
+          "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
+          "userId": null,
+          "gamertags": [
+            "JPGamerPlay"
+          ],
+          "permissions": [
+            "instance:read"
+          ],
+          "privileges": true,
+          "access": "monitored",
+          "user": null
+        }
+      ]
+    }
+  },
+  "example": {
+    "id": "76ad39e5-827f-4e0f-9715-e590be710595",
+    "owner": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
+    "name": "Meu mundo de minecraft",
+    "type": "minecraft",
+    "port": 5634,
+    "memory": 2048,
+    "cpu": 2,
+    "maxPlayers": 10,
+    "status": "stopped",
+    "history": [],
+    "minecraft": {
+      "software": "paper",
+      "bedrock": false,
+      "gamemode": "survival",
+      "difficulty": "normal",
+      "seed": "",
+      "motd": "",
+      "levelType": "minecraft:normal",
+      "viewDistance": 10,
+      "spawn": 16,
+      "idle": 0,
+      "commandBlock": false,
+      "pvp": true,
+      "licensed": true,
+      "allowlist": false,
+      "nether": true,
+      "secureProfile": true,
+      "forceGamemode": false,
+      "hardcore": false,
+      "animals": true,
+      "monsters": true,
+      "npcs": true,
+      "cheats": false
+    },
+    "counterstrike": null,
+    "kerbal": null,
+    "hytale": null,
+    "terraria": null,
+    "players": [
+      {
+        "id": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd",
+        "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
+        "userId": null,
+        "gamertags": [
+          "JPGamerPlay"
+        ],
+        "permissions": [
+          "instance:read"
+        ],
+        "privileges": true,
+        "access": "monitored",
+        "user": null
+      }
+    ]
+  }
+}

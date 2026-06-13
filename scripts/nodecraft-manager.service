@@ -1,0 +1,18 @@
+[Unit]
+Description=NodeCraft Manager
+After=network.target
+
+[Service]
+Type=simple
+User=nodecraft
+WorkingDirectory=/opt/nodecraft/manager
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=10
+EnvironmentFile=/opt/nodecraft/manager/.env
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nodecraft-manager
+
+[Install]
+WantedBy=multi-user.target

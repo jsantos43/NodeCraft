@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "example": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd"
+    },
+    "instanceId": {
+      "type": "string",
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    },
+    "userId": {
+      "type": "string",
+      "example": "1e7ca2e6-519d-45af-ba5f-18305979ac8b"
+    },
+    "gamertags": {
+      "type": "array",
+      "example": [
+        "JPGamerPlay"
+      ]
+    },
+    "permissions": {
+      "type": "array",
+      "example": [
+        "instance:read",
+        "instance:execute"
+      ]
+    },
+    "privileges": {
+      "type": "boolean",
+      "example": true
+    },
+    "access": {
+      "type": "string",
+      "example": "always"
+    }
+  }
+}

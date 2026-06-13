@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "example": false
+    },
+    "error": {
+      "type": "string",
+      "example": "INTERNAL_ERROR"
+    },
+    "message": {
+      "type": "string",
+      "example": "Internal Server Error!"
+    },
+    "details": {
+      "type": "array",
+      "example": []
+    }
+  }
+}
