@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Zap, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Button from '../../components/ui/Button.jsx';
@@ -9,6 +9,8 @@ import './Login.css';
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const registered = location.state?.registered;
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,6 +46,7 @@ export default function Login() {
         </div>
 
         <form onSubmit={handle} className="login-form">
+          {registered && <div className="login-success">Account created! Check your email to verify your account.</div>}
           {error && <div className="login-error">{error}</div>}
 
           <Input
@@ -85,7 +88,7 @@ export default function Login() {
 
         <p className="login-register">
           Don't have an account?{' '}
-          <a href="/register" className="login-link">Create one</a>
+          <Link to="/register" className="login-link">Create one</Link>
         </p>
       </div>
     </div>

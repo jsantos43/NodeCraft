@@ -5,6 +5,7 @@ import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
 import Login from './pages/Auth/Login.jsx';
+import Register from './pages/Auth/Register.jsx';
 import Dashboard from './pages/Dashboard/Dashboard.jsx';
 import Servers from './pages/Servers/Servers.jsx';
 import ServerDetails from './pages/Servers/ServerDetails.jsx';
@@ -38,6 +39,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/servers" element={<PrivateRoute><Servers /></PrivateRoute>} />
