@@ -1,5 +1,5 @@
 import { InvalidRequest, NotFound } from '../errors/index.js';
-import { Link as Model } from '../models/index.js';
+import { Link as Model, User as UserModel } from '../models/index.js';
 import User from './User.js';
 
 class Link {
@@ -14,6 +14,7 @@ class Link {
       where: {
         instanceId,
       },
+      include: [{ model: UserModel, as: 'user', attributes: ['id', 'name', 'email'] }],
     });
 
     return links;
@@ -67,15 +68,15 @@ class Link {
   }
 
   static async update(linkId, data) {
-    // Read link
     const link = await Link.readOne(linkId);
 
-    // Verify if user is already linked with instance
-    if (await Link.verifyUserIsLinked(data.userId, link.instanceId)) {
-      throw new InvalidRequest('User is already linked with this instance');
+    // Only check for duplicate if userId is changing to a different user
+    if (data.userId && data.userId !== link.userId) {
+      if (await Link.verifyUserIsLinked(data.userId, link.instanceId)) {
+        throw new InvalidRequest('User is already linked with this instance');
+      }
     }
 
-    // Update link
     await link.update(data);
 
     return link;
@@ -112,7 +113,7 @@ class Link {
       },
     });
 
-    return link.permissions || [];
+    return link?.permissions || [];
   }
 }
 
