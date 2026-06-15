@@ -11,19 +11,24 @@ class Auth {
         user, accessToken, refreshToken,
       } = await Service.authenticate(data.email, data.password);
 
+      const isProd = config.app.stage !== 'DEV';
+      const refreshPath = isProd ? '/api/auth/refresh' : '/auth/refresh';
+
       // Set accessToken in response cookie
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: config.app.stage !== 'DEV',
-        sameSite: config.app.stage === 'DEV' ? 'Lax' : 'strict',
+        secure: isProd,
+        sameSite: isProd ? 'strict' : 'Lax',
+        maxAge: 15 * 60 * 1000,
       });
 
       // Set refreshToken in response cookie
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: config.app.stage !== 'DEV',
-        sameSite: config.app.stage === 'DEV' ? 'Lax' : 'strict',
-        path: '/auth/refresh',
+        secure: isProd,
+        sameSite: isProd ? 'strict' : 'Lax',
+        path: refreshPath,
+        maxAge: 3 * 24 * 60 * 60 * 1000,
       });
 
       return res.status(200).json({ success: true, user });
@@ -40,19 +45,24 @@ class Auth {
 
       const { user, accessToken, refreshToken } = await Service.refreshAuthentication(token);
 
+      const isProd = config.app.stage !== 'DEV';
+      const refreshPath = isProd ? '/api/auth/refresh' : '/auth/refresh';
+
       // Set accessToken in response cookie
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: config.app.stage !== 'DEV',
-        sameSite: config.app.stage === 'DEV' ? 'Lax' : 'strict',
+        secure: isProd,
+        sameSite: isProd ? 'strict' : 'Lax',
+        maxAge: 15 * 60 * 1000,
       });
 
       // Set refreshToken in response cookie
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: config.app.stage !== 'DEV',
-        sameSite: config.app.stage === 'DEV' ? 'Lax' : 'strict',
-        path: '/auth/refresh',
+        secure: isProd,
+        sameSite: isProd ? 'strict' : 'Lax',
+        path: refreshPath,
+        maxAge: 3 * 24 * 60 * 60 * 1000,
       });
 
       return res.status(200).json({ success: true, user });
@@ -65,11 +75,11 @@ class Auth {
     try {
       const { user } = req;
 
+      const refreshPath = config.app.stage !== 'DEV' ? '/api/auth/refresh' : '/auth/refresh';
+
       await Service.wipeToken(user.id, 'refresh');
       res.clearCookie('accessToken');
-      res.clearCookie('refreshToken', {
-        path: '/auth/refresh',
-      });
+      res.clearCookie('refreshToken', { path: refreshPath });
 
       return res.status(200).json({ success: true, user });
     } catch (err) {

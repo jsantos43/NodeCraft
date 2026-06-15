@@ -10,7 +10,7 @@ class File {
 
       const { worker } = await getWorkerContext(id);
 
-      const route = `${worker.url}/server/${id}/files?path=${path || ''}&download=${download || false}`;
+      const route = `${worker.url}/server/${id}/files?path=${encodeURIComponent(path || '')}&download=${download || false}`;
       const response = await proxyFetch(route, {
         method: 'GET',
         headers: {
@@ -50,7 +50,7 @@ class File {
 
       const { worker } = await getWorkerContext(id);
 
-      const route = `${worker.url}/server/${id}/files/create?destiny=${destiny || ''}`;
+      const route = `${worker.url}/server/${id}/files/create?destiny=${encodeURIComponent(destiny || '')}`;
       const response = await proxyFetch(route, {
         method: 'POST',
         headers: {
@@ -87,7 +87,7 @@ class File {
         req.file.originalname,
       );
 
-      const route = `${worker.url}/server/${id}/files/upload?destiny=${destiny || ''}`;
+      const route = `${worker.url}/server/${id}/files/upload?destiny=${encodeURIComponent(destiny || '')}`;
       const response = await proxyFetch(route, {
         method: 'POST',
         headers: { Authorization: `Bearer ${worker.secret}` },
@@ -113,7 +113,7 @@ class File {
 
       const { worker } = await getWorkerContext(id);
 
-      const route = `${worker.url}/server/${id}/files/edit?path=${path || ''}`;
+      const route = `${worker.url}/server/${id}/files/edit?path=${encodeURIComponent(path || '')}`;
       const response = await proxyFetch(route, {
         method: 'PUT',
         headers: {
@@ -142,7 +142,7 @@ class File {
 
       const { worker } = await getWorkerContext(id);
 
-      const route = `${worker.url}/server/${id}/files/delete?path=${path || ''}`;
+      const route = `${worker.url}/server/${id}/files/delete?path=${encodeURIComponent(path || '')}`;
       const response = await proxyFetch(route, {
         method: 'DELETE',
         headers: {
@@ -170,7 +170,7 @@ class File {
 
       const { worker } = await getWorkerContext(id);
 
-      const route = `${worker.url}/server/${id}/files/transfer?path=${path || ''}&destiny=${destiny || ''}&actions=${actions || ''}`;
+      const route = `${worker.url}/server/${id}/files/transfer?path=${encodeURIComponent(path || '')}&destiny=${encodeURIComponent(destiny || '')}&actions=${encodeURIComponent(actions || '')}`;
       const response = await proxyFetch(route, {
         method: 'POST',
         headers: {
@@ -198,7 +198,7 @@ class File {
 
       const { worker } = await getWorkerContext(id);
 
-      const route = `${worker.url}/server/${id}/files/unzip?path=${path || ''}&destiny=${destiny || ''}`;
+      const route = `${worker.url}/server/${id}/files/unzip?path=${encodeURIComponent(path || '')}&destiny=${encodeURIComponent(destiny || '')}`;
       const response = await proxyFetch(route, {
         method: 'POST',
         headers: {

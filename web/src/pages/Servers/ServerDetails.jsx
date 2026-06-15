@@ -4,6 +4,7 @@ import {
   Play, Square, RotateCcw, Trash2, Terminal, Folder, HardDrive,
   Network, Variable, ArrowLeft, RefreshCw, Copy, Check, Save,
   FileText, FilePlus, FolderPlus, Upload, Download, ChevronRight, X,
+  Plus, Edit2, Users,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -12,6 +13,7 @@ import Input, { Select } from '../../components/ui/Input.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
+import { usersApi } from '../../api/users.js';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './ServerDetails.css';
 
@@ -21,7 +23,21 @@ const TABS = [
   { id: 'files',     label: 'Files',      icon: Folder     },
   { id: 'backups',   label: 'Backups',    icon: HardDrive  },
   { id: 'env',       label: 'Variables',  icon: Variable   },
-  { id: 'network',   label: 'Network',    icon: Network    },
+  { id: 'network',   label: 'Players',    icon: Users      },
+];
+
+const PERMISSIONS = [
+  { id: 'instance:read',    label: 'View'    },
+  { id: 'instance:update',  label: 'Update'  },
+  { id: 'instance:execute', label: 'Execute' },
+  { id: 'instance:backup',  label: 'Backup'  },
+  { id: 'instance:console', label: 'Console' },
+];
+
+const ACCESS_OPTS = [
+  { value: 'always',    label: 'Always',    desc: 'Always allowed to join'              },
+  { value: 'super',     label: 'Super',     desc: 'Always + enables Monitored users'    },
+  { value: 'monitored', label: 'Monitored', desc: 'Only when a Super user is online'    },
 ];
 
 const GAME_LABELS = {
@@ -451,10 +467,191 @@ function BackupsTab({ instanceId }) {
   );
 }
 
+function LinkDialog({ instanceId, link, onSaved, onClose }) {
+  const isEdit = !!link;
+  const [userId, setUserId] = useState(link?.userId || '');
+  const [lookedUpUser, setLookedUpUser] = useState(link?.user || null);
+  const [gamertags, setGamertags] = useState(link?.gamertags || []);
+  const [gamertagInput, setGamertagInput] = useState('');
+  const [permissions, setPermissions] = useState(link?.permissions || ['instance:read']);
+  const [access, setAccess] = useState(link?.access || 'always');
+  const [privileges, setPrivileges] = useState(link?.privileges ?? false);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupError, setLookupError] = useState(null);
+
+  const { execute: save, loading: saving, error: saveError } = useAction(async () => {
+    const body = { gamertags, permissions, access, privileges };
+    if (userId.trim()) body.userId = userId.trim();
+    if (isEdit) {
+      await instancesApi.updateLink(instanceId, link.id, body);
+    } else {
+      await instancesApi.createLink(instanceId, body);
+    }
+    onSaved();
+  });
+
+  const lookupUser = async () => {
+    if (!userId.trim()) return;
+    setLookingUp(true);
+    setLookupError(null);
+    try {
+      const res = await usersApi.get(userId.trim());
+      setLookedUpUser(res.user);
+    } catch {
+      setLookupError('User not found');
+      setLookedUpUser(null);
+    } finally {
+      setLookingUp(false);
+    }
+  };
+
+  const addGamertag = () => {
+    const gt = gamertagInput.trim();
+    if (!gt || gamertags.includes(gt) || gamertags.length >= 4) return;
+    setGamertags(prev => [...prev, gt]);
+    setGamertagInput('');
+  };
+
+  const togglePermission = (perm) => {
+    setPermissions(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]);
+  };
+
+  return (
+    <div className="files-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="files-dialog link-dialog">
+        <div className="files-dialog-header">
+          <span className="files-dialog-title">{isEdit ? 'Edit Access Link' : 'New Access Link'}</span>
+          <button className="files-dialog-close" onClick={onClose}><X size={14} /></button>
+        </div>
+
+        <div className="files-dialog-body">
+          <div className="link-form-field">
+            <label className="link-form-label">User ID <span className="link-form-optional">(optional)</span></label>
+            <div className="link-form-row">
+              <Input
+                value={userId}
+                onChange={e => { setUserId(e.target.value); setLookedUpUser(null); setLookupError(null); }}
+                onKeyDown={e => e.key === 'Enter' && lookupUser()}
+                placeholder="Paste user UUID..."
+              />
+              <Button size="sm" variant="secondary" onClick={lookupUser} loading={lookingUp}>Verify</Button>
+            </div>
+            {lookupError && <span className="link-form-error">{lookupError}</span>}
+            {lookedUpUser && (
+              <span className="link-form-user-ok"><Check size={12} /> {lookedUpUser.name} ({lookedUpUser.email})</span>
+            )}
+          </div>
+
+          <div className="link-form-field">
+            <label className="link-form-label">Gamertags <span className="link-form-optional">(up to 4, used for allowlist & OP)</span></label>
+            <div className="link-form-row">
+              <Input
+                value={gamertagInput}
+                onChange={e => setGamertagInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addGamertag()}
+                placeholder="Type gamertag and press Enter..."
+                disabled={gamertags.length >= 4}
+              />
+              <Button size="sm" variant="secondary" onClick={addGamertag} disabled={gamertags.length >= 4}>Add</Button>
+            </div>
+            {gamertags.length > 0 && (
+              <div className="link-tags">
+                {gamertags.map(gt => (
+                  <span key={gt} className="link-tag">
+                    {gt}
+                    <button className="link-tag-rm" onClick={() => setGamertags(prev => prev.filter(g => g !== gt))}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="link-form-field">
+            <label className="link-form-label">Access Type</label>
+            <Select value={access} onChange={e => setAccess(e.target.value)}>
+              {ACCESS_OPTS.map(o => (
+                <option key={o.value} value={o.value}>{o.label} — {o.desc}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="link-form-field">
+            <label className="link-form-label">Panel Permissions</label>
+            <div className="link-perms">
+              {PERMISSIONS.map(({ id: pId, label }) => (
+                <label key={pId} className="link-perm-toggle">
+                  <input type="checkbox" checked={permissions.includes(pId)} onChange={() => togglePermission(pId)} />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <label className="link-perm-toggle">
+            <input type="checkbox" checked={privileges} onChange={e => setPrivileges(e.target.checked)} />
+            Grant OP / admin privileges in-game
+          </label>
+
+          {saveError && <span className="link-form-error">{saveError}</span>}
+        </div>
+
+        <div className="files-dialog-footer">
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" size="sm" loading={saving} onClick={save}>
+            {isEdit ? 'Save Changes' : 'Create Link'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const ACCESS_COLOR = { super: 'purple', always: 'blue', monitored: 'yellow' };
+
+function LinkCard({ link, onEdit, onDelete }) {
+  const del = useAction(onDelete);
+  return (
+    <div className="link-card">
+      <div className="link-card-top">
+        <div className="link-card-user">
+          {link.user
+            ? <><span className="link-user-name">{link.user.name}</span><span className="link-user-email">{link.user.email}</span></>
+            : <span className="link-user-anon">Anonymous link</span>
+          }
+        </div>
+        <div className="link-card-badges">
+          <span className={`link-access-badge link-access-${ACCESS_COLOR[link.access]}`}>{link.access}</span>
+          {link.privileges && <span className="link-op-badge">OP</span>}
+        </div>
+        <div className="link-card-actions">
+          <button className="files-icon-btn" onClick={onEdit}><Edit2 size={13} /></button>
+          <button className="files-icon-btn files-icon-danger" onClick={del.execute} disabled={del.loading}>
+            {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
+          </button>
+        </div>
+      </div>
+      {link.gamertags?.length > 0 && (
+        <div className="link-tags link-tags-sm">
+          {link.gamertags.map(gt => <span key={gt} className="link-tag link-tag-sm">{gt}</span>)}
+        </div>
+      )}
+      {link.permissions?.length > 0 && (
+        <div className="link-perms-row">
+          {link.permissions.map(p => <span key={p} className="link-perm-chip">{p.replace('instance:', '')}</span>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NetworkTab({ instance }) {
   const { data, loading, refetch } = useApi(() => instancesApi.listLinks(instance.id), [instance.id]);
   const remapPort = useAction(async () => { await instancesApi.remapPort(instance.id); refetch(); });
   const links = data?.links || [];
+  const [dialog, setDialog] = useState(null);
+
+  const onSaved = () => { setDialog(null); refetch(); };
+  const onDelete = (linkId) => instancesApi.deleteLink(instance.id, linkId).then(refetch);
 
   return (
     <div className="network-wrap">
@@ -465,19 +662,34 @@ function NetworkTab({ instance }) {
           <Button size="sm" variant="ghost" onClick={remapPort.execute} loading={remapPort.loading}>Remap</Button>
         </div>
       </div>
-      <div className="network-links">
-        <h4 className="network-section-title">Access Links</h4>
-        {links.length === 0 ? (
-          <div className="network-empty">No links configured</div>
+
+      <div className="link-section">
+        <div className="link-section-header">
+          <span className="network-section-title">Player Access</span>
+          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add Link</Button>
+        </div>
+
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '32px' }}><Spinner size={18} /></div>
+        ) : links.length === 0 ? (
+          <div className="network-empty">No access links. Add one to grant players permission to this server.</div>
         ) : (
-          links.map(l => (
-            <div key={l.id} className="link-row">
-              <span className="link-name">{l.name}</span>
-              <span className="link-url">{l.url}</span>
-            </div>
-          ))
+          <div className="link-list">
+            {links.map(link => (
+              <LinkCard key={link.id} link={link} onEdit={() => setDialog(link)} onDelete={() => onDelete(link.id)} />
+            ))}
+          </div>
         )}
       </div>
+
+      {dialog && (
+        <LinkDialog
+          instanceId={instance.id}
+          link={dialog === 'new' ? null : dialog}
+          onSaved={onSaved}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </div>
   );
 }
