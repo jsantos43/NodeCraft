@@ -33,7 +33,7 @@ router
   .put( // [Body: content | Query: path]
     '/:id/files/edit',
     auth('instance:file:write'),
-    verifyNotRunning,
+    // verifyNotRunning,
     validate(updateFile),
     Controller.update,
   )
@@ -41,14 +41,14 @@ router
   .delete( // [Query: path]
     '/:id/files/delete',
     auth('instance:file:write'),
-    verifyNotRunning,
+    // verifyNotRunning,
     Controller.delete,
   )
 
   .post( // [Query: path, destiny, actions(copy or move)]
     '/:id/files/transfer',
     auth('instance:file:transfer'),
-    verifyNotRunning,
+    // verifyNotRunning,
     Controller.transfer,
   )
 

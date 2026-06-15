@@ -4,7 +4,7 @@ import {
   Play, Square, RotateCcw, Trash2, Terminal, Folder, HardDrive,
   Network, Variable, ArrowLeft, RefreshCw, Copy, Check, Save,
   FileText, FilePlus, FolderPlus, Upload, Download, ChevronRight, X,
-  Plus, Edit2, Users,
+  Plus, Edit2, Users, Scissors, Archive,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -223,6 +223,9 @@ function FilesTab({ instanceId }) {
   const [opError, setOpError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [actionDialog, setActionDialog] = useState(null); // { type: 'copy'|'move'|'unzip', entry }
+  const [actionDest, setActionDest] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
   const uploadRef = useRef(null);
 
   const { data, loading, refetch } = useApi(
@@ -322,6 +325,35 @@ function FilesTab({ instanceId }) {
     }
   };
 
+  const openActionDialog = (type, entry) => {
+    const defaultDest = type === 'unzip'
+      ? join(entry.name.replace(/\.zip$/i, ''))
+      : join(entry.name);
+    setActionDialog({ type, entry });
+    setActionDest(defaultDest);
+    setOpError(null);
+  };
+
+  const doAction = async () => {
+    if (!actionDialog) return;
+    setActionLoading(true);
+    setOpError(null);
+    try {
+      const src = join(actionDialog.entry.name);
+      if (actionDialog.type === 'unzip') {
+        await instancesApi.unzipFile(instanceId, src, actionDest);
+      } else {
+        await instancesApi.transferFile(instanceId, src, actionDest, actionDialog.type);
+      }
+      setActionDialog(null);
+      refetch();
+    } catch (err) {
+      setOpError(err.message || 'Operation failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // ── Editor view ──────────────────────────────────────────────────────────
   if (editFile) {
     return (
@@ -397,6 +429,17 @@ function FilesTab({ instanceId }) {
               </span>
               <span className="file-name">{entry.name}</span>
               <span className="file-row-actions">
+                {entry.name.endsWith('.zip') && (
+                  <button className="files-icon-btn" title="Extract" onClick={e => { e.stopPropagation(); openActionDialog('unzip', entry); }}>
+                    <Archive size={13} />
+                  </button>
+                )}
+                <button className="files-icon-btn" title="Copy to..." onClick={e => { e.stopPropagation(); openActionDialog('copy', entry); }}>
+                  <Copy size={13} />
+                </button>
+                <button className="files-icon-btn" title="Move to..." onClick={e => { e.stopPropagation(); openActionDialog('move', entry); }}>
+                  <Scissors size={13} />
+                </button>
                 <button className="files-icon-btn" title="Download" onClick={e => downloadEntry(e, entry)}>
                   <Download size={13} />
                 </button>
@@ -406,6 +449,36 @@ function FilesTab({ instanceId }) {
               </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {actionDialog && (
+        <div className="files-overlay" onClick={() => setActionDialog(null)}>
+          <div className="files-dialog" onClick={e => e.stopPropagation()}>
+            <div className="files-dialog-header">
+              <span className="files-dialog-title">
+                {actionDialog.type === 'copy' ? 'Copy' : actionDialog.type === 'move' ? 'Move' : 'Extract'}&nbsp;
+                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{actionDialog.entry.name}</span>
+              </span>
+              <button className="files-dialog-close" onClick={() => setActionDialog(null)}><X size={14} /></button>
+            </div>
+            <div className="files-dialog-body">
+              <Input
+                label="Destination path"
+                value={actionDest}
+                onChange={e => setActionDest(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && doAction()}
+                autoFocus
+              />
+              {opError && <span className="files-error-inline">{opError}</span>}
+            </div>
+            <div className="files-dialog-footer">
+              <Button variant="secondary" size="sm" onClick={() => setActionDialog(null)}>Cancel</Button>
+              <Button size="sm" loading={actionLoading} onClick={doAction}>
+                {actionDialog.type === 'copy' ? 'Copy here' : actionDialog.type === 'move' ? 'Move here' : 'Extract here'}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -451,18 +524,49 @@ function FilesTab({ instanceId }) {
   );
 }
 
-function BackupsTab({ instanceId }) {
-  const { data: inst } = useApi(() => instancesApi.get(instanceId), [instanceId]);
-  const createBackup = useAction(() => instancesApi.backup(instanceId));
+const BACKUP_BADGE = { success: 'backup-badge-ok', failed: 'backup-badge-fail', skipped: 'backup-badge-skip' };
+
+function BackupsTab({ instance, onRefetch }) {
+  const createBackup = useAction(async () => {
+    await instancesApi.backup(instance.id);
+    onRefetch?.();
+  });
+
+  const formatDate = (iso) => iso
+    ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+    : null;
 
   return (
     <div className="backups-wrap">
+      <div className="backup-info-card">
+        <div className="backup-info-row">
+          <span className="backup-info-label">Last backup</span>
+          <span className="backup-info-value">
+            {instance.lastBackupAt ? formatDate(instance.lastBackupAt) : <span className="backup-info-never">never run</span>}
+          </span>
+        </div>
+        <div className="backup-info-row">
+          <span className="backup-info-label">Status</span>
+          <span className="backup-info-value">
+            {instance.lastBackupStatus
+              ? <span className={`backup-badge ${BACKUP_BADGE[instance.lastBackupStatus] || ''}`}>{instance.lastBackupStatus}</span>
+              : <span className="backup-info-never">—</span>
+            }
+          </span>
+        </div>
+      </div>
+
       <div className="backups-header">
         <Button size="sm" variant="secondary" icon={HardDrive} onClick={createBackup.execute} loading={createBackup.loading}>
           Create Backup
         </Button>
       </div>
-      <div className="backups-empty">No backups available</div>
+
+      {createBackup.error && <span className="backup-error">{createBackup.error}</span>}
+
+      <p className="backup-note">
+        Backups run automatically at 3:00 AM daily. The last 7 daily and 4 weekly backups are kept.
+      </p>
     </div>
   );
 }
@@ -896,7 +1000,7 @@ export default function ServerDetails() {
           {tab === 'overview' && <Card><OverviewTab instance={instance} /></Card>}
           {tab === 'console'  && <Card padding={false}><ConsoleTab instance={instance} /></Card>}
           {tab === 'files'    && <Card><FilesTab instanceId={id} /></Card>}
-          {tab === 'backups'  && <Card><BackupsTab instanceId={id} /></Card>}
+          {tab === 'backups'  && <Card><BackupsTab instance={instance} onRefetch={refetch} /></Card>}
           {tab === 'env'      && <Card><VariablesTab instance={instance} onSaved={refetch} /></Card>}
           {tab === 'network'  && <Card><NetworkTab instance={instance} /></Card>}
         </div>

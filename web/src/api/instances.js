@@ -24,6 +24,8 @@ export const instancesApi = {
     return fetch(url, { method: 'POST', body: formData, credentials: 'include' }).then(r => r.json());
   },
   downloadUrl: (id, path) => `${BASE_URL}/instance/${id}/files?path=${encodeURIComponent(path)}&download=true`,
+  transferFile: (id, path, destiny, action) => api.post(`/instance/${id}/files/transfer?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}&actions=${encodeURIComponent(action)}`),
+  unzipFile: (id, path, destiny) => api.post(`/instance/${id}/files/unzip?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}`),
 
   listLinks: (id) => api.get(`/instance/${id}/link`),
   createLink: (id, body) => api.post(`/instance/${id}/link`, body),
