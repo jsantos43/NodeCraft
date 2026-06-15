@@ -54,17 +54,11 @@ class Minecraft extends Instance {
       if (!this.rcon) {
         await FileService.createOneFile(this.paths.ops, '[]');
       } else {
-        const { result } = await this.sendRcon('op list');
-        const opsRaw = result || '';
+        const content = await FileService.readOneFile(this.paths.ops);
+        const currentOps = JSON.parse(content || '[]');
 
-        const currentOps = opsRaw
-          .split(':')[1]
-          ?.split(',')
-          .map((p) => p.trim())
-          .filter(Boolean) || [];
-
-        for (const player of currentOps) {
-          await this.sendRcon(`deop ${player}`);
+        for (const op of currentOps) {
+          await this.sendRcon(`deop ${op.name}`);
         }
       }
     } catch (err) {
@@ -123,7 +117,7 @@ class Minecraft extends Instance {
         await FileService.createOneDirectory(Path.dirname(this.paths.floodgate));
 
         await FileService.createOneFile(this.paths.geyser, geyser);
-        await FileService.createOneDirectory(this.paths.floodgate, floodgate);
+        await FileService.createOneFile(this.paths.floodgate, floodgate);
       }
     } catch (err) {
       logger.error({ err }, 'Error to sync geyser and floodgate');
@@ -141,7 +135,7 @@ class Minecraft extends Instance {
   async verifyRcon() {
     this.initRcon(25575, null, async () => {
       await this.sendRcon('gamerule send_command_feedback false');
-      await this.sendRcon('gamerule  log_admin_commands false');
+      await this.sendRcon('gamerule log_admin_commands false');
       await this.sendRcon('save-all');
       await this.sendRcon('save-on');
     });
@@ -157,6 +151,7 @@ class Minecraft extends Instance {
       // Wipe barrier gamertags
       this.barrier.allowedGamertags = [];
       this.barrier.superGamertags = [];
+      this.barrier.opGamertags = [];
 
       const links = instancePlain.players || [];
       for (const link of links) {
@@ -190,7 +185,7 @@ class Minecraft extends Instance {
       if (!this.rcon) return;
 
       if (this.barrier.applyRules) {
-      // Wipe allowlist
+        // Wipe allowlist
         await this.wipeAllowlist();
 
         // Set allowlist
@@ -292,7 +287,7 @@ class Minecraft extends Instance {
       await this.sync();
 
       // Remove session.lock
-      this.removeSessionLock();
+      await this.removeSessionLock();
 
       // Set monitoring
       this.checker.interval = setInterval(() => this.monitor(), 5000);

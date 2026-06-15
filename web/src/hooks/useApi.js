@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export function useApi(fn, deps = []) {
   const [data, setData] = useState(null);
@@ -31,12 +31,14 @@ export function useApi(fn, deps = []) {
 export function useAction(fn) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
 
   const execute = useCallback(async (...args) => {
     setLoading(true);
     setError(null);
     try {
-      return await fn(...args);
+      return await fnRef.current(...args);
     } catch (err) {
       setError(err.message || 'Something went wrong');
       throw err;

@@ -26,12 +26,13 @@ class Worker {
     try {
       const body = req?.body;
 
-      const { worker, apiKey } = await Service.create(body);
+      const { worker, apiKey, secret } = await Service.create(body);
 
       return res.status(201).json({
         success: true,
         worker,
         apiKey,
+        secret,
       });
     } catch (err) {
       return next(err);

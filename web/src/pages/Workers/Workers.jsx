@@ -18,12 +18,12 @@ export default function Workers() {
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
-  const [createdKey, setCreatedKey] = useState(null);
+  const [createdKeys, setCreatedKeys] = useState(null); // { apiKey, secret }
 
   const { data, loading, refetch } = useApi(() => workersApi.list());
   const createWorker = useAction(async () => {
     const res = await workersApi.create({ name: newName });
-    setCreatedKey(res.apiKey);
+    setCreatedKeys({ apiKey: res.apiKey, secret: res.secret });
     refetch();
     setNewName('');
     return res;
@@ -132,7 +132,7 @@ export default function Workers() {
 
       {/* Create Worker Modal */}
       <Modal
-        open={createOpen && !createdKey}
+        open={createOpen && !createdKeys}
         onClose={() => setCreateOpen(false)}
         title="Add Worker"
         size="sm"
@@ -155,21 +155,28 @@ export default function Workers() {
 
       {/* API Key Modal */}
       <Modal
-        open={!!createdKey}
-        onClose={() => { setCreatedKey(null); setCreateOpen(false); }}
+        open={!!createdKeys}
+        onClose={() => { setCreatedKeys(null); setCreateOpen(false); }}
         title="Worker Created"
         size="sm"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div className="api-key-notice">
-            Save this API key — it will only be shown once.
+            Save these credentials — they will only be shown once.
           </div>
-          <div className="api-key-box">
-            <code className="api-key">{createdKey}</code>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="api-key-label">MANAGER_API_KEY (worker → manager auth)</div>
+            <div className="api-key-box">
+              <code className="api-key">{createdKeys?.apiKey}</code>
+            </div>
+            <div className="api-key-label">MANAGER_SECRET (manager → worker auth)</div>
+            <div className="api-key-box">
+              <code className="api-key">{createdKeys?.secret}</code>
+            </div>
           </div>
           <ModalFooter>
-            <Button onClick={() => { setCreatedKey(null); setCreateOpen(false); }}>
-              I've saved it
+            <Button onClick={() => { setCreatedKeys(null); setCreateOpen(false); }}>
+              I've saved them
             </Button>
           </ModalFooter>
         </div>

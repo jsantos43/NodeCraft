@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Server } from 'lucide-react';
+import { ArrowLeft, Server, Save } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
+import Input from '../../components/ui/Input.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
 import ResourceBar from '../../components/ui/ResourceBar.jsx';
-import { useApi } from '../../hooks/useApi.js';
+import { useApi, useAction } from '../../hooks/useApi.js';
 import { workersApi } from '../../api/workers.js';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './WorkerDetails.css';
@@ -16,11 +17,34 @@ const GAME_LABELS = { minecraft: 'Minecraft', counterstrike: 'CS2', terraria: 'T
 export default function WorkerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, loading } = useApi(() => workersApi.get(id), [id]);
+  const { data, loading, refetch } = useApi(() => workersApi.get(id), [id]);
   const { data: instData } = useApi(() => workersApi.listInstances(id), [id]);
 
   const worker = data?.worker;
   const instances = instData?.instances || [];
+
+  const [form, setForm] = useState({ name: '', url: '', secret: '' });
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  useEffect(() => {
+    if (worker) setForm({ name: worker.name || '', url: worker.url || '', secret: worker.secret || '' });
+  }, [worker?.id]);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const { execute: save, loading: saving } = useAction(async () => {
+    setSaved(false);
+    setSaveError(null);
+    try {
+      await workersApi.update(id, { name: form.name, url: form.url, secret: form.secret });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+      refetch();
+    } catch (err) {
+      setSaveError(err.message || 'Failed to save');
+    }
+  });
 
   if (loading) return (
     <Layout breadcrumbs={['Workers', '...']}>
@@ -73,20 +97,48 @@ export default function WorkerDetails() {
             <CardHeader title="Details" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {[
-                ['ID', worker.id],
-                ['Name', worker.name],
-                ['URL', worker.url || '—'],
-                ['Status', worker.healthy ? 'Healthy' : 'Unhealthy'],
+                ['ID',        worker.id],
+                ['Status',    null],
                 ['Last Seen', worker.lastSeenAt ? new Date(worker.lastSeenAt).toLocaleString() : 'Never'],
               ].map(([k, v]) => (
                 <div key={k} className="overview-row">
                   <span className="overview-key">{k}</span>
-                  <span className="overview-val">{k === 'Status' ? <StatusBadge status={worker.healthy ? 'healthy' : 'offline'} /> : v}</span>
+                  <span className="overview-val">
+                    {k === 'Status' ? <StatusBadge status={worker.healthy ? 'healthy' : 'offline'} /> : v}
+                  </span>
                 </div>
               ))}
             </div>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader title="Settings" subtitle="Changes take effect on the next worker connection" />
+          <div className="worker-settings-grid">
+            <Input
+              label="Name"
+              value={form.name}
+              onChange={e => set('name', e.target.value)}
+            />
+            <Input
+              label="URL"
+              placeholder="http://worker-host:9184"
+              value={form.url}
+              onChange={e => set('url', e.target.value)}
+            />
+            <Input
+              label="Secret (MANAGER_SECRET)"
+              placeholder="Leave blank to keep current"
+              value={form.secret}
+              onChange={e => set('secret', e.target.value)}
+            />
+          </div>
+          <div className="worker-settings-footer">
+            {saveError && <span className="worker-url-error">{saveError}</span>}
+            {saved && <span className="worker-url-saved">Saved</span>}
+            <Button icon={Save} loading={saving} onClick={save}>Save Changes</Button>
+          </div>
+        </Card>
 
         <Card>
           <CardHeader

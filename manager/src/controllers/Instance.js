@@ -132,8 +132,6 @@ class Instance {
       const { id } = req.params;
 
       const instance = await Service.readOne(id);
-      const running = instance?.status === 'running';
-      if (running) throw new InvalidRequest('You cannot do this while instance is running!');
 
       const worker = await WorkerService.readOne(instance.workerId);
       const route = `${worker.url}/server/${id}/restart`;
