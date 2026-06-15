@@ -7,19 +7,53 @@ import config from '../../config/config.js';
 const dockerImages = config.images;
 
 class Container {
-  static defineMinecraft(instance, path) {
+  static async fetchLatestMinecraftVersion() {
+    const res = await fetch('https://launchermeta.mojang.com/mc/game/version_manifest_v2.json');
+    if (!res.ok) throw new Error(`Failed to fetch Minecraft version manifest: ${res.status}`);
+    const manifest = await res.json();
+    return manifest.latest.release;
+  }
+
+  static async defineMinecraft(instance, path) {
     const gameData = instance?.minecraft;
     if (!gameData) throw new Error('instance has no minecraft config!');
+
+    const version = await Container.fetchLatestMinecraftVersion();
 
     const enviroment = [
       'EULA=TRUE',
       'ENABLE_RCON=true',
       'RCON_PASSWORD=nodecraft',
       'RCON_PORT=25575',
-      'VERSION=latest',
+      `UID=${config.system.puid}`,
+      `GID=${config.system.pgid}`,
+      `VERSION=${version}`,
+      `MEMORY=${instance.memory}M`,
     ];
-    if (gameData.software === 'paper') enviroment.push('TYPE=paper');
-    else if (gameData.software === 'purpur') enviroment.push('TYPE=purpur');
+    if (gameData.software === 'paper') {
+      enviroment.push('TYPE=paper');
+      enviroment.push('PAPER_CHANNEL=experimental');
+
+      if (gameData.bedrock === true) {
+        enviroment.push(
+          [
+            'PLUGINS=https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot',
+            'https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot',
+          ].join('\n'),
+        );
+      }
+    } else if (gameData.software === 'purpur') {
+      enviroment.push('TYPE=purpur');
+
+      if (gameData.bedrock === true) {
+        enviroment.push(
+          [
+            'PLUGINS=https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot',
+            'https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot',
+          ].join('\n'),
+        );
+      }
+    }
 
     const image = dockerImages.minecraft;
     const binds = [`${path}:/data`];
@@ -79,6 +113,10 @@ class Container {
 
   static defineKerbal(instance, path) {
     const image = dockerImages.kerbal;
+    const enviroment = [
+      `PUID=${config.system.puid}`,
+      `PGID=${config.system.pgid}`,
+    ];
     const exposedPorts = { '6702/tcp': {} };
     const binds = [
       `${path}/Config:/data/Config`,
@@ -96,11 +134,16 @@ class Container {
       image,
       portBindings,
       exposedPorts,
+      enviroment,
     };
   }
 
   static async defineHytale(instance, path) {
     const image = dockerImages.hytale;
+    const enviroment = [
+      `PUID=${config.system.puid}`,
+      `PGID=${config.system.pgid}`,
+    ];
     const exposedPorts = { '5520/udp': {} };
     const binds = [`${path}:/data`];
     const portBindings = {
@@ -114,12 +157,15 @@ class Container {
       image,
       portBindings,
       exposedPorts,
+      enviroment,
     };
   }
 
   static defineTerraria(instance, path) {
     const image = dockerImages.terraria;
     const enviroment = [
+      `PUID=${config.system.puid}`,
+      `PGID=${config.system.pgid}`,
       'SERVERCONFIG=1',
     ];
     const exposedPorts = { '7777/tcp': {} };
@@ -150,7 +196,7 @@ class Container {
 
     switch (instance.type) {
       case 'minecraft':
-        info = Container.defineMinecraft(instance, instancePath);
+        info = await Container.defineMinecraft(instance, instancePath);
         break;
       case 'counterstrike':
         info = Container.defineCounterStrike(instance, instancePath);

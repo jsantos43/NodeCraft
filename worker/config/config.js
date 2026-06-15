@@ -31,11 +31,15 @@ const config = {
     secret: process.env.STORAGE_SECRET,
     max: process.env.STORAGE_MAX,
   },
+  system: {
+    puid: process.env.PUID || 1000,
+    pgid: process.env.PGID || 1000,
+  },
   images: {
     minecraft: 'itzg/minecraft-server:latest',
     counterstrike: 'cm2network/cs2:latest',
-    kerbal: 'ghcr.io/joaosantos2007/ksp:latest',
-    hytale: 'ghcr.io/joaosantos2007/hytale:latest',
+    kerbal: 'ghcr.io/jsantos43/ksp:latest',
+    hytale: 'ghcr.io/jsantos43/hytale:latest',
     terraria: 'ghcr.io/passivelemon/terraria-docker:latest',
   },
 };

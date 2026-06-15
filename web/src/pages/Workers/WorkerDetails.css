@@ -72,3 +72,22 @@
 
 .overview-key { font-size: 12px; color: var(--text-muted); }
 .overview-val { font-size: 13px; color: var(--text-primary); }
+
+.worker-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.worker-settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.worker-url-saved { font-size: 12px; color: var(--accent-text); }
+.worker-url-error { font-size: 12px; color: var(--red-text); }

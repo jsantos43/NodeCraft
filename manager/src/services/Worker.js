@@ -8,13 +8,15 @@ const MAX_INSTANCE_HISTORY = 15;
 class Worker {
   static async create(data) {
     const apiKey = Auth.generateRandomToken();
+    const secret = Auth.generateRandomToken();
 
     const worker = await Model.create({
       name: data.name,
       apiKey: Auth.hashToken(apiKey),
+      secret,
     });
 
-    return { worker, apiKey };
+    return { worker, apiKey, secret };
   }
 
   static async readAll() {

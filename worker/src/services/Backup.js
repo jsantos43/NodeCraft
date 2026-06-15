@@ -1,7 +1,6 @@
 import Path from 'path';
 import logger from '../../config/logger.js';
 import StorageProvider from '../providers/Storage.js';
-import { Internal } from '../errors/index.js';
 import File from './File.js';
 import config from '../../config/config.js';
 
@@ -46,12 +45,8 @@ class Backup {
   }
 
   static async send({
-    id, path, size, daily, weekly,
+    id, path, daily, weekly,
   }) {
-    const totalSize = (daily && weekly) ? (2 * size) : size;
-    const availableSpace = await Backup.verifyAvailableSpace(totalSize);
-    if (!availableSpace) throw new Internal('No space available to backups');
-
     const filename = Path.basename(path);
     if (daily) await StorageProvider.upload(`${id}/daily/${filename}`, path);
     if (weekly) await StorageProvider.upload(`${id}/weekly/${filename}`, path);
@@ -69,13 +64,14 @@ class Backup {
 
       // Verify need backups
       const info = await Backup.verifyNeeds(instance.id);
+
       if (info.doBackup || force) {
         // Make and send backup to bucket
-        const { backupPath, backupSize } = await File.makeBackup(instance);
+        const { backupPath } = await File.makeBackup(instance);
+
         await Backup.send({
           id: instance.id,
           path: backupPath,
-          size: backupSize,
           daily: info.needDaily || force,
           weekly: info.needWeekly,
         });

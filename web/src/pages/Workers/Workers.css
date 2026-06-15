@@ -80,3 +80,11 @@
   color: var(--accent-text);
   word-break: break-all;
 }
+
+.api-key-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
