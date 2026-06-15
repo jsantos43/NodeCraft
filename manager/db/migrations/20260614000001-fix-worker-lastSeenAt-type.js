@@ -1,15 +1,18 @@
 'use strict';
 
-export async function up(queryInterface, Sequelize) {
-  await queryInterface.changeColumn('workers', 'lastSeenAt', {
-    type: Sequelize.DataTypes.BIGINT,
-    allowNull: true,
-  });
-}
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.changeColumn('workers', 'lastSeenAt', {
+      type: Sequelize.DataTypes.BIGINT,
+      allowNull: true,
+    });
+  },
 
-export async function down(queryInterface, Sequelize) {
-  await queryInterface.changeColumn('workers', 'lastSeenAt', {
-    type: Sequelize.DataTypes.TIME,
-    allowNull: true,
-  });
-}
+  async down(queryInterface, Sequelize) {
+    await queryInterface.changeColumn('workers', 'lastSeenAt', {
+      type: Sequelize.DataTypes.TIME,
+      allowNull: true,
+    });
+  },
+};
