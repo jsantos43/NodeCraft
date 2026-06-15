@@ -41,7 +41,7 @@ Worker.init({
     defaultValue: false,
   },
   lastSeenAt: {
-    type: DataTypes.TIME,
+    type: DataTypes.BIGINT,
     allowNull: true,
   },
   cpuUsage: {
