@@ -28,7 +28,7 @@ class Container {
       `UID=${config.system.puid}`,
       `GID=${config.system.pgid}`,
       `VERSION=${version}`,
-      `MEMORY=${instance.memory}M`,
+      `MAX_MEMORY=${instance.memory}M`,
     ];
     if (gameData.software === 'paper') {
       enviroment.push('TYPE=paper');
