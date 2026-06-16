@@ -79,19 +79,15 @@ class File {
 
       const { worker } = await getWorkerContext(id);
 
-      // Send form data body to worker
-      const form = new FormData();
-      form.append(
-        'file',
-        new Blob([req.file.buffer], { type: req.file.mimetype }),
-        req.file.originalname,
-      );
-
       const route = `${worker.url}/server/${id}/files/upload?destiny=${encodeURIComponent(destiny || '')}`;
       const response = await proxyFetch(route, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${worker.secret}` },
-        body: form,
+        headers: {
+          Authorization: `Bearer ${worker.secret}`,
+          'content-type': req.headers['content-type'],
+        },
+        body: req,
+        duplex: 'half',
       });
 
       if (!response.ok) {

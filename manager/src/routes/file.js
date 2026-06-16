@@ -1,11 +1,7 @@
 import { Router } from 'express';
-import multer from 'multer';
 import Controller from '../controllers/File.js';
 import { auth, validate, verifyNotRunning } from '../middlewares/index.js';
 import { createFile, updateFile } from '../schemas/index.js';
-
-// Use multer to storage upload file in ram memory
-const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
@@ -26,7 +22,6 @@ router
   .post( // [Query: destiny]
     '/:id/files/upload',
     auth('instance:file:write'),
-    upload.single('file'),
     Controller.upload,
   )
 
