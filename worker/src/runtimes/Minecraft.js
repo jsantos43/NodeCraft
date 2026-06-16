@@ -51,7 +51,7 @@ class Minecraft extends Instance {
 
   async wipeOps() {
     try {
-      if (!this.rcon) {
+      if (!this.rcon.service) {
         await FileService.createOneFile(this.paths.ops, '[]');
       } else {
         const content = await FileService.readOneFile(this.paths.ops);
@@ -133,7 +133,7 @@ class Minecraft extends Instance {
   }
 
   async verifyRcon() {
-    this.initRcon(25575, null, async () => {
+    await this.initRcon(25575, null, async () => {
       await this.sendRcon('gamerule send_command_feedback false');
       await this.sendRcon('gamerule log_admin_commands false');
       await this.sendRcon('save-all');
@@ -182,24 +182,19 @@ class Minecraft extends Instance {
 
   async applyBarrier() {
     try {
-      if (!this.rcon) return;
+      if (!this.rcon.service) return;
 
       if (this.barrier.applyRules) {
-        // Wipe allowlist
         await this.wipeAllowlist();
 
-        // Set allowlist
         for (const gamertag of this.barrier.allowedGamertags) {
           await this.sendRcon(`whitelist add ${gamertag}`);
         }
 
-        // Reload whitelist
         await this.sendRcon('whitelist reload');
 
-        // Wipe privileges
         await this.wipeOps();
 
-        // Set privileges
         for (const gamertag of this.barrier.opGamertags) {
           await this.sendRcon(`op ${gamertag}`);
         }
@@ -208,7 +203,6 @@ class Minecraft extends Instance {
       }
 
       if (!this.barrier.updating && this.instance.minecraft.allowlist) {
-      // Kick players without authorized gamertag
         for (const player of this.state.players) {
           if (!this.barrier.allowedGamertags.includes(player.name)) {
             await this.sendRcon(`kick ${player.name}`);
