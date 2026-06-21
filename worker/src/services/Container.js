@@ -232,7 +232,7 @@ class Container {
         PortBindings: info.portBindings,
 
         NetworkMode: 'nodecraft-net',
-        Memory: instance.memory * 1024 * 1024,
+        Memory: Math.ceil(instance.memory * 1.3) * 1024 * 1024,
         NanoCpus: instance.cpu * 1e9,
 
         // Secure

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Play, Square, RotateCcw, Trash2, Terminal, Folder, HardDrive,
@@ -14,6 +14,7 @@ import { StatusBadge } from '../../components/ui/Badge.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { usersApi } from '../../api/users.js';
+import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './ServerDetails.css';
 
@@ -926,10 +927,46 @@ export default function ServerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [tab, setTab] = useState('overview');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null); // 'starting' | 'stopping' | null
+  const pollRef = useRef(null);
+
   const { data, loading, refetch } = useApi(() => instancesApi.get(id), [id]);
   const instance = data?.instance;
 
-  const runAction = useAction(async (fn) => { await fn(); refetch(); });
+  // Resolve pending when real status matches expected
+  useEffect(() => {
+    if (!instance || !pendingStatus) return;
+    const done = (pendingStatus === 'starting' && instance.status === 'running') ||
+                 (pendingStatus === 'stopping' && instance.status !== 'running');
+    if (done) {
+      setPendingStatus(null);
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, [instance?.status, pendingStatus]);
+
+  useEffect(() => () => clearInterval(pollRef.current), []);
+
+  const startPolling = useCallback(() => {
+    if (pollRef.current) return;
+    const deadline = Date.now() + 30_000;
+    pollRef.current = setInterval(() => {
+      if (Date.now() > deadline) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+        setPendingStatus(null);
+        return;
+      }
+      refetch();
+    }, 3000);
+  }, [refetch]);
+
+  const runAction = useAction(async (fn) => { await fn(); });
+  const deleteAction = useAction(async () => {
+    await instancesApi.delete(id);
+    navigate('/servers');
+  });
 
   if (loading && !instance) return (
     <Layout breadcrumbs={['Servers', '...']}>
@@ -947,7 +984,25 @@ export default function ServerDetails() {
     </Layout>
   );
 
-  const isRunning = instance.status === 'running';
+  const effectiveStatus = pendingStatus || instance.status || 'stopped';
+  const isRunning = effectiveStatus === 'running' || effectiveStatus === 'starting';
+  const transitioning = !!pendingStatus;
+
+  const handleRun = async () => {
+    setPendingStatus('starting');
+    try { await runAction.execute(() => instancesApi.run(id)); } catch { setPendingStatus(null); return; }
+    startPolling();
+  };
+  const handleStop = async () => {
+    setPendingStatus('stopping');
+    try { await runAction.execute(() => instancesApi.stop(id)); } catch { setPendingStatus(null); return; }
+    startPolling();
+  };
+  const handleRestart = async () => {
+    setPendingStatus('starting');
+    try { await runAction.execute(() => instancesApi.restart(id)); } catch { setPendingStatus(null); return; }
+    startPolling();
+  };
 
   return (
     <Layout breadcrumbs={['Servers', instance.name]}>
@@ -958,28 +1013,24 @@ export default function ServerDetails() {
           </button>
           <div className="server-details-meta">
             <h1 className="server-details-title">{instance.name}</h1>
-            <StatusBadge status={instance.status || 'stopped'} />
+            <StatusBadge status={effectiveStatus} />
             <span className="server-details-game">{GAME_LABELS[instance.type] || instance.type}</span>
           </div>
           <div className="server-details-actions">
             {!isRunning && (
-              <Button icon={Play} size="sm" onClick={() => runAction.execute(() => instancesApi.run(id))}>
+              <Button icon={Play} size="sm" disabled={transitioning} onClick={handleRun}>
                 Start
               </Button>
             )}
             {isRunning && (
-              <Button icon={Square} variant="danger" size="sm" onClick={() => runAction.execute(() => instancesApi.stop(id))}>
+              <Button icon={Square} variant="danger" size="sm" disabled={transitioning} onClick={handleStop}>
                 Stop
               </Button>
             )}
-            <Button icon={RotateCcw} variant="secondary" size="sm" onClick={() => runAction.execute(() => instancesApi.restart(id))}>
+            <Button icon={RotateCcw} variant="secondary" size="sm" disabled={transitioning} onClick={handleRestart}>
               Restart
             </Button>
-            <Button icon={Trash2} variant="ghost" size="sm" onClick={async () => {
-              await instancesApi.delete(id);
-              navigate('/servers');
-            }}>
-            </Button>
+            <Button icon={Trash2} variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} />
           </div>
         </div>
 
@@ -1005,6 +1056,14 @@ export default function ServerDetails() {
           {tab === 'network'  && <Card><NetworkTab instance={instance} /></Card>}
         </div>
       </div>
+
+      <ConfirmDelete
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={deleteAction.execute}
+        name={instance.name}
+        loading={deleteAction.loading}
+      />
     </Layout>
   );
 }

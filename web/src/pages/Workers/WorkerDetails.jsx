@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Server, Save } from 'lucide-react';
+import { ArrowLeft, Server, Save, Trash2 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
@@ -9,6 +9,7 @@ import { StatusBadge } from '../../components/ui/Badge.jsx';
 import ResourceBar from '../../components/ui/ResourceBar.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { workersApi } from '../../api/workers.js';
+import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './WorkerDetails.css';
 
@@ -26,6 +27,12 @@ export default function WorkerDetails() {
   const [form, setForm] = useState({ name: '', url: '', secret: '' });
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const { execute: deleteWorker, loading: deleting } = useAction(async () => {
+    await workersApi.delete(id);
+    navigate('/workers');
+  });
 
   useEffect(() => {
     if (worker) setForm({ name: worker.name || '', url: worker.url || '', secret: worker.secret || '' });
@@ -72,6 +79,7 @@ export default function WorkerDetails() {
             </div>
             <span className="worker-details-id">{worker.id}</span>
           </div>
+          <Button icon={Trash2} variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} />
         </div>
 
         <div className="worker-details-grid">
@@ -180,6 +188,14 @@ export default function WorkerDetails() {
           )}
         </Card>
       </div>
+
+      <ConfirmDelete
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={deleteWorker}
+        name={worker.name}
+        loading={deleting}
+      />
     </Layout>
   );
 }

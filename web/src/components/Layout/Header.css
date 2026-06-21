@@ -12,6 +12,35 @@
   z-index: 10;
 }
 
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+  padding-right: 16px;
+  border-right: 1px solid var(--border);
+}
+
+.topbar-brand-icon {
+  width: 26px;
+  height: 26px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(34,197,94,0.25);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-text);
+  flex-shrink: 0;
+}
+
+.topbar-brand-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
 .topbar-title {
   font-size: 14px;
   font-weight: 600;
@@ -142,15 +171,45 @@
   gap: 2px;
 }
 
+.menu-username-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .menu-username {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
 }
 
+.menu-admin-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--yellow-text);
+  background: var(--yellow-dim);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
 .menu-email {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.topbar-admin-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--yellow-text);
+  background: var(--yellow-dim);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
 .topbar-menu-divider {
