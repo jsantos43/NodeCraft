@@ -212,9 +212,17 @@ function ConsoleTab({ instance }) {
       try {
         const { token, workerUrl } = await instancesApi.consoleToken(instance.id);
 
-        socket = io(workerUrl, {
+        // workerUrl may include a path prefix (e.g. https://host/worker) used by
+        // the nginx reverse proxy. A path in the io() URL would be treated as a
+        // Socket.IO namespace, not an HTTP path, so connect to the origin and
+        // pass the prefix through the `path` option instead.
+        const parsed = new URL(workerUrl);
+        const prefix = parsed.pathname.replace(/\/+$/, '');
+
+        socket = io(parsed.origin, {
           auth: { token },
           transports: ['websocket'],
+          path: `${prefix}/socket.io/`,
         });
         socketRef.current = socket;
 
