@@ -55,7 +55,7 @@ router
     Controller.restart,
   )
   .post(
-    '/instance/:id/console-token',
+    '/instance/:id/console',
     auth('instance:console'),
     Controller.consoleToken,
   )
