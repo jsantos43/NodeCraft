@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Worker as WorkerModel, Instance as InstanceModel } from '../models/index.js';
+import { Worker as WorkerModel, Instance as InstanceModel, instanceInclude } from '../models/index.js';
 import logger from '../../config/logger.js';
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
@@ -52,6 +52,7 @@ class BackupScheduler {
             workerId: worker.id,
             lastActivityAt: { [Op.gte]: oneDayAgo },
           },
+          include: instanceInclude,
         });
 
         for (const instance of instances) {

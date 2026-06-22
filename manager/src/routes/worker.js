@@ -1,19 +1,24 @@
 import { Router } from 'express';
 import Controller from '../controllers/Worker.js';
-import { auth, workerAuth } from '../middlewares/index.js';
+import { auth, workerAuth, workerOrAuth } from '../middlewares/index.js';
 
 const router = Router();
 
 router
   .get(
     '/worker',
-    // auth('admin'),
+    auth('admin'),
     Controller.readAll,
   )
   .get(
     '/worker/:id',
-    // auth('admin'),
+    auth('admin'),
     Controller.readOne,
+  )
+  .get(
+    '/worker/:id/heartbeats',
+    auth('admin'),
+    Controller.readHeartbeats,
   )
   .post(
     '/worker',
@@ -37,7 +42,7 @@ router
   )
   .get(
     '/worker/:id/instances',
-    workerAuth(),
+    workerOrAuth('admin'),
     Controller.readInstances,
   )
   .put(

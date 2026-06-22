@@ -1,0 +1,30 @@
+.range-selector {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-input, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.range-selector-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.range-selector-btn:hover {
+  color: var(--text-secondary);
+}
+
+.range-selector-btn.active {
+  background: var(--accent);
+  color: #fff;
+}

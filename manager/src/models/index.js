@@ -2,6 +2,7 @@ import User from './User.js';
 import Instance from './Instance.js';
 import Link from './Link.js';
 import Worker from './Worker.js';
+import WorkerHeartbeat from './WorkerHeartbeat.js';
 import db from '../../config/sequelize.js';
 import Minecraft from './Minecraft.js';
 import CounterStrike from './CounterStrike.js';
@@ -56,6 +57,19 @@ Worker.hasMany(Instance, {
 });
 
 Instance.belongsTo(Worker, {
+  foreignKey: 'workerId',
+  as: 'worker',
+});
+
+// worker <-> heartbeat
+Worker.hasMany(WorkerHeartbeat, {
+  foreignKey: 'workerId',
+  as: 'heartbeats',
+  onDelete: 'CASCADE',
+  hooks: true,
+});
+
+WorkerHeartbeat.belongsTo(Worker, {
   foreignKey: 'workerId',
   as: 'worker',
 });
@@ -152,4 +166,5 @@ export {
   Instance,
   Link,
   Worker,
+  WorkerHeartbeat,
 };
