@@ -460,6 +460,15 @@
 .backup-badge-fail { background: rgba(239, 68, 68, 0.15);  color: #ef4444; }
 .backup-badge-skip { background: rgba(234, 179, 8, 0.15);  color: #eab308; }
 
+.backup-inprogress {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent, #6366f1);
+}
+
 .backup-error { font-size: 12px; color: var(--error, #ef4444); }
 
 .backup-note {

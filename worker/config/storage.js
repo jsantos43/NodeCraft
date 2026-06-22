@@ -3,7 +3,7 @@ import config from './config.js';
 
 const s3Config = {
   endpoint: config.storage.endpoint || undefined,
-  forcePathStyle: config.storage.forcePathStyle === 'true',
+  forcePathStyle: config.storage.forcePathStyle !== 'false',
   credentials: {
     accessKeyId: config.storage.id,
     secretAccessKey: config.storage.secret,

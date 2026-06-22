@@ -616,11 +616,52 @@ function FilesTab({ instanceId }) {
 
 const BACKUP_BADGE = { success: 'backup-badge-ok', failed: 'backup-badge-fail', skipped: 'backup-badge-skip' };
 
+const BACKUP_TIMEOUT = 5 * 60 * 1000; // give up watching after 5 min
+
 function BackupsTab({ instance, onRefetch }) {
-  const createBackup = useAction(async () => {
-    await instancesApi.backup(instance.id);
+  const [backingUp, setBackingUp] = useState(false);
+  const [error, setError] = useState(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const baselineRef = useRef(null);   // lastBackupAt captured when we triggered
+  const pollRef = useRef(null);
+  const deadlineRef = useRef(0);
+
+  const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
+  useEffect(() => () => stopPolling(), []);
+
+  // The worker stamps lastBackupAt when a backup finishes (success or failed).
+  // Once it moves past our baseline, the backup is done.
+  useEffect(() => {
+    if (!backingUp) return;
+    if (instance.lastBackupAt !== baselineRef.current) {
+      setBackingUp(false);
+      stopPolling();
+    }
+  }, [instance.lastBackupAt, backingUp]);
+
+  const startBackup = async () => {
+    setError(null);
+    setTimedOut(false);
+    baselineRef.current = instance.lastBackupAt ?? null;
+    try {
+      await instancesApi.backup(instance.id);
+    } catch (err) {
+      setError(err.message || 'Failed to start backup');
+      return;
+    }
+    setBackingUp(true);
+    deadlineRef.current = Date.now() + BACKUP_TIMEOUT;
     onRefetch?.();
-  });
+    pollRef.current = setInterval(() => {
+      if (Date.now() > deadlineRef.current) {
+        stopPolling();
+        setBackingUp(false);
+        setTimedOut(true);
+        return;
+      }
+      onRefetch?.();
+    }, 3000);
+  };
 
   const formatDate = (iso) => iso
     ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -638,21 +679,35 @@ function BackupsTab({ instance, onRefetch }) {
         <div className="backup-info-row">
           <span className="backup-info-label">Status</span>
           <span className="backup-info-value">
-            {instance.lastBackupStatus
-              ? <span className={`backup-badge ${BACKUP_BADGE[instance.lastBackupStatus] || ''}`}>{instance.lastBackupStatus}</span>
-              : <span className="backup-info-never">—</span>
+            {backingUp
+              ? <span className="backup-inprogress"><Spinner size={12} /> Backing up…</span>
+              : instance.lastBackupStatus
+                ? <span className={`backup-badge ${BACKUP_BADGE[instance.lastBackupStatus] || ''}`}>{instance.lastBackupStatus}</span>
+                : <span className="backup-info-never">—</span>
             }
           </span>
         </div>
       </div>
 
       <div className="backups-header">
-        <Button size="sm" variant="secondary" icon={HardDrive} onClick={createBackup.execute} loading={createBackup.loading}>
-          Create Backup
+        <Button
+          size="sm"
+          variant="secondary"
+          icon={HardDrive}
+          onClick={startBackup}
+          loading={backingUp}
+          disabled={backingUp}
+        >
+          {backingUp ? 'Backing up…' : 'Create Backup'}
         </Button>
       </div>
 
-      {createBackup.error && <span className="backup-error">{createBackup.error}</span>}
+      {error && <span className="backup-error">{error}</span>}
+      {timedOut && (
+        <span className="backup-error">
+          Still running after 5 minutes — check the status again shortly.
+        </span>
+      )}
 
       <p className="backup-note">
         Backups run automatically at 3:00 AM daily. The last 7 daily and 4 weekly backups are kept.
