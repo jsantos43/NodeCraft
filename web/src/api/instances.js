@@ -1,6 +1,6 @@
 import { api } from './client.js';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const instancesApi = {
   list: () => api.get('/instance'),
@@ -27,7 +27,7 @@ export const instancesApi = {
   transferFile: (id, path, destiny, action) => api.post(`/instance/${id}/files/transfer?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}&actions=${encodeURIComponent(action)}`),
   unzipFile: (id, path, destiny) => api.post(`/instance/${id}/files/unzip?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}`),
 
-  consoleToken: (id) => api.post(`/instance/${id}/console-token`),
+  consoleToken: (id) => api.post(`/instance/${id}/console`),
 
   listLinks: (id) => api.get(`/instance/${id}/link`),
   createLink: (id, body) => api.post(`/instance/${id}/link`, body),
