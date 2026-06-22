@@ -1,0 +1,29 @@
+.worker-metrics-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.worker-metrics-chart {
+  min-width: 0;
+}
+
+.worker-metrics-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.worker-metrics-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+@media (max-width: 760px) {
+  .worker-metrics-charts {
+    grid-template-columns: 1fr;
+  }
+}

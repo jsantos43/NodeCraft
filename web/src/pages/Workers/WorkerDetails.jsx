@@ -11,6 +11,7 @@ import { useApi, useAction } from '../../hooks/useApi.js';
 import { workersApi } from '../../api/workers.js';
 import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
+import WorkerMetrics from '../../components/WorkerMetrics/WorkerMetrics.jsx';
 import './WorkerDetails.css';
 
 const GAME_LABELS = { minecraft: 'Minecraft', counterstrike: 'CS2', terraria: 'Terraria', kerbal: 'KSP', hytale: 'Hytale' };
@@ -119,6 +120,8 @@ export default function WorkerDetails() {
             </div>
           </Card>
         </div>
+
+        <WorkerMetrics workerId={id} />
 
         <Card>
           <CardHeader title="Settings" subtitle="Changes take effect on the next worker connection" />

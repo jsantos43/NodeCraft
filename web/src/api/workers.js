@@ -7,4 +7,5 @@ export const workersApi = {
   update: (id, body) => api.put(`/worker/${id}`, body),
   delete: (id) => api.delete(`/worker/${id}`),
   listInstances: (id) => api.get(`/worker/${id}/instances`),
+  heartbeats: (id, range) => api.get(`/worker/${id}/heartbeats${range ? `?range=${range}` : ''}`),
 };

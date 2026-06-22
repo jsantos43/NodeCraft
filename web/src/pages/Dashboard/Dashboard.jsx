@@ -1,24 +1,18 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Server, Cpu, Activity, HardDrive, Users, Zap } from 'lucide-react';
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-} from 'recharts';
 import Layout from '../../components/Layout/Layout.jsx';
 import StatCard from '../../components/ui/StatCard.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
+import MetricsChart from '../../components/ui/MetricsChart.jsx';
+import RangeSelector from '../../components/ui/RangeSelector.jsx';
 import ResourceBar from '../../components/ui/ResourceBar.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { workersApi } from '../../api/workers.js';
+import { clusterChartData } from '../../utils/metrics.js';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './Dashboard.css';
-
-const mockHistory = Array.from({ length: 20 }, (_, i) => ({
-  t: `${i}m`,
-  cpu: Math.round(15 + Math.sin(i / 3) * 20 + Math.random() * 10),
-  mem: Math.round(50 + Math.cos(i / 4) * 15 + Math.random() * 8),
-}));
 
 const GAME_LABELS = {
   minecraft: 'Minecraft',
@@ -29,11 +23,24 @@ const GAME_LABELS = {
 };
 
 export default function Dashboard() {
+  const [range, setRange] = useState('24h');
   const { data: instancesData, loading: loadingI } = useApi(() => instancesApi.list());
   const { data: workersData,  loading: loadingW } = useApi(() => workersApi.list());
 
+  const { data: histData } = useApi(async () => {
+    const { workers = [] } = await workersApi.list();
+    const perWorker = await Promise.all(
+      workers.map((w) => workersApi.heartbeats(w.id, range)
+        .then((r) => r.heartbeats || [])
+        .catch(() => [])),
+    );
+    return perWorker;
+  }, [range]);
+
   const instances = instancesData?.instances || [];
   const workers   = workersData?.workers   || [];
+
+  const clusterData = useMemo(() => clusterChartData(histData || [], range), [histData, range]);
 
   const onlineServers = instances.filter(i => i.status === 'running').length;
   const onlineWorkers = workers.filter(w => w.healthy).length;
@@ -69,49 +76,31 @@ export default function Dashboard() {
       {/* ── Charts ── */}
       <div className="dash-charts-row">
         <Card>
-          <CardHeader title="CPU Usage" subtitle="Cluster — last 20 min" />
-          <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={mockHistory} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-              <defs>
-                <linearGradient id="gCpu" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="var(--accent)" stopOpacity={0.28} />
-                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}    />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="t"   tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis unit="%" domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: 'var(--text-secondary)' }}
-                itemStyle={{ color: 'var(--text-primary)' }}
-              />
-              <Area type="monotone" dataKey="cpu" stroke="var(--accent)" strokeWidth={2} fill="url(#gCpu)" name="CPU" unit="%" />
-            </AreaChart>
-          </ResponsiveContainer>
+          <CardHeader
+            title="CPU Usage"
+            subtitle="Cluster average"
+            action={<RangeSelector value={range} onChange={setRange} />}
+          />
+          <MetricsChart
+            data={clusterData}
+            dataKey="cpu"
+            name="CPU"
+            unit="%"
+            domain={[0, 100]}
+            color="var(--accent)"
+          />
         </Card>
 
         <Card>
-          <CardHeader title="Memory Usage" subtitle="Cluster — last 20 min" />
-          <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={mockHistory} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-              <defs>
-                <linearGradient id="gMem" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="var(--blue)" stopOpacity={0.28} />
-                  <stop offset="95%" stopColor="var(--blue)" stopOpacity={0}    />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="t"   tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis unit="%" domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: 'var(--text-secondary)' }}
-                itemStyle={{ color: 'var(--text-primary)' }}
-              />
-              <Area type="monotone" dataKey="mem" stroke="var(--blue)" strokeWidth={2} fill="url(#gMem)" name="Memory" unit="%" />
-            </AreaChart>
-          </ResponsiveContainer>
+          <CardHeader title="Memory Usage" subtitle="Cluster total" />
+          <MetricsChart
+            data={clusterData}
+            dataKey="mem"
+            name="Memory"
+            unit="%"
+            domain={[0, 100]}
+            color="var(--blue)"
+          />
         </Card>
       </div>
 

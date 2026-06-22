@@ -76,6 +76,18 @@ class Worker {
     }
   }
 
+  static async readHeartbeats(req, res, next) {
+    try {
+      const id = req?.params?.id;
+      const range = req?.query?.range;
+      const heartbeats = await Service.readHeartbeats(id, range);
+
+      return res.status(200).json({ success: true, heartbeats });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   static async readInstances(req, res, next) {
     try {
       const id = req?.params?.id;
