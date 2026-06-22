@@ -2,7 +2,6 @@ node_modules
 .env
 instances
 temp
-package-lock.json
 yarn.lock
 /.pnp
 logs
