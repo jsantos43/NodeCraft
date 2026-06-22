@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { Internal, InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import WorkerService from '../services/Worker.js';
@@ -159,6 +160,26 @@ class Instance {
       const instance = await Service.update(id, { port });
 
       return res.status(200).json({ success: true, instance });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async consoleToken(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { user } = req;
+
+      const instance = await Service.readOne(id);
+      const worker = await WorkerService.readOne(instance.workerId);
+
+      const token = jwt.sign(
+        { sub: user.id, instanceId: id, purpose: 'console' },
+        worker.secret,
+        { expiresIn: 120 },
+      );
+
+      return res.status(200).json({ success: true, token, workerUrl: worker.url });
     } catch (err) {
       return next(err);
     }

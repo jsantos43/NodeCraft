@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { io } from 'socket.io-client';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Play, Square, RotateCcw, Trash2, Terminal, Folder, HardDrive,
@@ -196,20 +197,108 @@ function OverviewTab({ instance }) {
 }
 
 function ConsoleTab({ instance }) {
-  const logs = instance.history || [];
+  const [lines, setLines] = useState(instance.history || []);
+  const [command, setCommand] = useState('');
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState(null);
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    let socket;
+
+    const connect = async () => {
+      try {
+        const { token, workerUrl } = await instancesApi.consoleToken(instance.id);
+
+        socket = io(workerUrl, {
+          auth: { token },
+          transports: ['websocket'],
+        });
+        socketRef.current = socket;
+
+        socket.on('connect', () => {
+          setConnected(true);
+          setError(null);
+          socket.emit('join-console', { instanceId: instance.id });
+        });
+
+        socket.on('disconnect', () => setConnected(false));
+
+        socket.on('connect_error', (err) => {
+          setError(err.message || 'Connection failed');
+          setConnected(false);
+        });
+
+        socket.on('instance-output', (line) => {
+          setLines((prev) => [...prev, line]);
+        });
+      } catch (err) {
+        setError(err.message || 'Failed to get console token');
+      }
+    };
+
+    connect();
+
+    return () => {
+      socket?.disconnect();
+      socketRef.current = null;
+    };
+  }, [instance.id]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [lines]);
+
+  const sendCommand = () => {
+    const cmd = command.trim();
+    if (!cmd || !socketRef.current?.connected) return;
+    socketRef.current.emit('send-command', { instanceId: instance.id, command: cmd });
+    setLines((prev) => [...prev, `> ${cmd}`]);
+    setCommand('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') sendCommand();
+  };
+
   return (
     <div className="console-wrap">
-      <div className="console-log">
-        {logs.length === 0 ? (
+      <div className="console-status-bar">
+        <span className={`console-status-dot ${connected ? 'console-status-ok' : 'console-status-off'}`} />
+        <span className="console-status-label">{connected ? 'Connected' : 'Disconnected'}</span>
+        {error && <span className="console-status-error">{error}</span>}
+      </div>
+      <div className="console-log" onClick={() => inputRef.current?.focus()}>
+        {lines.length === 0 ? (
           <span className="console-empty">No console output yet</span>
         ) : (
-          logs.map((line, i) => (
+          lines.map((line, i) => (
             <div key={i} className="console-line">
               <span className="console-line-num">{i + 1}</span>
               <span>{line}</span>
             </div>
           ))
         )}
+        <div ref={bottomRef} />
+      </div>
+      <div className="console-input-row">
+        <span className="console-prompt">&gt;</span>
+        <input
+          ref={inputRef}
+          className="console-input"
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Enter command..."
+          disabled={!connected}
+          autoComplete="off"
+          spellCheck={false}
+        />
+        <button className="console-send-btn" onClick={sendCommand} disabled={!connected}>
+          Send
+        </button>
       </div>
     </div>
   );

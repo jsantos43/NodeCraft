@@ -145,10 +145,14 @@ class Instance {
 
   async sendCommand(command) {
     try {
-      const { sent } = await this.sendRcon(command);
+      const { sent, result } = await this.sendRcon(command);
 
-      // Verify if rcon message not worked and stream exits
-      if (!sent && this.stream && !this.stream.destroyed) {
+      if (sent) {
+        // RCON replies don't go through stdout, so push the response to the console
+        const message = Instance.cleanLine(result);
+        if (message && this.io) this.io.to(`instance:${this.id}`).emit('instance-output', message);
+      } else if (this.stream && !this.stream.destroyed) {
+        // Fallback to stdin; the container echoes the result via stdout
         this.stream.write(`${command}\r\n`);
       }
     } catch (err) {

@@ -27,6 +27,8 @@ export const instancesApi = {
   transferFile: (id, path, destiny, action) => api.post(`/instance/${id}/files/transfer?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}&actions=${encodeURIComponent(action)}`),
   unzipFile: (id, path, destiny) => api.post(`/instance/${id}/files/unzip?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}`),
 
+  consoleToken: (id) => api.post(`/instance/${id}/console-token`),
+
   listLinks: (id) => api.get(`/instance/${id}/link`),
   createLink: (id, body) => api.post(`/instance/${id}/link`, body),
   updateLink: (id, linkId, body) => api.put(`/instance/${id}/link/${linkId}`, body),
