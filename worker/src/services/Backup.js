@@ -25,21 +25,28 @@ class Backup {
       doBackup: true,
     };
 
-    const dailyBackups = await StorageProvider.list(`${id}/daily/`);
-    if (dailyBackups.length > 0) {
-      const lastBackupAge = Date.now() - new Date(dailyBackups[0].LastModified).getTime();
-      if (lastBackupAge < ONE_DAY) info.needDaily = false;
-    }
-
-    const weeklyBackups = await StorageProvider.list(`${id}/weekly/`);
-    if (weeklyBackups.length > 0) {
-      for (const backup of weeklyBackups) {
-        const age = Date.now() - new Date(backup.LastModified).getTime();
-        if (age <= ONE_WEEK) info.needWeekly = false;
+    try {
+      const dailyBackups = await StorageProvider.list(`${id}/daily/`);
+      if (dailyBackups.length > 0) {
+        const lastBackupAge = Date.now() - new Date(dailyBackups[0].LastModified).getTime();
+        if (lastBackupAge < ONE_DAY) info.needDaily = false;
       }
-    }
 
-    if (!info.needDaily && !info.needWeekly) info.doBackup = false;
+      const weeklyBackups = await StorageProvider.list(`${id}/weekly/`);
+      if (weeklyBackups.length > 0) {
+        for (const backup of weeklyBackups) {
+          const age = Date.now() - new Date(backup.LastModified).getTime();
+          if (age <= ONE_WEEK) info.needWeekly = false;
+        }
+      }
+
+      if (!info.needDaily && !info.needWeekly) info.doBackup = false;
+    } catch (err) {
+      // A transient storage/list error must never abort a backup. Fall back to
+      // taking a daily backup (the important one) and skip weekly to avoid spam.
+      logger.error({ err }, 'Error checking backup needs; assuming a daily backup is required');
+      return { needDaily: true, needWeekly: false, doBackup: true };
+    }
 
     return info;
   }
@@ -79,8 +86,13 @@ class Backup {
         await File.delete(backupPath);
       }
 
-      // Cleanup old backups
-      await Backup.cleanup(instance.id);
+      // Cleanup old backups — best-effort: the backup already succeeded, so a
+      // transient prune/list failure must not report the whole backup as failed.
+      try {
+        await Backup.cleanup(instance.id);
+      } catch (err) {
+        logger.error({ err }, 'Error pruning old backups (backup itself succeeded)');
+      }
 
       return { status: 'success', executedAt: new Date().toISOString() };
     } catch (err) {

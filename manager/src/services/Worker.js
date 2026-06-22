@@ -3,7 +3,7 @@ import { Worker as Model, Instance as InstanceModel, instanceInclude } from '../
 import { NotFound } from '../errors/index.js';
 import Instance from './Instance.js';
 
-const MAX_INSTANCE_HISTORY = 15;
+const MAX_INSTANCE_HISTORY = 45;
 
 class Worker {
   static async create(data) {

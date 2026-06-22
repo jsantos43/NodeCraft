@@ -48,17 +48,19 @@ class Server {
   }
 
   static async backup(instance) {
+    const isRunning = instance.status === 'running';
+    let result = { status: 'failed' };
+
     try {
-      const isRunning = instance.status === 'running';
       if (isRunning) await Server.stop(instance);
 
-      const result = await Backup.execute(instance, true);
-
-      if (isRunning) await Server.run(instance);
-      await Manager.reportBackupResult(instance.id, result);
+      result = await Backup.execute(instance, true);
     } catch (err) {
       logger.error({ err }, `Error to backup instance ${instance?.id}`);
-      await Manager.reportBackupResult(instance.id, { status: 'failed' });
+    } finally {
+      // Always bring the instance back up if it was running, even if the backup failed
+      if (isRunning) await Server.run(instance);
+      await Manager.reportBackupResult(instance.id, result);
     }
   }
 

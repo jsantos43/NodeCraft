@@ -1,23 +1,21 @@
-// import AuthService from '../services/Auth.js';
-// import UserService from '../services/User.js';
+import jwt from 'jsonwebtoken';
+import config from '../../config/config.js';
 
-const socketAuth = async (socket, next) => {
+const socketAuth = (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) throw new Error('Invalid Access Token!');
+    if (!token) throw new Error('Missing token');
 
-    // Get token payload
-    const payload = AuthService.verifyJWTToken(token);
+    const payload = jwt.verify(token, config.manager.secret);
 
-    // Get user by token
-    const user = await UserService.readOne(payload.sub);
+    if (payload.purpose !== 'console') throw new Error('Invalid token purpose');
 
-    // eslint-disable-next-line no-param-reassign
-    socket.user = user;
+    socket.user = { id: payload.sub };
+    socket.instanceId = payload.instanceId;
 
     return next();
   } catch (err) {
-    return next(err);
+    return next(new Error('Unauthorized'));
   }
 };
 

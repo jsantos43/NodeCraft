@@ -4,6 +4,7 @@ import './App.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
+import Landing from './pages/Landing/Landing.jsx';
 import Login from './pages/Auth/Login.jsx';
 import Register from './pages/Auth/Register.jsx';
 import Dashboard from './pages/Dashboard/Dashboard.jsx';
@@ -12,8 +13,6 @@ import ServerDetails from './pages/Servers/ServerDetails.jsx';
 import CreateServer from './pages/Servers/CreateServer.jsx';
 import Workers from './pages/Workers/Workers.jsx';
 import WorkerDetails from './pages/Workers/WorkerDetails.jsx';
-import Backups from './pages/Backups/Backups.jsx';
-import Monitoring from './pages/Monitoring/Monitoring.jsx';
 import Users from './pages/Users/Users.jsx';
 import Settings from './pages/Settings/Settings.jsx';
 import Spinner from './components/ui/Spinner.jsx';
@@ -35,22 +34,57 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />;
 }
 
+function RootRoute() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', background: 'var(--bg-base)',
+      }}>
+        <Spinner size={24} />
+      </div>
+    );
+  }
+
+  if (!user) return <Landing />;
+  return user.admin ? <Dashboard /> : <Navigate to="/servers" replace />;
+}
+
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', background: 'var(--bg-base)',
+      }}>
+        <Spinner size={24} />
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/login" replace />;
+  return user.admin ? children : <Navigate to="/servers" replace />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<RootRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/servers" element={<PrivateRoute><Servers /></PrivateRoute>} />
       <Route path="/servers/create" element={<PrivateRoute><CreateServer /></PrivateRoute>} />
       <Route path="/servers/:id" element={<PrivateRoute><ServerDetails /></PrivateRoute>} />
-      <Route path="/workers" element={<PrivateRoute><Workers /></PrivateRoute>} />
-      <Route path="/workers/:id" element={<PrivateRoute><WorkerDetails /></PrivateRoute>} />
-      <Route path="/backups" element={<PrivateRoute><Backups /></PrivateRoute>} />
-      <Route path="/monitoring" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
-      <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
       <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+
+      <Route path="/workers" element={<AdminRoute><Workers /></AdminRoute>} />
+      <Route path="/workers/:id" element={<AdminRoute><WorkerDetails /></AdminRoute>} />
+      <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

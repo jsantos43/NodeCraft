@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { io } from 'socket.io-client';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Play, Square, RotateCcw, Trash2, Terminal, Folder, HardDrive,
@@ -14,6 +15,7 @@ import { StatusBadge } from '../../components/ui/Badge.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { usersApi } from '../../api/users.js';
+import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './ServerDetails.css';
 
@@ -195,20 +197,108 @@ function OverviewTab({ instance }) {
 }
 
 function ConsoleTab({ instance }) {
-  const logs = instance.history || [];
+  const [lines, setLines] = useState(instance.history || []);
+  const [command, setCommand] = useState('');
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState(null);
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    let socket;
+
+    const connect = async () => {
+      try {
+        const { token, workerUrl } = await instancesApi.consoleToken(instance.id);
+
+        socket = io(workerUrl, {
+          auth: { token },
+          transports: ['websocket'],
+        });
+        socketRef.current = socket;
+
+        socket.on('connect', () => {
+          setConnected(true);
+          setError(null);
+          socket.emit('join-console', { instanceId: instance.id });
+        });
+
+        socket.on('disconnect', () => setConnected(false));
+
+        socket.on('connect_error', (err) => {
+          setError(err.message || 'Connection failed');
+          setConnected(false);
+        });
+
+        socket.on('instance-output', (line) => {
+          setLines((prev) => [...prev, line]);
+        });
+      } catch (err) {
+        setError(err.message || 'Failed to get console token');
+      }
+    };
+
+    connect();
+
+    return () => {
+      socket?.disconnect();
+      socketRef.current = null;
+    };
+  }, [instance.id]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [lines]);
+
+  const sendCommand = () => {
+    const cmd = command.trim();
+    if (!cmd || !socketRef.current?.connected) return;
+    socketRef.current.emit('send-command', { instanceId: instance.id, command: cmd });
+    setLines((prev) => [...prev, `> ${cmd}`]);
+    setCommand('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') sendCommand();
+  };
+
   return (
     <div className="console-wrap">
-      <div className="console-log">
-        {logs.length === 0 ? (
+      <div className="console-status-bar">
+        <span className={`console-status-dot ${connected ? 'console-status-ok' : 'console-status-off'}`} />
+        <span className="console-status-label">{connected ? 'Connected' : 'Disconnected'}</span>
+        {error && <span className="console-status-error">{error}</span>}
+      </div>
+      <div className="console-log" onClick={() => inputRef.current?.focus()}>
+        {lines.length === 0 ? (
           <span className="console-empty">No console output yet</span>
         ) : (
-          logs.map((line, i) => (
+          lines.map((line, i) => (
             <div key={i} className="console-line">
               <span className="console-line-num">{i + 1}</span>
               <span>{line}</span>
             </div>
           ))
         )}
+        <div ref={bottomRef} />
+      </div>
+      <div className="console-input-row">
+        <span className="console-prompt">&gt;</span>
+        <input
+          ref={inputRef}
+          className="console-input"
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Enter command..."
+          disabled={!connected}
+          autoComplete="off"
+          spellCheck={false}
+        />
+        <button className="console-send-btn" onClick={sendCommand} disabled={!connected}>
+          Send
+        </button>
       </div>
     </div>
   );
@@ -526,11 +616,52 @@ function FilesTab({ instanceId }) {
 
 const BACKUP_BADGE = { success: 'backup-badge-ok', failed: 'backup-badge-fail', skipped: 'backup-badge-skip' };
 
+const BACKUP_TIMEOUT = 5 * 60 * 1000; // give up watching after 5 min
+
 function BackupsTab({ instance, onRefetch }) {
-  const createBackup = useAction(async () => {
-    await instancesApi.backup(instance.id);
+  const [backingUp, setBackingUp] = useState(false);
+  const [error, setError] = useState(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const baselineRef = useRef(null);   // lastBackupAt captured when we triggered
+  const pollRef = useRef(null);
+  const deadlineRef = useRef(0);
+
+  const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
+  useEffect(() => () => stopPolling(), []);
+
+  // The worker stamps lastBackupAt when a backup finishes (success or failed).
+  // Once it moves past our baseline, the backup is done.
+  useEffect(() => {
+    if (!backingUp) return;
+    if (instance.lastBackupAt !== baselineRef.current) {
+      setBackingUp(false);
+      stopPolling();
+    }
+  }, [instance.lastBackupAt, backingUp]);
+
+  const startBackup = async () => {
+    setError(null);
+    setTimedOut(false);
+    baselineRef.current = instance.lastBackupAt ?? null;
+    try {
+      await instancesApi.backup(instance.id);
+    } catch (err) {
+      setError(err.message || 'Failed to start backup');
+      return;
+    }
+    setBackingUp(true);
+    deadlineRef.current = Date.now() + BACKUP_TIMEOUT;
     onRefetch?.();
-  });
+    pollRef.current = setInterval(() => {
+      if (Date.now() > deadlineRef.current) {
+        stopPolling();
+        setBackingUp(false);
+        setTimedOut(true);
+        return;
+      }
+      onRefetch?.();
+    }, 3000);
+  };
 
   const formatDate = (iso) => iso
     ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -548,21 +679,35 @@ function BackupsTab({ instance, onRefetch }) {
         <div className="backup-info-row">
           <span className="backup-info-label">Status</span>
           <span className="backup-info-value">
-            {instance.lastBackupStatus
-              ? <span className={`backup-badge ${BACKUP_BADGE[instance.lastBackupStatus] || ''}`}>{instance.lastBackupStatus}</span>
-              : <span className="backup-info-never">—</span>
+            {backingUp
+              ? <span className="backup-inprogress"><Spinner size={12} /> Backing up…</span>
+              : instance.lastBackupStatus
+                ? <span className={`backup-badge ${BACKUP_BADGE[instance.lastBackupStatus] || ''}`}>{instance.lastBackupStatus}</span>
+                : <span className="backup-info-never">—</span>
             }
           </span>
         </div>
       </div>
 
       <div className="backups-header">
-        <Button size="sm" variant="secondary" icon={HardDrive} onClick={createBackup.execute} loading={createBackup.loading}>
-          Create Backup
+        <Button
+          size="sm"
+          variant="secondary"
+          icon={HardDrive}
+          onClick={startBackup}
+          loading={backingUp}
+          disabled={backingUp}
+        >
+          {backingUp ? 'Backing up…' : 'Create Backup'}
         </Button>
       </div>
 
-      {createBackup.error && <span className="backup-error">{createBackup.error}</span>}
+      {error && <span className="backup-error">{error}</span>}
+      {timedOut && (
+        <span className="backup-error">
+          Still running after 5 minutes — check the status again shortly.
+        </span>
+      )}
 
       <p className="backup-note">
         Backups run automatically at 3:00 AM daily. The last 7 daily and 4 weekly backups are kept.
@@ -926,10 +1071,46 @@ export default function ServerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [tab, setTab] = useState('overview');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null); // 'starting' | 'stopping' | null
+  const pollRef = useRef(null);
+
   const { data, loading, refetch } = useApi(() => instancesApi.get(id), [id]);
   const instance = data?.instance;
 
-  const runAction = useAction(async (fn) => { await fn(); refetch(); });
+  // Resolve pending when real status matches expected
+  useEffect(() => {
+    if (!instance || !pendingStatus) return;
+    const done = (pendingStatus === 'starting' && instance.status === 'running') ||
+                 (pendingStatus === 'stopping' && instance.status !== 'running');
+    if (done) {
+      setPendingStatus(null);
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, [instance?.status, pendingStatus]);
+
+  useEffect(() => () => clearInterval(pollRef.current), []);
+
+  const startPolling = useCallback(() => {
+    if (pollRef.current) return;
+    const deadline = Date.now() + 30_000;
+    pollRef.current = setInterval(() => {
+      if (Date.now() > deadline) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+        setPendingStatus(null);
+        return;
+      }
+      refetch();
+    }, 3000);
+  }, [refetch]);
+
+  const runAction = useAction(async (fn) => { await fn(); });
+  const deleteAction = useAction(async () => {
+    await instancesApi.delete(id);
+    navigate('/servers');
+  });
 
   if (loading && !instance) return (
     <Layout breadcrumbs={['Servers', '...']}>
@@ -947,7 +1128,25 @@ export default function ServerDetails() {
     </Layout>
   );
 
-  const isRunning = instance.status === 'running';
+  const effectiveStatus = pendingStatus || instance.status || 'stopped';
+  const isRunning = effectiveStatus === 'running' || effectiveStatus === 'starting';
+  const transitioning = !!pendingStatus;
+
+  const handleRun = async () => {
+    setPendingStatus('starting');
+    try { await runAction.execute(() => instancesApi.run(id)); } catch { setPendingStatus(null); return; }
+    startPolling();
+  };
+  const handleStop = async () => {
+    setPendingStatus('stopping');
+    try { await runAction.execute(() => instancesApi.stop(id)); } catch { setPendingStatus(null); return; }
+    startPolling();
+  };
+  const handleRestart = async () => {
+    setPendingStatus('starting');
+    try { await runAction.execute(() => instancesApi.restart(id)); } catch { setPendingStatus(null); return; }
+    startPolling();
+  };
 
   return (
     <Layout breadcrumbs={['Servers', instance.name]}>
@@ -958,28 +1157,24 @@ export default function ServerDetails() {
           </button>
           <div className="server-details-meta">
             <h1 className="server-details-title">{instance.name}</h1>
-            <StatusBadge status={instance.status || 'stopped'} />
+            <StatusBadge status={effectiveStatus} />
             <span className="server-details-game">{GAME_LABELS[instance.type] || instance.type}</span>
           </div>
           <div className="server-details-actions">
             {!isRunning && (
-              <Button icon={Play} size="sm" onClick={() => runAction.execute(() => instancesApi.run(id))}>
+              <Button icon={Play} size="sm" disabled={transitioning} onClick={handleRun}>
                 Start
               </Button>
             )}
             {isRunning && (
-              <Button icon={Square} variant="danger" size="sm" onClick={() => runAction.execute(() => instancesApi.stop(id))}>
+              <Button icon={Square} variant="danger" size="sm" disabled={transitioning} onClick={handleStop}>
                 Stop
               </Button>
             )}
-            <Button icon={RotateCcw} variant="secondary" size="sm" onClick={() => runAction.execute(() => instancesApi.restart(id))}>
+            <Button icon={RotateCcw} variant="secondary" size="sm" disabled={transitioning} onClick={handleRestart}>
               Restart
             </Button>
-            <Button icon={Trash2} variant="ghost" size="sm" onClick={async () => {
-              await instancesApi.delete(id);
-              navigate('/servers');
-            }}>
-            </Button>
+            <Button icon={Trash2} variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} />
           </div>
         </div>
 
@@ -1005,6 +1200,14 @@ export default function ServerDetails() {
           {tab === 'network'  && <Card><NetworkTab instance={instance} /></Card>}
         </div>
       </div>
+
+      <ConfirmDelete
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={deleteAction.execute}
+        name={instance.name}
+        loading={deleteAction.loading}
+      />
     </Layout>
   );
 }

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Play, Square, RotateCcw, Trash2, MoreHorizontal, Server } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
+import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import Spinner from '../../components/ui/Spinner.jsx';
@@ -33,23 +34,84 @@ export default function Servers() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [activeMenu, setActiveMenu] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [pending, setPending] = useState({}); // { [id]: 'starting' | 'stopping' }
+  const pollRef = useRef(null);
+
   const { data, loading, refetch } = useApi(() => instancesApi.list());
   const runAction = useAction((fn) => fn());
+  const deleteAction = useAction(() => instancesApi.delete(deleteTarget.id));
+
+  // Resolve pending entries when real data arrives
+  useEffect(() => {
+    const instances = data?.instances;
+    if (!instances || Object.keys(pending).length === 0) return;
+    setPending(prev => {
+      const next = { ...prev };
+      let changed = false;
+      for (const [id, ps] of Object.entries(prev)) {
+        const inst = instances.find(i => i.id === id);
+        if (!inst) continue;
+        const done = (ps === 'starting' && inst.status === 'running') ||
+                     (ps === 'stopping' && inst.status !== 'running');
+        if (done) { delete next[id]; changed = true; }
+      }
+      return changed ? next : prev;
+    });
+  }, [data]);
+
+  // Start polling while there are pending actions; stop when all resolved
+  const startPolling = useCallback(() => {
+    if (pollRef.current) return;
+    const deadline = Date.now() + 30_000;
+    pollRef.current = setInterval(() => {
+      if (Date.now() > deadline) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+        setPending({});
+        return;
+      }
+      refetch();
+    }, 3000);
+  }, [refetch]);
+
+  useEffect(() => {
+    if (Object.keys(pending).length === 0 && pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, [pending]);
+
+  useEffect(() => () => clearInterval(pollRef.current), []);
 
   const instances = (data?.instances || []).filter(i =>
     !search || i.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAction = async (action, id, e) => {
+  const handleAction = async (action, inst, e) => {
     e.stopPropagation();
     setActiveMenu(null);
+    if (action === 'delete') {
+      setDeleteTarget({ id: inst.id, name: inst.name });
+      return;
+    }
     try {
-      if (action === 'run')     await runAction.execute(() => instancesApi.run(id));
-      if (action === 'stop')    await runAction.execute(() => instancesApi.stop(id));
-      if (action === 'restart') await runAction.execute(() => instancesApi.restart(id));
-      if (action === 'delete')  await runAction.execute(() => instancesApi.delete(id));
-      refetch();
-    } catch {}
+      if (action === 'run') {
+        setPending(p => ({ ...p, [inst.id]: 'starting' }));
+        await runAction.execute(() => instancesApi.run(inst.id));
+        startPolling();
+      } else if (action === 'stop') {
+        setPending(p => ({ ...p, [inst.id]: 'stopping' }));
+        await runAction.execute(() => instancesApi.stop(inst.id));
+        startPolling();
+      } else if (action === 'restart') {
+        setPending(p => ({ ...p, [inst.id]: 'starting' }));
+        await runAction.execute(() => instancesApi.restart(inst.id));
+        startPolling();
+      }
+    } catch {
+      setPending(p => { const n = { ...p }; delete n[inst.id]; return n; });
+    }
   };
 
   return (
@@ -108,26 +170,33 @@ export default function Servers() {
                     </div>
                   </td>
                   <td><span className="server-game">{GAME_LABELS[inst.type] || inst.type}</span></td>
-                  <td><StatusBadge status={inst.status || 'stopped'} /></td>
+                  <td><StatusBadge status={pending[inst.id] || inst.status || 'stopped'} /></td>
                   <td><code className="server-port">{inst.port || '—'}</code></td>
                   <td><span className="server-mem">{formatMemory(inst.memory)}</span></td>
                   <td><span className="server-worker">{inst.workerId ? inst.workerId.slice(0, 8) + '...' : '—'}</span></td>
                   <td><span className="server-uptime">{formatUptime(inst.status)}</span></td>
                   <td>
                     <div className="server-actions" onClick={e => e.stopPropagation()}>
-                      {inst.status !== 'running' && (
-                        <button className="action-btn action-run" title="Start" onClick={e => handleAction('run', inst.id, e)}>
-                          <Play size={13} />
-                        </button>
-                      )}
-                      {inst.status === 'running' && (
-                        <button className="action-btn action-stop" title="Stop" onClick={e => handleAction('stop', inst.id, e)}>
-                          <Square size={13} />
-                        </button>
-                      )}
-                      <button className="action-btn" title="Restart" onClick={e => handleAction('restart', inst.id, e)}>
-                        <RotateCcw size={13} />
-                      </button>
+                      {(() => {
+                        const ps = pending[inst.id];
+                        const effectiveRunning = ps === 'starting' || (!ps && inst.status === 'running');
+                        const transitioning = !!ps;
+                        return (<>
+                          {!effectiveRunning && (
+                            <button className="action-btn action-run" title="Start" disabled={transitioning} onClick={e => handleAction('run', inst, e)}>
+                              <Play size={13} />
+                            </button>
+                          )}
+                          {effectiveRunning && (
+                            <button className="action-btn action-stop" title="Stop" disabled={transitioning} onClick={e => handleAction('stop', inst, e)}>
+                              <Square size={13} />
+                            </button>
+                          )}
+                          <button className="action-btn" title="Restart" disabled={transitioning} onClick={e => handleAction('restart', inst, e)}>
+                            <RotateCcw size={13} />
+                          </button>
+                        </>);
+                      })()}
                       <div className="action-menu-wrap">
                         <button
                           className="action-btn"
@@ -138,7 +207,7 @@ export default function Servers() {
                         </button>
                         {activeMenu === inst.id && (
                           <div className="action-menu" onMouseLeave={() => setActiveMenu(null)}>
-                            <button className="action-menu-item action-menu-danger" onClick={e => handleAction('delete', inst.id, e)}>
+                            <button className="action-menu-item action-menu-danger" onClick={e => handleAction('delete', inst, e)}>
                               <Trash2 size={12} /> Delete
                             </button>
                           </div>
@@ -152,6 +221,17 @@ export default function Servers() {
           </table>
         )}
       </Card>
+
+      <ConfirmDelete
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAction.execute();
+          refetch();
+        }}
+        name={deleteTarget?.name ?? ''}
+        loading={deleteAction.loading}
+      />
     </Layout>
   );
 }

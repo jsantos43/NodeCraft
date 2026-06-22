@@ -120,7 +120,29 @@
 .copy-btn:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
 
 /* Console */
-.console-wrap { overflow: hidden; }
+.console-wrap { overflow: hidden; display: flex; flex-direction: column; }
+
+.console-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #111;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 11px;
+}
+
+.console-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.console-status-ok  { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+.console-status-off { background: var(--text-muted); }
+
+.console-status-label { color: var(--text-muted); }
+.console-status-error { color: #f87171; margin-left: 8px; }
 
 .console-log {
   background: #0D0D0D;
@@ -129,9 +151,9 @@
   line-height: 1.6;
   padding: 16px;
   min-height: 300px;
-  max-height: 500px;
+  max-height: 460px;
   overflow-y: auto;
-  border-radius: var(--radius-lg);
+  cursor: text;
 }
 
 .console-empty { color: var(--text-muted); }
@@ -149,6 +171,49 @@
   user-select: none;
   flex-shrink: 0;
 }
+
+.console-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #111;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 10px 16px;
+}
+
+.console-prompt {
+  color: #22c55e;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  user-select: none;
+}
+
+.console-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  caret-color: #22c55e;
+}
+
+.console-input::placeholder { color: var(--text-muted); }
+.console-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.console-send-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.console-send-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.console-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Files */
 .files-wrap { display: flex; flex-direction: column; gap: 12px; }
@@ -394,6 +459,15 @@
 .backup-badge-ok   { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
 .backup-badge-fail { background: rgba(239, 68, 68, 0.15);  color: #ef4444; }
 .backup-badge-skip { background: rgba(234, 179, 8, 0.15);  color: #eab308; }
+
+.backup-inprogress {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent, #6366f1);
+}
 
 .backup-error { font-size: 12px; color: var(--error, #ef4444); }
 

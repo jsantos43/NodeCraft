@@ -55,6 +55,11 @@ router
     Controller.restart,
   )
   .post(
+    '/instance/:id/console-token',
+    auth('instance:console'),
+    Controller.consoleToken,
+  )
+  .post(
     '/instance/:id/backup',
     auth('instance:backup'),
     verifyNotRunning,
