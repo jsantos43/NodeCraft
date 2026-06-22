@@ -6,3 +6,4 @@ yarn.lock
 /.pnp
 logs
 tests
+web/package-lock.json
