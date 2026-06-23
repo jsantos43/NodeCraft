@@ -22,7 +22,7 @@ router
   )
   .post(
     '/instance',
-    auth('admin'),
+    auth('logged'),
     validate(createInstance),
     Controller.create,
   )

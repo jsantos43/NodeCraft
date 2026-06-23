@@ -14,6 +14,7 @@ import CreateServer from './pages/Servers/CreateServer.jsx';
 import Workers from './pages/Workers/Workers.jsx';
 import WorkerDetails from './pages/Workers/WorkerDetails.jsx';
 import Users from './pages/Users/Users.jsx';
+import UserDetails from './pages/Users/UserDetails.jsx';
 import Settings from './pages/Settings/Settings.jsx';
 import Spinner from './components/ui/Spinner.jsx';
 
@@ -85,6 +86,7 @@ function AppRoutes() {
       <Route path="/workers" element={<AdminRoute><Workers /></AdminRoute>} />
       <Route path="/workers/:id" element={<AdminRoute><WorkerDetails /></AdminRoute>} />
       <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />
+      <Route path="/users/:id" element={<AdminRoute><UserDetails /></AdminRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

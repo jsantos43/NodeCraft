@@ -56,6 +56,26 @@ class File {
     }
   }
 
+  // Recursively sum the size of a directory tree, in MB.
+  static async getDirSize(path) {
+    try {
+      const stats = await stat(path);
+
+      if (!stats.isDirectory()) return stats.size / (1024 * 1024);
+
+      const entries = await readdir(path, { withFileTypes: true });
+      const sizes = await Promise.all(
+        entries.map((entry) => File.getDirSize(Path.join(path, entry.name))),
+      );
+
+      return sizes.reduce((acc, size) => acc + size, 0);
+    } catch (err) {
+      logger.error({ err }, 'Error to get directory size');
+
+      return 0;
+    }
+  }
+
   static async readOneFile(path) {
     try {
       const rawData = await readFile(path, 'utf8');

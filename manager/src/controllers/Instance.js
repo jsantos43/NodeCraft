@@ -2,18 +2,20 @@ import jwt from 'jsonwebtoken';
 import { Internal, InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import WorkerService from '../services/Worker.js';
+import Quota from '../services/Quota.js';
 
 class Instance {
   static async create(req, res, next) {
     try {
       const { body, user } = req;
 
-      // Verify user plan(future)
-
       // Get instance data
       const instanceData = { ...body };
       delete instanceData.game;
       const gameData = body?.game || {};
+
+      // Enforce the owner's quota before allocating any resources
+      await Quota.verifyCanCreate(user.id, instanceData);
 
       const instance = await Service.create(user.id, instanceData, gameData);
 
@@ -82,6 +84,9 @@ class Instance {
       const running = instance?.status === 'running';
 
       if (running) throw new InvalidRequest('You cannot do this while instance is running!');
+
+      // Enforce the owner's disk quota before starting
+      await Quota.verifyCanStart(instance);
 
       const worker = await WorkerService.readOne(instance.workerId);
 

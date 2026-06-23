@@ -48,15 +48,5 @@
 
 .user-date { color: var(--text-muted); }
 
-.action-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  transition: background var(--transition), color var(--transition);
-}
-
-.action-btn-danger:hover { background: var(--red-dim); color: var(--red-text); }
+.users-row { cursor: pointer; transition: background var(--transition); }
+.users-row:hover { background: var(--bg-subtle); }

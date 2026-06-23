@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import Controller from '../controllers/User.js';
 import { auth, validate } from '../middlewares/index.js';
-import { createUser, updateUser } from '../schemas/index.js';
+import { createUser, updateUser, adminUpdateUser } from '../schemas/index.js';
 
 const router = Router();
 
@@ -35,7 +35,7 @@ router
   .put(
     '/user/:id',
     auth('admin'),
-    validate(updateUser),
+    validate(adminUpdateUser),
     Controller.updateOther,
   )
   .delete(

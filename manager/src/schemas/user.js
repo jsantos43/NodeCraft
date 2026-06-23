@@ -18,6 +18,29 @@ const updateUser = Joi.object({
   password: Joi.forbidden(),
   verified: Joi.forbidden(),
   birthDate: Joi.date(),
+  maxInstances: Joi.forbidden(),
+  maxMemory: Joi.forbidden(),
+  maxCpu: Joi.forbidden(),
+  maxDisk: Joi.forbidden(),
+  allowedGames: Joi.forbidden(),
 });
 
-export { createUser, updateUser };
+// Used by admins (PUT /user/:id) to manage other users, including quotas.
+const adminUpdateUser = Joi.object({
+  id: Joi.forbidden(),
+  admin: Joi.boolean(),
+  name: Joi.string().trim().min(3).max(32),
+  email: Joi.forbidden(),
+  password: Joi.forbidden(),
+  verified: Joi.forbidden(),
+  birthDate: Joi.date(),
+  maxInstances: Joi.number().integer().min(0),
+  maxMemory: Joi.number().integer().min(0),
+  maxCpu: Joi.number().integer().min(0),
+  maxDisk: Joi.number().integer().min(0),
+  allowedGames: Joi.array().items(
+    Joi.string().valid('minecraft', 'hytale', 'counterstrike', 'terraria', 'kerbal'),
+  ),
+});
+
+export { createUser, updateUser, adminUpdateUser };

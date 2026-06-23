@@ -144,6 +144,7 @@ class Worker {
     await instance.update({
       status: data?.status,
       history,
+      ...(Number.isFinite(data?.diskUsage) ? { diskUsage: Math.ceil(data.diskUsage) } : {}),
       ...(data?.status === 'running' ? { lastActivityAt: new Date() } : {}),
     });
   }
