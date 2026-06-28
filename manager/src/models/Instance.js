@@ -98,6 +98,17 @@ Instance.init({
       },
     },
   },
+  diskUsage: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: {
+        args: [0],
+        msg: 'diskUsage field must be greater than or equal to 0!',
+      },
+    },
+  },
   status: {
     type: DataTypes.STRING,
     values: ['running', 'stopped', 'failed'],

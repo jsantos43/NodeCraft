@@ -5,7 +5,7 @@ import {
   Play, Square, RotateCcw, Trash2, Terminal, Folder, HardDrive,
   Network, Variable, ArrowLeft, RefreshCw, Copy, Check, Save,
   FileText, FilePlus, FolderPlus, Upload, Download, ChevronRight, X,
-  Plus, Edit2, Users, Scissors, Archive,
+  Plus, Edit2, Users, Scissors, Archive, Gamepad2, Coffee, Smartphone, Signal,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -25,7 +25,8 @@ const TABS = [
   { id: 'files',     label: 'Files',      icon: Folder     },
   { id: 'backups',   label: 'Backups',    icon: HardDrive  },
   { id: 'env',       label: 'Variables',  icon: Variable   },
-  { id: 'network',   label: 'Players',    icon: Users      },
+  { id: 'connect',   label: 'Connect',    icon: Gamepad2   },
+  { id: 'players',   label: 'Players',    icon: Users      },
 ];
 
 const PERMISSIONS = [
@@ -324,6 +325,7 @@ function FilesTab({ instanceId }) {
   const [actionDialog, setActionDialog] = useState(null); // { type: 'copy'|'move'|'unzip', entry }
   const [actionDest, setActionDest] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [upload, setUpload] = useState(null); // { name, percent }
   const uploadRef = useRef(null);
 
   const { data, loading, refetch } = useApi(
@@ -411,14 +413,18 @@ function FilesTab({ instanceId }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setOpError(null);
+    setUpload({ name: file.name, percent: 0 });
     try {
       const formData = new FormData();
       formData.append('file', file);
-      await instancesApi.uploadFile(instanceId, formData, join(file.name));
+      await instancesApi.uploadFile(instanceId, formData, join(file.name), (percent) => {
+        setUpload({ name: file.name, percent });
+      });
       refetch();
     } catch (err) {
       setOpError(err.message || 'Upload failed');
     } finally {
+      setUpload(null);
       e.target.value = '';
     }
   };
@@ -502,7 +508,7 @@ function FilesTab({ instanceId }) {
           <button className="files-icon-btn" title="New Folder" onClick={() => { setShowCreate('folder'); setCreateName(''); setOpError(null); }}>
             <FolderPlus size={14} />
           </button>
-          <button className="files-icon-btn" title="Upload" onClick={() => uploadRef.current?.click()}>
+          <button className="files-icon-btn" title="Upload" disabled={!!upload} onClick={() => uploadRef.current?.click()}>
             <Upload size={14} />
           </button>
           <button className="files-icon-btn" title="Refresh" onClick={refetch}>
@@ -511,6 +517,22 @@ function FilesTab({ instanceId }) {
           <input ref={uploadRef} type="file" style={{ display: 'none' }} onChange={doUpload} />
         </div>
       </div>
+
+      {upload && (
+        <div className="files-upload-status">
+          <div className="files-upload-head">
+            <span className="files-upload-name">
+              <Upload size={12} /> {upload.name}
+            </span>
+            <span className="files-upload-pct">
+              {upload.percent < 100 ? `${upload.percent}%` : 'Finishing…'}
+            </span>
+          </div>
+          <div className="files-upload-track">
+            <div className="files-upload-fill" style={{ width: `${upload.percent}%` }} />
+          </div>
+        </div>
+      )}
 
       {opError && <div className="files-op-error">{opError}</div>}
 
@@ -863,47 +885,195 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
   );
 }
 
-const ACCESS_COLOR = { super: 'purple', always: 'blue', monitored: 'yellow' };
+const ACCESS_META = {
+  super:     { color: 'purple', label: 'Super',     desc: 'Always joins and lets Monitored players in' },
+  always:    { color: 'blue',   label: 'Always',    desc: 'Always allowed to join' },
+  monitored: { color: 'yellow', label: 'Monitored', desc: 'Joins only while a Super player is online' },
+};
 
-function LinkCard({ link, onEdit, onDelete }) {
+function RosterRow({ link, onEdit, onDelete }) {
   const del = useAction(onDelete);
+  const access = ACCESS_META[link.access] || { color: 'gray', label: link.access, desc: '' };
+  const name = link.user?.name || 'Anonymous';
+  const initial = link.user ? name.charAt(0).toUpperCase() : '∗';
   return (
-    <div className="link-card">
-      <div className="link-card-top">
-        <div className="link-card-user">
-          {link.user
-            ? <><span className="link-user-name">{link.user.name}</span><span className="link-user-email">{link.user.email}</span></>
-            : <span className="link-user-anon">Anonymous link</span>
-          }
+    <div className="roster-row">
+      <div className={`roster-avatar avatar-${access.color}`}>{initial}</div>
+      <div className="roster-main">
+        <div className="roster-line">
+          <span className="roster-name">{name}</span>
+          {link.privileges && <span className="roster-op" title="OP / admin in-game">OP</span>}
         </div>
-        <div className="link-card-badges">
-          <span className={`link-access-badge link-access-${ACCESS_COLOR[link.access]}`}>{link.access}</span>
-          {link.privileges && <span className="link-op-badge">OP</span>}
-        </div>
-        <div className="link-card-actions">
-          <button className="files-icon-btn" onClick={onEdit}><Edit2 size={13} /></button>
-          <button className="files-icon-btn files-icon-danger" onClick={del.execute} disabled={del.loading}>
-            {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
-          </button>
-        </div>
+        <span className="roster-meta">
+          {link.user ? link.user.email : 'No linked account'}
+          {link.gamertags?.length > 0 && <> · {link.gamertags.join(', ')}</>}
+        </span>
+        {link.permissions?.length > 0 && (
+          <div className="roster-perms">
+            {link.permissions.map(p => <span key={p} className="roster-perm">{p.replace('instance:', '')}</span>)}
+          </div>
+        )}
       </div>
-      {link.gamertags?.length > 0 && (
-        <div className="link-tags link-tags-sm">
-          {link.gamertags.map(gt => <span key={gt} className="link-tag link-tag-sm">{gt}</span>)}
-        </div>
-      )}
-      {link.permissions?.length > 0 && (
-        <div className="link-perms-row">
-          {link.permissions.map(p => <span key={p} className="link-perm-chip">{p.replace('instance:', '')}</span>)}
-        </div>
-      )}
+      <span className={`roster-access roster-access-${access.color}`} title={access.desc}>{access.label}</span>
+      <div className="roster-actions">
+        <button className="files-icon-btn" onClick={onEdit} title="Edit"><Edit2 size={13} /></button>
+        <button className="files-icon-btn files-icon-danger" onClick={del.execute} disabled={del.loading} title="Remove">
+          {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
+        </button>
+      </div>
     </div>
   );
 }
 
-function NetworkTab({ instance }) {
+// Extract a connectable host from a worker URL (with or without protocol).
+function parseHost(url) {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url.replace(/^\w+:\/\//, '').split('/')[0].split(':')[0] || null;
+  }
+}
+
+// Click-anywhere-to-copy value chip with inline confirmation.
+function CopyValue({ value, size = 'md' }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    if (!value) return;
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1400);
+  };
+  const iconSize = size === 'lg' ? 16 : 13;
+  return (
+    <button
+      className={`copy-value copy-value-${size} ${copied ? 'is-copied' : ''}`}
+      onClick={copy}
+      disabled={!value}
+      title="Copy"
+    >
+      <span className="copy-value-text">{value || '—'}</span>
+      <span className="copy-value-icon">
+        {copied ? <Check size={iconSize} /> : <Copy size={iconSize} />}
+      </span>
+    </button>
+  );
+}
+
+// One edition's connect details, mirroring the field names the game itself uses.
+function EditionCard({ icon: Icon, title, fields, steps }) {
+  return (
+    <div className="edition-card">
+      <div className="edition-head"><Icon size={15} /> <span>{title}</span></div>
+      <div className="edition-fields">
+        {fields.map(([label, val]) => (
+          <div className="edition-field" key={label}>
+            <span className="edition-field-label">{label}</span>
+            <CopyValue value={val} />
+          </div>
+        ))}
+      </div>
+      <ol className="join-steps">
+        {steps.map((s, i) => <li key={i}>{s}</li>)}
+      </ol>
+    </div>
+  );
+}
+
+function ConnectTab({ instance, onRefetch }) {
+  const remapPort = useAction(async () => { await instancesApi.remapPort(instance.id); onRefetch?.(); });
+  const host = parseHost(instance.worker?.url);
+  const port = instance.port;
+  const address = host && port ? `${host}:${port}` : null;
+  const isMinecraft = instance.type === 'minecraft';
+  const bedrock = !!instance.minecraft?.bedrock;
+  const live = instance.status === 'running';
+
+  const subParts = [GAME_LABELS[instance.type] || instance.type];
+  const software = instance.minecraft?.software;
+  if (isMinecraft && software) subParts.push(software.charAt(0).toUpperCase() + software.slice(1));
+  if (instance.maxPlayers) subParts.push(`${instance.maxPlayers} slots`);
+
+  if (!host) {
+    return (
+      <div className="connect-empty">
+        <Signal size={26} />
+        <h3>No address yet</h3>
+        <p>This server isn’t on a worker yet. Once it’s deployed, the connection address shows up here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="connect-wrap">
+      {/* Signature: a Minecraft-style server-list plate with a live ping */}
+      <div className={`server-plate ${live ? 'is-live' : 'is-offline'}`}>
+        <div className="plate-status">
+          <span className="plate-ping" />
+          {live ? 'Live' : 'Offline'}
+        </div>
+        <div className="plate-id">
+          <span className="plate-name">{instance.name}</span>
+          <span className="plate-sub">{subParts.join('  ·  ')}</span>
+        </div>
+        <CopyValue value={address} size="lg" />
+      </div>
+
+      {host && !instance.worker?.healthy && (
+        <span className="connect-note">This worker is offline right now — players may not be able to reach the server.</span>
+      )}
+
+      <div className="join">
+        <span className="join-eyebrow">How to join</span>
+        <div className="join-cards">
+          {isMinecraft ? (
+            <>
+              <EditionCard
+                icon={Coffee}
+                title="Java Edition"
+                fields={[['Server Address', address]]}
+                steps={[
+                  <>Open <b>Multiplayer</b>.</>,
+                  <>Click <b>Add Server</b>.</>,
+                  <>Paste the address, then click <b>Done</b>.</>,
+                  <>Double-click the server to join.</>,
+                ]}
+              />
+              {bedrock && (
+                <EditionCard
+                  icon={Smartphone}
+                  title="Bedrock Edition"
+                  fields={[['Server Address', host], ['Port', port ? String(port) : '']]}
+                  steps={[
+                    <>Go to <b>Servers</b> → <b>Add Server</b>.</>,
+                    <>Enter any server name.</>,
+                    <>Fill in the address and port above.</>,
+                    <>Save, then tap the server to join.</>,
+                  ]}
+                />
+              )}
+            </>
+          ) : (
+            <EditionCard
+              icon={Gamepad2}
+              title={`${GAME_LABELS[instance.type] || 'Direct'} connect`}
+              fields={[['Server Address', address]]}
+              steps={[<>Add this address in your game client’s server browser to join.</>]}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="connect-footer">
+        <span className="connect-footer-text">Need a fresh address? A new port is assigned at random.</span>
+        <Button size="sm" variant="ghost" onClick={remapPort.execute} loading={remapPort.loading}>Remap port</Button>
+      </div>
+    </div>
+  );
+}
+
+function PlayersTab({ instance }) {
   const { data, loading, refetch } = useApi(() => instancesApi.listLinks(instance.id), [instance.id]);
-  const remapPort = useAction(async () => { await instancesApi.remapPort(instance.id); refetch(); });
   const links = data?.links || [];
   const [dialog, setDialog] = useState(null);
 
@@ -911,33 +1081,33 @@ function NetworkTab({ instance }) {
   const onDelete = (linkId) => instancesApi.deleteLink(instance.id, linkId).then(refetch);
 
   return (
-    <div className="network-wrap">
-      <div className="network-header">
-        <div className="network-info-row">
-          <span className="network-label">Game Port</span>
-          <code className="network-port">{instance.port || '—'}</code>
-          <Button size="sm" variant="ghost" onClick={remapPort.execute} loading={remapPort.loading}>Remap</Button>
+    <div className="players-wrap">
+      <div className="players-head">
+        <div className="players-head-text">
+          <span className="players-title">Player access</span>
+          <span className="players-count">
+            {links.length === 0 ? 'No players yet' : `${links.length} ${links.length === 1 ? 'player' : 'players'} invited`}
+          </span>
         </div>
+        <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>
       </div>
 
-      <div className="link-section">
-        <div className="link-section-header">
-          <span className="network-section-title">Player Access</span>
-          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add Link</Button>
+      {loading ? (
+        <div className="players-loading"><Spinner size={18} /></div>
+      ) : links.length === 0 ? (
+        <div className="players-empty">
+          <Users size={26} />
+          <h3>No one’s been invited yet</h3>
+          <p>Add a player to let them join and choose what they can do on the server.</p>
+          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>
         </div>
-
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '32px' }}><Spinner size={18} /></div>
-        ) : links.length === 0 ? (
-          <div className="network-empty">No access links. Add one to grant players permission to this server.</div>
-        ) : (
-          <div className="link-list">
-            {links.map(link => (
-              <LinkCard key={link.id} link={link} onEdit={() => setDialog(link)} onDelete={() => onDelete(link.id)} />
-            ))}
-          </div>
-        )}
-      </div>
+      ) : (
+        <div className="roster">
+          {links.map(link => (
+            <RosterRow key={link.id} link={link} onEdit={() => setDialog(link)} onDelete={() => onDelete(link.id)} />
+          ))}
+        </div>
+      )}
 
       {dialog && (
         <LinkDialog
@@ -1205,7 +1375,8 @@ export default function ServerDetails() {
           {tab === 'files'    && <Card><FilesTab instanceId={id} /></Card>}
           {tab === 'backups'  && <Card><BackupsTab instance={instance} onRefetch={refetch} /></Card>}
           {tab === 'env'      && <Card><VariablesTab instance={instance} onSaved={refetch} /></Card>}
-          {tab === 'network'  && <Card><NetworkTab instance={instance} /></Card>}
+          {tab === 'connect'  && <Card><ConnectTab instance={instance} onRefetch={refetch} /></Card>}
+          {tab === 'players'  && <Card><PlayersTab instance={instance} /></Card>}
         </div>
       </div>
 

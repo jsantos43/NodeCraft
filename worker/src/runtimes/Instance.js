@@ -1,6 +1,7 @@
 import Path from 'path';
 import { Rcon } from 'rcon-client';
 import Container from '../services/Container.js';
+import File from '../services/File.js';
 import config from '../../config/config.js';
 import logger from '../../config/logger.js';
 import { getIO } from '../../config/socket.js';
@@ -25,6 +26,10 @@ class Instance {
     this.synchronizer = { // Update instance details
       interval: null,
       history: [],
+    };
+    this.disk = { // Cached disk usage (MB) to avoid measuring every cycle
+      value: null,
+      measuredAt: 0,
     };
     this.buffer = '';
   }
@@ -160,11 +165,28 @@ class Instance {
     }
   }
 
+  async measureDiskUsage() {
+    const now = Date.now();
+    // Re-measure at most once per minute; reuse the cached value otherwise.
+    if (this.disk.value !== null && now - this.disk.measuredAt < 60000) {
+      return this.disk.value;
+    }
+
+    const sizeMb = await File.getDirSize(this.path);
+    this.disk.value = Math.ceil(sizeMb);
+    this.disk.measuredAt = now;
+
+    return this.disk.value;
+  }
+
   async sendInstanceDetails() {
     try {
+      const diskUsage = await this.measureDiskUsage();
+
       await Manager.sendInstanceDetails(this.id, {
         status: this.status === 'running' ? this.status : 'stopped',
         history: this?.synchronizer?.history || [],
+        diskUsage,
       });
 
       if (this?.synchronizer?.history) this.synchronizer.history = [];

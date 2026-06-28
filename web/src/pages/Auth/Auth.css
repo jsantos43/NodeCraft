@@ -1,0 +1,73 @@
+/* Shared visuals for the verify-email / reset-password auth pages.
+   Builds on the login card shell (Login.css). */
+
+.auth-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.auth-status-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.auth-status-icon.is-success {
+  color: var(--accent-text);
+  background: var(--accent-dim);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.auth-status-icon.is-error {
+  color: var(--red-text);
+  background: var(--red-dim);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.auth-status-icon.is-pending {
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+}
+
+.auth-status-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.auth-status-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 300px;
+}
+
+.auth-status-sub strong { color: var(--text-primary); font-weight: 600; }
+
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* spin the loader icon for the pending state */
+.auth-spin { animation: auth-spin 0.9s linear infinite; }
+
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-spin { animation: none; }
+}

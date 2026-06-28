@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import Landing from './pages/Landing/Landing.jsx';
 import Login from './pages/Auth/Login.jsx';
 import Register from './pages/Auth/Register.jsx';
+import VerifyEmail from './pages/Auth/VerifyEmail.jsx';
+import ResetPassword from './pages/Auth/ResetPassword.jsx';
 import Dashboard from './pages/Dashboard/Dashboard.jsx';
 import Servers from './pages/Servers/Servers.jsx';
 import ServerDetails from './pages/Servers/ServerDetails.jsx';
@@ -14,6 +16,7 @@ import CreateServer from './pages/Servers/CreateServer.jsx';
 import Workers from './pages/Workers/Workers.jsx';
 import WorkerDetails from './pages/Workers/WorkerDetails.jsx';
 import Users from './pages/Users/Users.jsx';
+import UserDetails from './pages/Users/UserDetails.jsx';
 import Settings from './pages/Settings/Settings.jsx';
 import Spinner from './components/ui/Spinner.jsx';
 
@@ -76,6 +79,8 @@ function AppRoutes() {
       <Route path="/" element={<RootRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify" element={<VerifyEmail />} />
+      <Route path="/reset" element={<ResetPassword />} />
 
       <Route path="/servers" element={<PrivateRoute><Servers /></PrivateRoute>} />
       <Route path="/servers/create" element={<PrivateRoute><CreateServer /></PrivateRoute>} />
@@ -85,6 +90,7 @@ function AppRoutes() {
       <Route path="/workers" element={<AdminRoute><Workers /></AdminRoute>} />
       <Route path="/workers/:id" element={<AdminRoute><WorkerDetails /></AdminRoute>} />
       <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />
+      <Route path="/users/:id" element={<AdminRoute><UserDetails /></AdminRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -169,7 +169,11 @@
 
 .worker-option-info { display: flex; flex-direction: column; gap: 2px; }
 
-.worker-option-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.worker-option-name { font-size: 13px; font-weight: 500; color: var(--text-primary); display: inline-flex; align-items: center; gap: 8px; }
+
+.worker-status { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; padding: 1px 6px; border-radius: 999px; }
+.worker-status.is-online { color: #16a34a; background: rgba(22, 163, 74, 0.12); }
+.worker-status.is-offline { color: #9ca3af; background: rgba(156, 163, 175, 0.14); }
 
 .worker-option-detail { font-size: 11px; color: var(--text-muted); }
 
@@ -194,6 +198,46 @@
   font-size: 13px;
   color: var(--text-secondary);
 }
+
+/* Quota panel (resources step) */
+.quota-panel {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.quota-item {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.quota-item-label { font-size: 11px; color: var(--text-muted); }
+.quota-item-val { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.quota-item.quota-over { border-color: #dc2626; }
+.quota-item.quota-over .quota-item-val { color: #dc2626; }
+
+/* Blocked game card (not allowed for the account) */
+.game-card-blocked { opacity: 0.45; cursor: not-allowed; }
+.game-card-blocked:hover { border-color: var(--border); }
+
+/* Deploy blocked banner */
+.deploy-blocked {
+  margin-top: 16px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: var(--radius);
+}
+.deploy-blocked ul { margin: 6px 0 0; padding-left: 18px; }
+.deploy-blocked li { margin: 2px 0; }
 
 /* Deploy summary */
 .deploy-summary {

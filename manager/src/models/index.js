@@ -79,6 +79,7 @@ Instance.hasOne(Minecraft, {
   foreignKey: 'instanceId',
   as: 'minecraft',
   onDelete: 'CASCADE',
+  hooks: true,
 });
 
 Minecraft.belongsTo(Instance, {
@@ -90,6 +91,7 @@ Instance.hasOne(CounterStrike, {
   foreignKey: 'instanceId',
   as: 'counterstrike',
   onDelete: 'CASCADE',
+  hooks: true,
 });
 
 CounterStrike.belongsTo(Instance, {
@@ -101,6 +103,7 @@ Instance.hasOne(Kerbal, {
   foreignKey: 'instanceId',
   as: 'kerbal',
   onDelete: 'CASCADE',
+  hooks: true,
 });
 
 Kerbal.belongsTo(Instance, {
@@ -112,6 +115,7 @@ Instance.hasOne(Hytale, {
   foreignKey: 'instanceId',
   as: 'hytale',
   onDelete: 'CASCADE',
+  hooks: true,
 });
 
 Hytale.belongsTo(Instance, {
@@ -123,6 +127,7 @@ Instance.hasOne(Terraria, {
   foreignKey: 'instanceId',
   as: 'terraria',
   onDelete: 'CASCADE',
+  hooks: true,
 });
 
 Terraria.belongsTo(Instance, {
@@ -145,6 +150,13 @@ const instanceInclude = [
   { model: Kerbal, as: 'kerbal', required: false },
   { model: Hytale, as: 'hytale', required: false },
   { model: Terraria, as: 'terraria', required: false },
+  // Only expose safe worker fields to clients (never apiKey/secret).
+  {
+    model: Worker,
+    as: 'worker',
+    required: false,
+    attributes: ['id', 'name', 'url', 'healthy'],
+  },
   {
     model: Link,
     as: 'players',
