@@ -168,8 +168,6 @@ const instanceInclude = [
   },
 ];
 
-// await db.sync({ alter: true });
-
 export {
   db,
   gameModels,
