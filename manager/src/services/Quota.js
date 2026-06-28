@@ -37,6 +37,15 @@ class Quota {
       throw new Forbidden('Game type is not allowed for your account!');
     }
 
+    if (user.allowedWorkers.length === 0) {
+      throw new Forbidden('You are not allowed to use any worker!');
+    }
+
+    const { workerId } = instanceData;
+    if (workerId && !user.allowedWorkers.includes(workerId)) {
+      throw new Forbidden('This worker is not allowed for your account!');
+    }
+
     if (usage.count >= user.maxInstances) {
       throw new Forbidden('You have reached your instance limit!');
     }

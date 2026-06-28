@@ -280,6 +280,26 @@
   padding: 7px 12px;
 }
 
+.files-upload-status {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.files-upload-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.files-upload-name { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+.files-upload-pct { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.files-upload-track { height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.files-upload-fill {
+  height: 100%;
+  background: var(--accent, #8b5cf6);
+  border-radius: 999px;
+  transition: width 0.15s ease;
+}
+
 .files-loading, .files-empty { padding: 40px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
 .files-list { display: flex; flex-direction: column; }
@@ -505,6 +525,46 @@
 
 .network-section-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .network-empty { font-size: 13px; color: var(--text-muted); padding: 24px 0; }
+
+/* Connection / how-to-join */
+.network-connect {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.connect-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.connect-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.connect-grid .connect-row { flex: 1; min-width: 200px; }
+.connect-key { font-size: 12px; color: var(--text-muted); min-width: 78px; }
+.connect-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.06);
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+}
+.connect-note { font-size: 12px; color: var(--yellow-text, #d97706); }
+
+.connect-guides { display: flex; flex-wrap: wrap; gap: 12px; }
+.guide-block {
+  flex: 1;
+  min-width: 260px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.guide-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.guide-steps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.guide-steps li { font-size: 12px; color: var(--text-secondary); }
 
 /* Link section */
 .link-section { display: flex; flex-direction: column; gap: 10px; }

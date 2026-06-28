@@ -16,10 +16,10 @@ const config = {
     name: process.env.DATABASE_NAME || null,
   },
   email: {
-    enable: process.env.EMAIL_ENABLE || false,
+    enable: process.env.EMAIL_ENABLE === 'true',
     host: process.env.EMAIL_HOST || null,
-    port: process.env.EMAIL_PORT || null,
-    secure: process.env.EMAIL_SECURE || null,
+    port: process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : null,
+    secure: process.env.EMAIL_SECURE === 'true',
     user: process.env.EMAIL_USER || null,
     password: process.env.EMAIL_PASSWORD || null,
   },

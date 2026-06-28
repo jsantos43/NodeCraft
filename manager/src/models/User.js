@@ -135,6 +135,22 @@ User.init({
       },
     },
   },
+  allowedWorkers: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: [],
+    validate: {
+      isValidArray(value) {
+        if (!Array.isArray(value)) {
+          throw new Error('allowedWorkers field must be an array!');
+        }
+
+        if (!value.every((item) => typeof item === 'string')) {
+          throw new Error('allowedWorkers must contain only strings!');
+        }
+      },
+    },
+  },
 }, {
   tableName: 'user',
   sequelize: db,

@@ -8,6 +8,7 @@ import Input, { Select } from '../../components/ui/Input.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { workersApi } from '../../api/workers.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import './CreateServer.css';
 
 const GAMES = [
@@ -21,7 +22,7 @@ const GAMES = [
 const STEPS = ['Select Game', 'Resources', 'Worker', 'Settings', 'Deploy'];
 
 const defaultGameConfig = {
-  minecraft: { software: 'paper', gamemode: 'survival', difficulty: 'normal', motd: '', maxPlayers: 20, pvp: true, licensed: true },
+  minecraft: { gamemode: 'survival', difficulty: 'normal', software: 'paper', seed: '', allowlist: false, bedrock: false, licensed: true, pvp: true },
   counterstrike: {},
   terraria: {},
   kerbal: {},
@@ -42,8 +43,53 @@ export default function CreateServer() {
   });
   const [errors, setErrors] = useState({});
 
+  const { user } = useAuth();
+  const allowedWorkers = user?.allowedWorkers || [];
+
+  const allowedGames = user?.allowedGames || [];
+
   const { data: workersData } = useApi(() => workersApi.list());
-  const workers = (workersData?.workers || []).filter(w => w.healthy);
+  // Workers this user is allowed to use. Allowed access takes priority over
+  // online status, so offline workers remain selectable.
+  const workers = (workersData?.workers || [])
+    .filter(w => allowedWorkers.includes(w.id));
+
+  // Quota usage across the instances this user owns. Mirrors the manager's
+  // Quota.verifyCanCreate checks so the user gets feedback before submitting.
+  const { data: instData } = useApi(() => instancesApi.list());
+  const owned = (instData?.instances || []).filter(i => i.owner === user?.id);
+  const usage = owned.reduce((a, i) => ({
+    count: a.count + 1,
+    memory: a.memory + (i.memory || 0),
+    cpu: a.cpu + (i.cpu || 0),
+  }), { count: 0, memory: 0, cpu: 0 });
+
+  const limits = {
+    instances: user?.maxInstances ?? 0,
+    memory: user?.maxMemory ?? 0,
+    cpu: user?.maxCpu ?? 0,
+  };
+  const remaining = {
+    instances: limits.instances - usage.count,
+    memory: limits.memory - usage.memory,
+    cpu: limits.cpu - usage.cpu,
+  };
+
+  // Reasons the current configuration cannot be created (empty = OK).
+  const quotaIssues = [];
+  if (remaining.instances <= 0) {
+    quotaIssues.push(`Instance limit reached (${usage.count}/${limits.instances}).`);
+  }
+  if (Number(form.memory) > remaining.memory) {
+    quotaIssues.push(`Memory exceeds your quota (${Math.max(0, remaining.memory)} MB available).`);
+  }
+  if (Number(form.cpu) > remaining.cpu) {
+    quotaIssues.push(`CPU exceeds your quota (${Math.max(0, remaining.cpu)} core(s) available).`);
+  }
+  if (form.type && !allowedGames.includes(form.type)) {
+    quotaIssues.push('This game is not allowed for your account.');
+  }
+  const canCreate = quotaIssues.length === 0 && !!form.workerId && form.name.length >= 3;
 
   const { execute: createServer, loading } = useAction(async () => {
     const payload = {
@@ -52,7 +98,7 @@ export default function CreateServer() {
       memory: Number(form.memory),
       cpu: Number(form.cpu),
       maxPlayers: Number(form.maxPlayers),
-      workerId: form.workerId || undefined,
+      workerId: form.workerId,
       game: form.game,
     };
     const res = await instancesApi.create(payload);
@@ -68,7 +114,11 @@ export default function CreateServer() {
     if (step === 1) {
       if (!form.name || form.name.length < 3) e.name = 'Min 3 characters';
       if (form.memory < 512) e.memory = 'Min 512 MB';
+      if (remaining.instances <= 0) e.quota = `Instance limit reached (${usage.count}/${limits.instances})`;
+      if (Number(form.memory) > remaining.memory) e.memory = `Exceeds available memory (${Math.max(0, remaining.memory)} MB left)`;
+      if (Number(form.cpu) > remaining.cpu) e.cpu = `Exceeds available CPU (${Math.max(0, remaining.cpu)} core(s) left)`;
     }
+    if (step === 2 && !form.workerId) e.workerId = 'Select a worker';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -107,17 +157,22 @@ export default function CreateServer() {
               <h2 className="create-section-title">Choose a game</h2>
               <p className="create-section-sub">Select the game type for your new server</p>
               <div className="game-grid">
-                {GAMES.map(g => (
-                  <button
-                    key={g.id}
-                    className={`game-card ${form.type === g.id ? 'game-card-selected' : ''}`}
-                    onClick={() => selectGame(g.id)}
-                  >
-                    <span className="game-emoji">{g.emoji}</span>
-                    <span className="game-name">{g.name}</span>
-                    <span className="game-desc">{g.desc}</span>
-                  </button>
-                ))}
+                {GAMES.map(g => {
+                  const blocked = !allowedGames.includes(g.id);
+                  return (
+                    <button
+                      key={g.id}
+                      className={`game-card ${form.type === g.id ? 'game-card-selected' : ''} ${blocked ? 'game-card-blocked' : ''}`}
+                      onClick={() => !blocked && selectGame(g.id)}
+                      disabled={blocked}
+                      title={blocked ? 'Not allowed for your account' : undefined}
+                    >
+                      <span className="game-emoji">{g.emoji}</span>
+                      <span className="game-name">{g.name}</span>
+                      <span className="game-desc">{blocked ? 'Not allowed for your account' : g.desc}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -127,6 +182,23 @@ export default function CreateServer() {
             <div className="create-section">
               <h2 className="create-section-title">Configure Resources</h2>
               <p className="create-section-sub">Set the resource limits for your server</p>
+
+              <div className="quota-panel">
+                <div className={`quota-item ${remaining.instances <= 0 ? 'quota-over' : ''}`}>
+                  <span className="quota-item-label">Instances</span>
+                  <span className="quota-item-val">{usage.count} / {limits.instances}</span>
+                </div>
+                <div className={`quota-item ${Number(form.memory) > remaining.memory ? 'quota-over' : ''}`}>
+                  <span className="quota-item-label">Memory available</span>
+                  <span className="quota-item-val">{Math.max(0, remaining.memory)} MB</span>
+                </div>
+                <div className={`quota-item ${Number(form.cpu) > remaining.cpu ? 'quota-over' : ''}`}>
+                  <span className="quota-item-label">CPU available</span>
+                  <span className="quota-item-val">{Math.max(0, remaining.cpu)} core(s)</span>
+                </div>
+              </div>
+              {errors.quota && <span className="ui-input-error">{errors.quota}</span>}
+
               <div className="create-form">
                 <Input
                   label="Server Name"
@@ -144,7 +216,7 @@ export default function CreateServer() {
                     value={form.memory}
                     onChange={e => set('memory', e.target.value)}
                     error={errors.memory}
-                    hint="Minimum 512 MB"
+                    hint={`Min 512 MB · ${Math.max(0, remaining.memory)} MB available`}
                   />
                   <Input
                     label="CPU Cores"
@@ -152,6 +224,8 @@ export default function CreateServer() {
                     min="1"
                     value={form.cpu}
                     onChange={e => set('cpu', e.target.value)}
+                    error={errors.cpu}
+                    hint={`${Math.max(0, remaining.cpu)} core(s) available`}
                   />
                 </div>
                 <Input
@@ -172,17 +246,6 @@ export default function CreateServer() {
               <h2 className="create-section-title">Choose a Worker</h2>
               <p className="create-section-sub">Select the node that will host this server</p>
               <div className="worker-picker">
-                <div
-                  className={`worker-option ${!form.workerId ? 'worker-option-selected' : ''}`}
-                  onClick={() => set('workerId', '')}
-                >
-                  <div className="worker-option-info">
-                    <span className="worker-option-name">Auto-assign</span>
-                    <span className="worker-option-detail">NodeCraft will pick the best available worker</span>
-                  </div>
-                  {!form.workerId && <CheckCircle2 size={16} className="worker-check" />}
-                </div>
-
                 {workers.map(w => (
                   <div
                     key={w.id}
@@ -190,7 +253,12 @@ export default function CreateServer() {
                     onClick={() => set('workerId', w.id)}
                   >
                     <div className="worker-option-info">
-                      <span className="worker-option-name">{w.name}</span>
+                      <span className="worker-option-name">
+                        {w.name}
+                        <span className={`worker-status ${w.healthy ? 'is-online' : 'is-offline'}`}>
+                          {w.healthy ? 'Online' : 'Offline'}
+                        </span>
+                      </span>
                       <span className="worker-option-detail">
                         CPU {w.cpuUsage?.toFixed(1)}% · RAM {w.memorieUsed ? `${(w.memorieUsed/1024).toFixed(1)} GB` : '—'} · Disk {w.diskAvailable ? `${(w.diskAvailable/1024).toFixed(0)} GB free` : '—'}
                       </span>
@@ -200,9 +268,12 @@ export default function CreateServer() {
                 ))}
 
                 {workers.length === 0 && (
-                  <div className="no-workers">No online workers available</div>
+                  <div className="no-workers">
+                    No workers available for your account. Contact an administrator to be granted access to a worker.
+                  </div>
                 )}
               </div>
+              {errors.workerId && <span className="ui-input-error">{errors.workerId}</span>}
             </div>
           )}
 
@@ -216,15 +287,6 @@ export default function CreateServer() {
                 <div className="create-form">
                   <div className="create-row">
                     <Select
-                      label="Software"
-                      value={form.game.software}
-                      onChange={e => setGame('software', e.target.value)}
-                    >
-                      <option value="vanilla">Vanilla</option>
-                      <option value="paper">Paper</option>
-                      <option value="purpur">Purpur</option>
-                    </Select>
-                    <Select
                       label="Gamemode"
                       value={form.game.gamemode}
                       onChange={e => setGame('gamemode', e.target.value)}
@@ -233,8 +295,6 @@ export default function CreateServer() {
                       <option value="creative">Creative</option>
                       <option value="adventure">Adventure</option>
                     </Select>
-                  </div>
-                  <div className="create-row">
                     <Select
                       label="Difficulty"
                       value={form.game.difficulty}
@@ -245,20 +305,30 @@ export default function CreateServer() {
                       <option value="normal">Normal</option>
                       <option value="hard">Hard</option>
                     </Select>
+                  </div>
+                  <div className="create-row">
+                    <Select
+                      label="Software"
+                      value={form.game.software}
+                      onChange={e => setGame('software', e.target.value)}
+                    >
+                      <option value="vanilla">Vanilla</option>
+                      <option value="paper">Paper</option>
+                      <option value="purpur">Purpur</option>
+                    </Select>
                     <Input
-                      label="MOTD"
-                      placeholder="A Minecraft Server"
-                      value={form.game.motd || ''}
-                      onChange={e => setGame('motd', e.target.value)}
+                      label="Seed"
+                      placeholder="Leave empty for random"
+                      value={form.game.seed || ''}
+                      onChange={e => setGame('seed', e.target.value)}
                     />
                   </div>
                   <div className="create-toggles">
                     {[
+                      ['allowlist', 'Allowlist'],
+                      ['bedrock', 'Bedrock'],
+                      ['licensed', 'Online Mode'],
                       ['pvp', 'PvP'],
-                      ['licensed', 'Online Mode (Licensed)'],
-                      ['commandBlock', 'Command Blocks'],
-                      ['nether', 'Nether'],
-                      ['hardcore', 'Hardcore'],
                     ].map(([key, label]) => (
                       <label key={key} className="create-toggle">
                         <input
@@ -310,9 +380,18 @@ export default function CreateServer() {
                 </div>
                 <div className="deploy-row">
                   <span className="deploy-key">Worker</span>
-                  <span className="deploy-val">{form.workerId ? workers.find(w => w.id === form.workerId)?.name || form.workerId : 'Auto-assigned'}</span>
+                  <span className="deploy-val">{workers.find(w => w.id === form.workerId)?.name || form.workerId || '—'}</span>
                 </div>
               </div>
+
+              {quotaIssues.length > 0 && (
+                <div className="deploy-blocked">
+                  <strong>Cannot create this instance:</strong>
+                  <ul>
+                    {quotaIssues.map((msg) => <li key={msg}>{msg}</li>)}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -325,12 +404,12 @@ export default function CreateServer() {
             )}
             <div style={{ flex: 1 }} />
             {step < STEPS.length - 1 && step > 0 && (
-              <Button iconRight={ChevronRight} onClick={next}>
+              <Button iconRight={ChevronRight} disabled={step === 2 && !form.workerId} onClick={next}>
                 Continue
               </Button>
             )}
             {step === STEPS.length - 1 && (
-              <Button loading={loading} onClick={createServer}>
+              <Button loading={loading} disabled={!canCreate} onClick={createServer}>
                 Deploy Server
               </Button>
             )}

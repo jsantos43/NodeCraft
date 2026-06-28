@@ -104,6 +104,9 @@
 
 .game-check input { accent-color: var(--accent, #8b5cf6); cursor: pointer; }
 
+.workers-hint,
+.workers-empty { font-size: 11px; color: var(--text-muted); }
+
 .user-settings-footer {
   display: flex;
   align-items: center;

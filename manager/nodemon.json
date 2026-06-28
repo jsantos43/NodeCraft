@@ -1,3 +1,4 @@
 {
-  "ignore": ["logs"]
+  "ignore": ["logs"],
+  "ext": "js,mjs,cjs,json,html,env"
 }

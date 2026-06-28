@@ -324,6 +324,7 @@ function FilesTab({ instanceId }) {
   const [actionDialog, setActionDialog] = useState(null); // { type: 'copy'|'move'|'unzip', entry }
   const [actionDest, setActionDest] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [upload, setUpload] = useState(null); // { name, percent }
   const uploadRef = useRef(null);
 
   const { data, loading, refetch } = useApi(
@@ -411,14 +412,18 @@ function FilesTab({ instanceId }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setOpError(null);
+    setUpload({ name: file.name, percent: 0 });
     try {
       const formData = new FormData();
       formData.append('file', file);
-      await instancesApi.uploadFile(instanceId, formData, join(file.name));
+      await instancesApi.uploadFile(instanceId, formData, join(file.name), (percent) => {
+        setUpload({ name: file.name, percent });
+      });
       refetch();
     } catch (err) {
       setOpError(err.message || 'Upload failed');
     } finally {
+      setUpload(null);
       e.target.value = '';
     }
   };
@@ -502,7 +507,7 @@ function FilesTab({ instanceId }) {
           <button className="files-icon-btn" title="New Folder" onClick={() => { setShowCreate('folder'); setCreateName(''); setOpError(null); }}>
             <FolderPlus size={14} />
           </button>
-          <button className="files-icon-btn" title="Upload" onClick={() => uploadRef.current?.click()}>
+          <button className="files-icon-btn" title="Upload" disabled={!!upload} onClick={() => uploadRef.current?.click()}>
             <Upload size={14} />
           </button>
           <button className="files-icon-btn" title="Refresh" onClick={refetch}>
@@ -511,6 +516,22 @@ function FilesTab({ instanceId }) {
           <input ref={uploadRef} type="file" style={{ display: 'none' }} onChange={doUpload} />
         </div>
       </div>
+
+      {upload && (
+        <div className="files-upload-status">
+          <div className="files-upload-head">
+            <span className="files-upload-name">
+              <Upload size={12} /> {upload.name}
+            </span>
+            <span className="files-upload-pct">
+              {upload.percent < 100 ? `${upload.percent}%` : 'Finishing…'}
+            </span>
+          </div>
+          <div className="files-upload-track">
+            <div className="files-upload-fill" style={{ width: `${upload.percent}%` }} />
+          </div>
+        </div>
+      )}
 
       {opError && <div className="files-op-error">{opError}</div>}
 
@@ -901,6 +922,16 @@ function LinkCard({ link, onEdit, onDelete }) {
   );
 }
 
+// Extract a connectable host from a worker URL (with or without protocol).
+function parseHost(url) {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url.replace(/^\w+:\/\//, '').split('/')[0].split(':')[0] || null;
+  }
+}
+
 function NetworkTab({ instance }) {
   const { data, loading, refetch } = useApi(() => instancesApi.listLinks(instance.id), [instance.id]);
   const remapPort = useAction(async () => { await instancesApi.remapPort(instance.id); refetch(); });
@@ -910,14 +941,77 @@ function NetworkTab({ instance }) {
   const onSaved = () => { setDialog(null); refetch(); };
   const onDelete = (linkId) => instancesApi.deleteLink(instance.id, linkId).then(refetch);
 
+  const host = parseHost(instance.worker?.url);
+  const port = instance.port;
+  const isMinecraft = instance.type === 'minecraft';
+  const bedrock = !!instance.minecraft?.bedrock;
+  const javaAddress = host && port ? `${host}:${port}` : null;
+
   return (
     <div className="network-wrap">
-      <div className="network-header">
-        <div className="network-info-row">
-          <span className="network-label">Game Port</span>
-          <code className="network-port">{instance.port || '—'}</code>
-          <Button size="sm" variant="ghost" onClick={remapPort.execute} loading={remapPort.loading}>Remap</Button>
+      <div className="network-connect">
+        <span className="network-section-title">Connection</span>
+        <div className="connect-grid">
+          <div className="connect-row">
+            <span className="connect-key">Server IP</span>
+            <code className="connect-val">{host || 'Worker not assigned'}</code>
+            {host && <CopyButton text={host} />}
+          </div>
+          <div className="connect-row">
+            <span className="connect-key">Port</span>
+            <code className="connect-val">{port || '—'}</code>
+            <Button size="sm" variant="ghost" onClick={remapPort.execute} loading={remapPort.loading}>Remap</Button>
+          </div>
         </div>
+        {host && !instance.worker?.healthy && (
+          <span className="connect-note">This worker is currently offline — the server may be unreachable.</span>
+        )}
+
+        {isMinecraft ? (
+          <div className="connect-guides">
+            <div className="guide-block">
+              <div className="guide-title">☕ Java Edition</div>
+              <div className="connect-row">
+                <span className="connect-key">Address</span>
+                <code className="connect-val">{javaAddress || '—'}</code>
+                {javaAddress && <CopyButton text={javaAddress} />}
+              </div>
+              <ol className="guide-steps">
+                <li>Open Minecraft Java and click <b>Multiplayer</b>.</li>
+                <li>Click <b>Add Server</b>.</li>
+                <li>Paste the address above into <b>Server Address</b>.</li>
+                <li>Click <b>Done</b>, then double-click the server to join.</li>
+              </ol>
+            </div>
+
+            {bedrock && (
+              <div className="guide-block">
+                <div className="guide-title">📱 Bedrock Edition</div>
+                <div className="connect-row">
+                  <span className="connect-key">Address</span>
+                  <code className="connect-val">{host || '—'}</code>
+                  {host && <CopyButton text={host} />}
+                </div>
+                <div className="connect-row">
+                  <span className="connect-key">Port</span>
+                  <code className="connect-val">{port || '—'}</code>
+                </div>
+                <ol className="guide-steps">
+                  <li>Open Minecraft Bedrock and go to <b>Servers</b> → <b>Add Server</b>.</li>
+                  <li>Enter any name you like.</li>
+                  <li>Set <b>Server Address</b> to the IP and <b>Port</b> to the value above.</li>
+                  <li>Save, then tap the server to join.</li>
+                </ol>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="connect-row">
+            <span className="connect-key">Connect using</span>
+            <code className="connect-val">{javaAddress || '—'}</code>
+            {javaAddress && <CopyButton text={javaAddress} />}
+          </div>
+        )}
       </div>
 
       <div className="link-section">

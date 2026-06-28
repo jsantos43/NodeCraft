@@ -1,4 +1,4 @@
-import { api } from './client.js';
+import { api, getAccessToken } from './client.js';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -19,9 +19,36 @@ export const instancesApi = {
   createFile: (id, body, destiny) => api.post(`/instance/${id}/files/create?destiny=${encodeURIComponent(destiny || '')}`, body),
   updateFile: (id, content, path) => api.put(`/instance/${id}/files/edit?path=${encodeURIComponent(path)}`, { content }),
   deleteFile: (id, path) => api.delete(`/instance/${id}/files/delete?path=${encodeURIComponent(path)}`),
-  uploadFile: (id, formData, destiny) => {
+  // Uses XHR (not fetch) so we can report upload progress. Same endpoint/auth
+  // as the rest of the client: cookie credentials + optional bearer token.
+  // onProgress receives (percent, loaded, total).
+  uploadFile: (id, formData, destiny, onProgress) => {
     const url = `${BASE_URL}/instance/${id}/files/upload${destiny ? `?destiny=${encodeURIComponent(destiny)}` : ''}`;
-    return fetch(url, { method: 'POST', body: formData, credentials: 'include' }).then(r => r.json());
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
+      xhr.withCredentials = true;
+      const token = getAccessToken();
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+      if (typeof onProgress === 'function') {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            onProgress(Math.round((e.loaded / e.total) * 100), e.loaded, e.total);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch { /* non-JSON response */ }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+        else reject(new Error(data?.message || data?.error || 'Upload failed'));
+      };
+      xhr.onerror = () => reject(new Error('Upload failed'));
+      xhr.onabort = () => reject(new Error('Upload aborted'));
+      xhr.send(formData);
+    });
   },
   downloadUrl: (id, path) => `${BASE_URL}/instance/${id}/files?path=${encodeURIComponent(path)}&download=true`,
   transferFile: (id, path, destiny, action) => api.post(`/instance/${id}/files/transfer?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}&actions=${encodeURIComponent(action)}`),

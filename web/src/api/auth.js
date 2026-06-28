@@ -21,6 +21,14 @@ export const authApi = {
     }
   },
 
+  async verifyEmail() {
+    return api.post('/auth/verify');
+  },
+
+  async validateAccount(token) {
+    return api.post('/auth/validate', { token });
+  },
+
   async forgotPassword(email) {
     return api.post('/auth/forgot', { email });
   },

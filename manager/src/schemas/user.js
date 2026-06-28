@@ -41,6 +41,8 @@ const adminUpdateUser = Joi.object({
   allowedGames: Joi.array().items(
     Joi.string().valid('minecraft', 'hytale', 'counterstrike', 'terraria', 'kerbal'),
   ),
+  // Worker ids the user may run instances on. Empty blocks instance creation.
+  allowedWorkers: Joi.array().items(Joi.string().trim()),
 });
 
 export { createUser, updateUser, adminUpdateUser };

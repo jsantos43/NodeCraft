@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import Landing from './pages/Landing/Landing.jsx';
 import Login from './pages/Auth/Login.jsx';
 import Register from './pages/Auth/Register.jsx';
+import VerifyEmail from './pages/Auth/VerifyEmail.jsx';
+import ResetPassword from './pages/Auth/ResetPassword.jsx';
 import Dashboard from './pages/Dashboard/Dashboard.jsx';
 import Servers from './pages/Servers/Servers.jsx';
 import ServerDetails from './pages/Servers/ServerDetails.jsx';
@@ -77,6 +79,8 @@ function AppRoutes() {
       <Route path="/" element={<RootRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify" element={<VerifyEmail />} />
+      <Route path="/reset" element={<ResetPassword />} />
 
       <Route path="/servers" element={<PrivateRoute><Servers /></PrivateRoute>} />
       <Route path="/servers/create" element={<PrivateRoute><CreateServer /></PrivateRoute>} />

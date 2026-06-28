@@ -13,6 +13,7 @@ import Spinner from '../../components/ui/Spinner.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { usersApi } from '../../api/users.js';
 import { instancesApi } from '../../api/instances.js';
+import { workersApi } from '../../api/workers.js';
 import './UserDetails.css';
 
 const GAMES = [
@@ -47,8 +48,10 @@ export default function UserDetails() {
 
   const { data, loading, refetch } = useApi(() => usersApi.get(id), [id]);
   const { data: instData } = useApi(() => instancesApi.list(), [id]);
+  const { data: workerData } = useApi(() => workersApi.list(), []);
 
   const user = data?.user;
+  const workers = workerData?.workers || [];
   const owned = (instData?.instances || []).filter(i => i.owner === id);
 
   const usage = owned.reduce((a, i) => ({
@@ -75,6 +78,7 @@ export default function UserDetails() {
         maxCpu: user.maxCpu ?? 0,
         maxDisk: user.maxDisk ?? 0,
         allowedGames: Array.isArray(user.allowedGames) ? user.allowedGames : [],
+        allowedWorkers: Array.isArray(user.allowedWorkers) ? user.allowedWorkers : [],
       });
     }
   }, [user?.id]);
@@ -85,6 +89,12 @@ export default function UserDetails() {
     allowedGames: f.allowedGames.includes(gid)
       ? f.allowedGames.filter(g => g !== gid)
       : [...f.allowedGames, gid],
+  }));
+  const toggleWorker = (wid) => setForm(f => ({
+    ...f,
+    allowedWorkers: f.allowedWorkers.includes(wid)
+      ? f.allowedWorkers.filter(w => w !== wid)
+      : [...f.allowedWorkers, wid],
   }));
 
   const { execute: save, loading: saving } = useAction(async () => {
@@ -99,6 +109,7 @@ export default function UserDetails() {
         maxCpu: Number(form.maxCpu),
         maxDisk: Number(form.maxDisk),
         allowedGames: form.allowedGames,
+        allowedWorkers: form.allowedWorkers,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -209,6 +220,29 @@ export default function UserDetails() {
                   </label>
                 ))}
               </div>
+            </div>
+
+            <div className="games-field">
+              <label className="ui-input-label">Allowed Workers</label>
+              {workers.length === 0 ? (
+                <span className="workers-empty">No workers registered</span>
+              ) : (
+                <>
+                  <div className="games-grid">
+                    {workers.map(w => (
+                      <label key={w.id} className={`game-check ${form.allowedWorkers.includes(w.id) ? 'is-on' : ''}`}>
+                        <input type="checkbox" checked={form.allowedWorkers.includes(w.id)} onChange={() => toggleWorker(w.id)} />
+                        {w.name}
+                      </label>
+                    ))}
+                  </div>
+                  <span className="workers-hint">
+                    {form.allowedWorkers.length === 0
+                      ? 'No workers selected — the user cannot create any instances.'
+                      : 'The user can only create instances on the selected workers.'}
+                  </span>
+                </>
+              )}
             </div>
 
             <div className="user-settings-footer">
