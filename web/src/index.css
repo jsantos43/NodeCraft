@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -7,6 +7,7 @@
 }
 
 :root {
+  /* ── Interface palette — deep dark (app shell: dashboard, servers, …) ── */
   --bg-base: #0A0A0A;
   --bg-subtle: #111113;
   --bg-card: #18181B;
@@ -15,29 +16,55 @@
 
   --border: #27272A;
   --border-hover: #3F3F46;
-  --border-focus: #52525B;
+  --border-focus: #46A6D4;
 
-  --accent: #22C55E;
-  --accent-hover: #16A34A;
-  --accent-dim: rgba(34, 197, 94, 0.12);
-  --accent-text: #4ADE80;
+  /* ── Brand accent — Diamond blue ── */
+  --accent: #63C2E6;
+  --accent-hover: #46A6D4;
+  --accent-dim: rgba(99, 194, 230, 0.12);
+  --accent-text: #8FD9EE;
+  --accent-ink: #0C1118;          /* dark text for use on the accent fill */
 
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-muted: #52525B;
+  /* Diamond ramp (logo / highlights) */
+  --diamond-highlight: #BDEBF7;
+  --diamond-light: #8FD9EE;
+  --diamond: #63C2E6;
+  --diamond-mid: #46A6D4;
+  --diamond-dark: #2E7FB0;
 
-  --red: #EF4444;
-  --red-dim: rgba(239, 68, 68, 0.12);
-  --red-text: #F87171;
-  --yellow: #F59E0B;
-  --yellow-dim: rgba(245, 158, 11, 0.12);
-  --yellow-text: #FCD34D;
-  --blue: #3B82F6;
-  --blue-dim: rgba(59, 130, 246, 0.12);
-  --blue-text: #93C5FD;
-  --purple: #8B5CF6;
-  --purple-dim: rgba(139, 92, 246, 0.12);
-  --purple-text: #C4B5FD;
+  --text-primary: #E8EEF5;
+  --text-secondary: #B6C2D2;
+  --text-muted: #8293A8;
+
+  --red: #E57373;
+  --red-dim: rgba(229, 115, 115, 0.12);
+  --red-text: #E57373;
+  --yellow: #E0B23C;
+  --yellow-dim: rgba(224, 178, 60, 0.12);
+  --yellow-text: #E0B23C;
+  --blue: #63C2E6;
+  --blue-dim: rgba(99, 194, 230, 0.12);
+  --blue-text: #8FD9EE;
+  --purple: #C792EA;
+  --purple-dim: rgba(199, 146, 234, 0.12);
+  --purple-text: #C792EA;
+  /* semantic "online / ok" green — decoupled from brand accent */
+  --green: #5BD6A6;
+  --green-dim: rgba(91, 214, 166, 0.12);
+  --green-text: #5BD6A6;
+
+  /* ── Legacy aliases (older components) mapped onto the new palette ── */
+  --light-color: var(--text-primary);
+  --dark-color: var(--bg-input);
+  --primary-color: var(--bg-card);
+  --secondary-color: var(--bg-subtle);
+  --tertiary-color: var(--bg-card-hover);
+  --card-color: var(--accent);
+  --badge-color: var(--accent);
+  --badge-bg: var(--accent-dim);
+  --text: var(--text-primary);
+  --error: var(--red);
+  --bold: 600;
 
   --radius-sm: 6px;
   --radius: 10px;
@@ -51,7 +78,8 @@
   --sidebar-width: 232px;
   --header-height: 54px;
 
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-brand: 'Silkscreen', 'Space Grotesk', monospace;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
 
   --transition: 150ms ease;

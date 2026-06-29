@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { User, LogOut, ChevronDown, Settings, Zap } from 'lucide-react';
+import { User, LogOut, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import './Header.css';
 
 export default function Header({ title, breadcrumbs, showLogo }) {
@@ -15,8 +16,8 @@ export default function Header({ title, breadcrumbs, showLogo }) {
           // Common users only ever see the brand here — no titles or
           // breadcrumbs, since servers is the only area they navigate.
           <Link to="/" className="topbar-brand topbar-brand-solo">
-            <div className="topbar-brand-icon"><Zap size={14} /></div>
-            <span className="topbar-brand-text">NodeCraft</span>
+            <div className="topbar-brand-icon"><PickaxeIcon size={16} /></div>
+            <span className="topbar-brand-text">Node<span className="topbar-brand-accent">Craft</span></span>
           </Link>
         ) : breadcrumbs ? (
           <nav className="topbar-breadcrumbs">

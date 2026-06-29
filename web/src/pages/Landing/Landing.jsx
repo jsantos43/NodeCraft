@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import './Landing.css';
 import '../../assets/styles/fonts.css';
 
@@ -62,17 +63,73 @@ function FeatureCard({ icon, title, description, color, delay }) {
   );
 }
 
-function Cube() {
+// Deterministic pseudo-random in [0,1) so the crack pattern is stable per render.
+function pseudo(n) {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// A jagged "crack" path from the centre outward, with perpendicular jitter at
+// each step so it reads like a fissure splitting the dark rather than a ray.
+function crackPath(angleDeg, length, segments, jitter, seed) {
+  const cx = 200, cy = 200;
+  const rad = (angleDeg * Math.PI) / 180;
+  const dx = Math.cos(rad), dy = Math.sin(rad);   // outward direction
+  const px = -dy, py = dx;                          // perpendicular
+  let d = `M ${cx} ${cy}`;
+  for (let s = 1; s <= segments; s++) {
+    const t = s / segments;
+    const dist = length * t;
+    const off = (pseudo(seed + s) - 0.5) * jitter * (1 - t * 0.35);
+    const x = cx + dx * dist + px * off;
+    const y = cy + dy * dist + py * off;
+    d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function buildCracks() {
+  const COUNT = 16;
+  return Array.from({ length: COUNT }, (_, i) => {
+    const base = (360 / COUNT) * i + (pseudo(i) - 0.5) * 14;
+    const long = i % 3 !== 0;
+    const length = long ? 150 + pseudo(i + 9) * 40 : 84 + pseudo(i + 3) * 28;
+    return {
+      d: crackPath(base, length, long ? 6 : 4, 28, i * 7 + 3),
+      dur: 2.6 + pseudo(i + 1) * 1.5,
+      delay: pseudo(i + 5) * 2.6,
+      w: long ? 1.6 : 1.05,
+    };
+  });
+}
+
+function HeroMark() {
+  const cracks = useMemo(buildCracks, []);
   return (
-    <div className="lp-cube-scene" aria-hidden="true">
-      <div className="lp-cube">
-        <div className="lp-face lp-face-front" />
-        <div className="lp-face lp-face-back" />
-        <div className="lp-face lp-face-left" />
-        <div className="lp-face lp-face-right" />
-        <div className="lp-face lp-face-top" />
-        <div className="lp-face lp-face-bottom" />
-      </div>
+    <div className="lp-mark-scene" aria-hidden="true">
+      <svg className="lp-cracks" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <radialGradient id="lpCrackGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#EAFBFF" />
+            <stop offset="35%" stopColor="#BDEBF7" />
+            <stop offset="100%" stopColor="#2E7FB0" />
+          </radialGradient>
+        </defs>
+        <g>
+          {cracks.map((c, i) => (
+            <path
+              key={i}
+              d={c.d}
+              pathLength="100"
+              className="lp-crack"
+              style={{ '--dur': `${c.dur}s`, '--delay': `${c.delay}s`, strokeWidth: c.w }}
+            />
+          ))}
+        </g>
+      </svg>
+      <span className="lp-shock" />
+      <span className="lp-shock lp-shock-2" />
+      <PickaxeIcon size={150} className="lp-mark-pick" />
     </div>
   );
 }
@@ -114,8 +171,8 @@ export default function Landing() {
       <nav className="lp-nav">
         <div className="lp-nav-inner">
           <div className="lp-nav-logo">
-            <span className="lp-nav-logo-icon" aria-hidden="true">⚡</span>
-            <span className="lp-nav-logo-text">NodeCraft</span>
+            <span className="lp-nav-logo-icon" aria-hidden="true"><PickaxeIcon size={22} /></span>
+            <span className="lp-nav-logo-text">Node<span className="lp-nav-logo-accent">Craft</span></span>
           </div>
           <div className="lp-nav-actions">
             {user ? (
@@ -168,8 +225,8 @@ export default function Landing() {
           </div>
 
           <div className="lp-hero-visual">
-            <div className="lp-cube-glow" aria-hidden="true" />
-            <Cube />
+            <div className="lp-mark-glow" aria-hidden="true" />
+            <HeroMark />
           </div>
         </div>
 
@@ -351,7 +408,7 @@ export default function Landing() {
       <footer className="lp-footer">
         <div className="lp-footer-inner">
           <div className="lp-footer-logo">
-            <span aria-hidden="true">⚡</span> NodeCraft
+            <PickaxeIcon size={16} /> NodeCraft
           </div>
           <p className="lp-footer-copy">Game server hosting, built by players.</p>
         </div>

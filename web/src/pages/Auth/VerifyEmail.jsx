@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Zap, CheckCircle2, XCircle, Loader2,
+  CheckCircle2, XCircle, Loader2,
 } from 'lucide-react';
+import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import Button from '../../components/ui/Button.jsx';
 import { authApi } from '../../api/auth.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -52,8 +53,8 @@ export default function VerifyEmail() {
 
       <div className="login-card">
         <div className="login-logo">
-          <div className="login-logo-icon"><Zap size={20} /></div>
-          <span className="login-logo-text">NodeCraft</span>
+          <div className="login-logo-icon"><PickaxeIcon size={22} /></div>
+          <span className="login-logo-text">Node<span className="login-logo-accent">Craft</span></span>
         </div>
 
         {status === 'pending' && (

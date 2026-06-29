@@ -200,7 +200,7 @@
 .worker-option-name { font-size: 13px; font-weight: 500; color: var(--text-primary); display: inline-flex; align-items: center; gap: 8px; }
 
 .worker-status { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; padding: 1px 6px; border-radius: 999px; }
-.worker-status.is-online { color: #16a34a; background: rgba(22, 163, 74, 0.12); }
+.worker-status.is-online { color: #5BD6A6; background: rgba(91, 214, 166, 0.12); }
 .worker-status.is-offline { color: #9ca3af; background: rgba(156, 163, 175, 0.14); }
 
 .worker-option-detail { font-size: 11px; color: var(--text-muted); }
