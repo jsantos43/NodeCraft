@@ -41,6 +41,21 @@ class Worker {
     return workers;
   }
 
+  static async readAvailableForUser(user) {
+    const ids = Array.isArray(user?.allowedWorkers) ? user.allowedWorkers : [];
+    if (ids.length === 0) return [];
+
+    const workers = await Model.findAll({
+      where: { id: { [Op.in]: ids } },
+      attributes: [
+        'id', 'name', 'url', 'healthy', 'lastSeenAt',
+        'cpuUsage', 'memorieTotal', 'memorieUsed', 'diskAvailable',
+      ],
+    });
+
+    return workers;
+  }
+
   static async readOne(id) {
     const worker = await Model.findByPk(id);
 

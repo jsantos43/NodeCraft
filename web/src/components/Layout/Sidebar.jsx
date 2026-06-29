@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Server, Cpu,
   Users, ChevronRight, ChevronLeft, Zap,
@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import './Sidebar.css';
 
 const adminNav = [
-  { to: '/',        label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/servers', label: 'Servers',   icon: Server          },
   { to: '/workers', label: 'Workers',   icon: Cpu             },
   { to: '/users',   label: 'Users',     icon: Users           },
@@ -48,12 +48,12 @@ export default function Sidebar() {
 
   return (
     <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
-      <div className="sidebar-logo" title={collapsed ? 'NodeCraft' : undefined}>
+      <Link to="/" className="sidebar-logo" title={collapsed ? 'NodeCraft' : undefined}>
         <div className="sidebar-logo-icon">
           <Zap size={16} />
         </div>
         <span className="sidebar-logo-text">NodeCraft</span>
-      </div>
+      </Link>
 
       <nav className="sidebar-nav">
         {adminNav.map(item => (

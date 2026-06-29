@@ -19,6 +19,15 @@
   margin-right: 16px;
   padding-right: 16px;
   border-right: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* No title/breadcrumbs after the brand — drop the trailing separator. */
+.topbar-brand-solo {
+  margin-right: 0;
+  padding-right: 0;
+  border-right: none;
 }
 
 .topbar-brand-icon {

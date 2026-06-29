@@ -13,8 +13,10 @@ export function AuthProvider({ children }) {
     try {
       const data = await usersApi.me();
       setUser(data.user);
+      return data.user;
     } catch {
       setUser(null);
+      return null;
     }
   }, []);
 
@@ -26,9 +28,8 @@ export function AuthProvider({ children }) {
   }, [fetchUser]);
 
   const login = async (email, password) => {
-    const data = await authApi.login(email, password);
-    await fetchUser();
-    return data;
+    await authApi.login(email, password);
+    return fetchUser();
   };
 
   const logout = async () => {

@@ -31,10 +31,33 @@
   box-shadow: var(--shadow-lg);
 }
 
+.login-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-bottom: -12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.login-back:hover { color: var(--text-primary); }
+
+.login-forgot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+  font-size: 13px;
+}
+
 .login-logo {
   display: flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  color: inherit;
 }
 
 .login-logo-icon {

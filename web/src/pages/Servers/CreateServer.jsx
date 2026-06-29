@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
@@ -44,15 +44,14 @@ export default function CreateServer() {
   const [errors, setErrors] = useState({});
 
   const { user } = useAuth();
-  const allowedWorkers = user?.allowedWorkers || [];
 
   const allowedGames = user?.allowedGames || [];
 
-  const { data: workersData } = useApi(() => workersApi.list());
-  // Workers this user is allowed to use. Allowed access takes priority over
-  // online status, so offline workers remain selectable.
-  const workers = (workersData?.workers || [])
-    .filter(w => allowedWorkers.includes(w.id));
+  // Workers this user is allowed to deploy on. The endpoint already scopes the
+  // result to the user's allowed workers (admin-safe fields only), and access
+  // takes priority over online status so offline workers remain selectable.
+  const { data: workersData } = useApi(() => workersApi.available());
+  const workers = workersData?.workers || [];
 
   // Quota usage across the instances this user owns. Mirrors the manager's
   // Quota.verifyCanCreate checks so the user gets feedback before submitting.
@@ -133,10 +132,23 @@ export default function CreateServer() {
   };
 
   return (
-    <Layout
-      breadcrumbs={['Servers', 'Create Server']}
-    >
+    <Layout title="Create Server">
       <div className="create-layout">
+        {/* Page header — anchors the wizard and gives a way back out. */}
+        <div className="create-head">
+          <button
+            type="button"
+            className="create-back"
+            onClick={() => navigate('/servers')}
+          >
+            <ArrowLeft size={15} /> Back to servers
+          </button>
+          <h1 className="create-title">Create a server</h1>
+          <p className="create-subtitle">
+            Pick a game, size it, and deploy — in a few quick steps.
+          </p>
+        </div>
+
         {/* Steps indicator */}
         <div className="create-steps">
           {STEPS.map((s, i) => (

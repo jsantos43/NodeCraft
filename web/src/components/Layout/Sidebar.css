@@ -27,6 +27,8 @@
   flex-shrink: 0;
   overflow: hidden;
   white-space: nowrap;
+  text-decoration: none;
+  color: inherit;
 }
 
 .sidebar-logo-icon {

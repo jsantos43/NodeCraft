@@ -6,6 +6,26 @@
   margin: 0 auto;
 }
 
+.settings-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 4px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+}
+
+.settings-back:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+.settings-back svg { transition: transform var(--transition); }
+.settings-back:hover svg { transform: translateX(-2px); }
+
 /* ---- Identity hero ---- */
 .identity-card { padding: 0; overflow: hidden; }
 

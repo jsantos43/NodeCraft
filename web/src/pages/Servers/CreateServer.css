@@ -1,5 +1,33 @@
 .create-layout { display: flex; flex-direction: column; gap: 20px; max-width: 680px; margin: 0 auto; }
 
+/* ── Page header ── */
+.create-head { display: flex; flex-direction: column; gap: 4px; }
+
+.create-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+}
+
+.create-back:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+.create-back svg { transition: transform var(--transition); }
+.create-back:hover svg { transform: translateX(-2px); }
+
+.create-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+
+.create-subtitle { font-size: 13px; color: var(--text-secondary); }
+
 .create-steps {
   display: flex;
   align-items: center;
@@ -268,4 +296,11 @@
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
+}
+
+/* On narrow screens the five step labels crowd; keep the numbered track. */
+@media (max-width: 560px) {
+  .create-title { font-size: 19px; }
+  .step-label { display: none; }
+  .step-line { margin: 0 4px; }
 }

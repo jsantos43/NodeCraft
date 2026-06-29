@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Zap, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Zap, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
@@ -21,8 +21,8 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(form.email, form.password);
-      navigate('/');
+      const loggedUser = await login(form.email, form.password);
+      navigate(loggedUser?.admin ? '/dashboard' : '/servers');
     } catch (err) {
       setError(err.message || 'Invalid credentials');
     } finally {
@@ -35,10 +35,14 @@ export default function Login() {
       <div className="login-bg" aria-hidden />
 
       <div className="login-card">
-        <div className="login-logo">
+        <Link to="/" className="login-back">
+          <ArrowLeft size={14} /> Back to home
+        </Link>
+
+        <Link to="/" className="login-logo">
           <div className="login-logo-icon"><Zap size={20} /></div>
           <span className="login-logo-text">NodeCraft</span>
-        </div>
+        </Link>
 
         <div className="login-header">
           <h1 className="login-title">Welcome back</h1>
@@ -79,6 +83,10 @@ export default function Login() {
             >
               {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
+          </div>
+
+          <div className="login-forgot">
+            <Link to="/forgot" className="login-link">Forgot password?</Link>
           </div>
 
           <Button type="submit" loading={loading} size="lg" style={{ width: '100%', justifyContent: 'center' }}>
