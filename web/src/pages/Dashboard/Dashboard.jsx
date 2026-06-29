@@ -10,6 +10,7 @@ import { StatusBadge } from '../../components/ui/Badge.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { workersApi } from '../../api/workers.js';
+import { usersApi } from '../../api/users.js';
 import { clusterChartData } from '../../utils/metrics.js';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './Dashboard.css';
@@ -23,9 +24,10 @@ const GAME_LABELS = {
 };
 
 export default function Dashboard() {
-  const [range, setRange] = useState('24h');
+  const [range, setRange] = useState('1h');
   const { data: instancesData, loading: loadingI } = useApi(() => instancesApi.list());
   const { data: workersData,  loading: loadingW } = useApi(() => workersApi.list());
+  const { data: usersData } = useApi(() => usersApi.list());
 
   const { data: histData } = useApi(async () => {
     const { workers = [] } = await workersApi.list();
@@ -39,6 +41,7 @@ export default function Dashboard() {
 
   const instances = instancesData?.instances || [];
   const workers   = workersData?.workers   || [];
+  const totalUsers = usersData?.users?.length;
 
   const clusterData = useMemo(() => clusterChartData(histData || [], range), [histData, range]);
 
@@ -70,7 +73,7 @@ export default function Dashboard() {
           subtitle={totalMemTotal ? `${(totalMemUsed/1024).toFixed(1)} / ${(totalMemTotal/1024).toFixed(1)} GB` : 'No data'}
           icon={HardDrive}
           color={memPct > 80 ? 'red' : 'blue'} />
-        <StatCard title="Total Users" value="—" icon={Users} color="purple" />
+        <StatCard title="Total Users" value={totalUsers ?? '—'} icon={Users} color="purple" />
       </div>
 
       {/* ── Charts ── */}

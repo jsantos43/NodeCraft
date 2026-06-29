@@ -9,7 +9,7 @@ import { workerChartData } from '../../utils/metrics.js';
 import './WorkerMetrics.css';
 
 export default function WorkerMetrics({ workerId }) {
-  const [range, setRange] = useState('24h');
+  const [range, setRange] = useState('1h');
   const { data, loading } = useApi(() => workersApi.heartbeats(workerId, range), [workerId, range]);
 
   const series = useMemo(

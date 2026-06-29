@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Server, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Server, Save, Trash2, Copy, Check } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
@@ -15,6 +15,20 @@ import WorkerMetrics from '../../components/WorkerMetrics/WorkerMetrics.jsx';
 import './WorkerDetails.css';
 
 const GAME_LABELS = { minecraft: 'Minecraft', counterstrike: 'CS2', terraria: 'Terraria', kerbal: 'KSP', hytale: 'Hytale' };
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <button className="copy-btn" onClick={copy} title="Copy">
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+    </button>
+  );
+}
 
 export default function WorkerDetails() {
   const { id } = useParams();
@@ -112,8 +126,11 @@ export default function WorkerDetails() {
               ].map(([k, v]) => (
                 <div key={k} className="overview-row">
                   <span className="overview-key">{k}</span>
-                  <span className="overview-val">
-                    {k === 'Status' ? <StatusBadge status={worker.healthy ? 'healthy' : 'offline'} /> : v}
+                  <span className="overview-val-wrap">
+                    <span className="overview-val">
+                      {k === 'Status' ? <StatusBadge status={worker.healthy ? 'healthy' : 'offline'} /> : v}
+                    </span>
+                    {k === 'ID' && <CopyButton text={v} />}
                   </span>
                 </div>
               ))}

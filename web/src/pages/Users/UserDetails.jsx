@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Server, Save, Trash2, Shield, CheckCircle2, XCircle,
+  ArrowLeft, Server, Save, Trash2, Shield, CheckCircle2, XCircle, Copy, Check,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -24,6 +24,20 @@ const GAMES = [
   { id: 'kerbal', label: 'KSP' },
 ];
 const GAME_LABELS = Object.fromEntries(GAMES.map(g => [g.id, g.label]));
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <button className="copy-btn" onClick={copy} title="Copy">
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+    </button>
+  );
+}
 
 function UsageBar({ label, value, max, unit }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
@@ -177,14 +191,17 @@ export default function UserDetails() {
               ].map(([k, v]) => (
                 <div key={k} className="overview-row">
                   <span className="overview-key">{k}</span>
-                  <span className="overview-val">
-                    {k === 'Role' ? (
-                      <Badge color={user.admin ? 'purple' : 'gray'}>{user.admin ? 'Admin' : 'User'}</Badge>
-                    ) : k === 'Verified' ? (
-                      user.verified
-                        ? <span className="verified-yes"><CheckCircle2 size={13} /> Verified</span>
-                        : <span className="verified-no"><XCircle size={13} /> Unverified</span>
-                    ) : v}
+                  <span className="overview-val-wrap">
+                    <span className="overview-val">
+                      {k === 'Role' ? (
+                        <Badge color={user.admin ? 'purple' : 'gray'}>{user.admin ? 'Admin' : 'User'}</Badge>
+                      ) : k === 'Verified' ? (
+                        user.verified
+                          ? <span className="verified-yes"><CheckCircle2 size={13} /> Verified</span>
+                          : <span className="verified-no"><XCircle size={13} /> Unverified</span>
+                      ) : v}
+                    </span>
+                    {k === 'ID' && <CopyButton text={v} />}
                   </span>
                 </div>
               ))}
