@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Zap } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Zap, ArrowLeft } from 'lucide-react';
 import { usersApi } from '../../api/users.js';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
@@ -41,10 +41,14 @@ export default function Register() {
       <div className="login-bg" aria-hidden />
 
       <div className="login-card">
-        <div className="login-logo">
+        <Link to="/" className="login-back">
+          <ArrowLeft size={14} /> Back to home
+        </Link>
+
+        <Link to="/" className="login-logo">
           <div className="login-logo-icon"><Zap size={20} /></div>
           <span className="login-logo-text">NodeCraft</span>
-        </div>
+        </Link>
 
         <div className="login-header">
           <h1 className="login-title">Create an account</h1>

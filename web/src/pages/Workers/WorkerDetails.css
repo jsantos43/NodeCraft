@@ -91,3 +91,18 @@
 
 .worker-url-saved { font-size: 12px; color: var(--accent-text); }
 .worker-url-error { font-size: 12px; color: var(--red-text); }
+
+.overview-val-wrap { display: flex; align-items: center; gap: 6px; }
+
+.copy-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+.copy-btn:hover { background: rgba(255, 255, 255, 0.07); color: var(--text-primary); }

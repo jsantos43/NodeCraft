@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 import './Landing.css';
 import '../../assets/styles/fonts.css';
 
@@ -101,6 +102,12 @@ export default function Landing() {
   const [stackRef, stackVisible] = useVisible(0.1);
   const [mcRef, mcVisible] = useVisible(0.1);
 
+  const { user } = useAuth();
+  // Where a logged-in user lands when entering the app: admins get the
+  // dashboard, everyone else goes straight to their servers.
+  const appPath = user ? (user.admin ? '/dashboard' : '/servers') : null;
+  const appLabel = user?.admin ? 'Go to dashboard' : 'Go to my servers';
+
   return (
     <div className="lp-root">
       {/* NAV */}
@@ -111,8 +118,14 @@ export default function Landing() {
             <span className="lp-nav-logo-text">NodeCraft</span>
           </div>
           <div className="lp-nav-actions">
-            <Link to="/login"    className="lp-btn-ghost">Sign in</Link>
-            <Link to="/register" className="lp-btn-primary">Get started</Link>
+            {user ? (
+              <Link to={appPath} className="lp-btn-primary">{appLabel}</Link>
+            ) : (
+              <>
+                <Link to="/login"    className="lp-btn-ghost">Sign in</Link>
+                <Link to="/register" className="lp-btn-primary">Get started</Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -137,12 +150,20 @@ export default function Landing() {
               through one dashboard. Minecraft, CS2, KSP, and more.
             </p>
             <div className="lp-hero-ctas">
-              <Link to="/register" className="lp-btn-primary lp-btn-lg">
-                Get started <span className="lp-btn-arrow">→</span>
-              </Link>
-              <Link to="/login" className="lp-btn-ghost lp-btn-lg">
-                Sign in
-              </Link>
+              {user ? (
+                <Link to={appPath} className="lp-btn-primary lp-btn-lg">
+                  {appLabel} <span className="lp-btn-arrow">→</span>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="lp-btn-primary lp-btn-lg">
+                    Get started <span className="lp-btn-arrow">→</span>
+                  </Link>
+                  <Link to="/login" className="lp-btn-ghost lp-btn-lg">
+                    Sign in
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -306,11 +327,23 @@ export default function Landing() {
       {/* CTA FOOTER BAND */}
       <section className="lp-cta-band">
         <div className="lp-cta-band-inner">
-          <h2 className="lp-cta-title">Ready to launch your server?</h2>
-          <p className="lp-cta-sub">Create an account and have your first instance running in minutes.</p>
-          <Link to="/register" className="lp-btn-primary lp-btn-lg lp-btn-white">
-            Create your server <span className="lp-btn-arrow">→</span>
-          </Link>
+          {user ? (
+            <>
+              <h2 className="lp-cta-title">Welcome back{user.name ? `, ${user.name}` : ''}!</h2>
+              <p className="lp-cta-sub">Jump straight back into managing your servers.</p>
+              <Link to={appPath} className="lp-btn-primary lp-btn-lg lp-btn-white">
+                {appLabel} <span className="lp-btn-arrow">→</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <h2 className="lp-cta-title">Ready to launch your server?</h2>
+              <p className="lp-cta-sub">Create an account and have your first instance running in minutes.</p>
+              <Link to="/register" className="lp-btn-primary lp-btn-lg lp-btn-white">
+                Create your server <span className="lp-btn-arrow">→</span>
+              </Link>
+            </>
+          )}
         </div>
       </section>
 

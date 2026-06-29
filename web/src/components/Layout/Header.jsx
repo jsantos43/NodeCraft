@@ -11,13 +11,14 @@ export default function Header({ title, breadcrumbs, showLogo }) {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        {showLogo && (
-          <div className="topbar-brand">
+        {showLogo ? (
+          // Common users only ever see the brand here — no titles or
+          // breadcrumbs, since servers is the only area they navigate.
+          <Link to="/" className="topbar-brand topbar-brand-solo">
             <div className="topbar-brand-icon"><Zap size={14} /></div>
             <span className="topbar-brand-text">NodeCraft</span>
-          </div>
-        )}
-        {breadcrumbs ? (
+          </Link>
+        ) : breadcrumbs ? (
           <nav className="topbar-breadcrumbs">
             {breadcrumbs.map((b, i) => (
               <React.Fragment key={i}>

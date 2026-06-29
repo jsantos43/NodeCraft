@@ -11,6 +11,16 @@ class Worker {
     }
   }
 
+  static async readAvailable(req, res, next) {
+    try {
+      const workers = await Service.readAvailableForUser(req.user);
+
+      return res.status(200).json({ success: true, workers });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   static async readOne(req, res, next) {
     try {
       const id = req?.params?.id;

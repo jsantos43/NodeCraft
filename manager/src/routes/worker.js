@@ -7,6 +7,11 @@ const router = Router();
 router
   .get(
     '/worker',
+    auth('logged'),
+    Controller.readAvailable,
+  )
+  .get(
+    '/worker/all',
     auth('admin'),
     Controller.readAll,
   )

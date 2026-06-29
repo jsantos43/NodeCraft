@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Save, Mail, Shield, CheckCircle2, AlertCircle, Send, Copy, Check, Lock, Trash2,
+  Save, Mail, Shield, CheckCircle2, AlertCircle, Send, Copy, Check, Lock, Trash2, ArrowLeft,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -88,6 +88,17 @@ export default function Settings() {
   return (
     <Layout title="Settings">
       <div className="settings-page">
+
+        {/* Common users have no sidebar, so give them a way back to servers. */}
+        {!user?.admin && (
+          <button
+            type="button"
+            className="settings-back"
+            onClick={() => navigate('/servers')}
+          >
+            <ArrowLeft size={15} /> Back to servers
+          </button>
+        )}
 
         {/* Identity hero */}
         <Card className="identity-card">

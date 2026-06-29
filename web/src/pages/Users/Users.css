@@ -50,3 +50,17 @@
 
 .users-row { cursor: pointer; transition: background var(--transition); }
 .users-row:hover { background: var(--bg-subtle); }
+
+.users-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.users-search {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}

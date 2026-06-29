@@ -13,7 +13,7 @@ import Spinner from '../../components/ui/Spinner.jsx';
 import './Monitoring.css';
 
 export default function Monitoring() {
-  const [range, setRange] = useState('24h');
+  const [range, setRange] = useState('1h');
 
   const { data, loading } = useApi(async () => {
     const { workers = [] } = await workersApi.list();

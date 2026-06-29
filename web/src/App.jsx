@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import Landing from './pages/Landing/Landing.jsx';
 import Login from './pages/Auth/Login.jsx';
 import Register from './pages/Auth/Register.jsx';
+import ForgotPassword from './pages/Auth/ForgotPassword.jsx';
 import VerifyEmail from './pages/Auth/VerifyEmail.jsx';
 import ResetPassword from './pages/Auth/ResetPassword.jsx';
 import Dashboard from './pages/Dashboard/Dashboard.jsx';
@@ -37,24 +38,6 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />;
 }
 
-function RootRoute() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div style={{
-        height: '100vh', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', background: 'var(--bg-base)',
-      }}>
-        <Spinner size={24} />
-      </div>
-    );
-  }
-
-  if (!user) return <Landing />;
-  return user.admin ? <Dashboard /> : <Navigate to="/servers" replace />;
-}
-
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -76,9 +59,11 @@ function AdminRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<RootRoute />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot" element={<ForgotPassword />} />
       <Route path="/verify" element={<VerifyEmail />} />
       <Route path="/reset" element={<ResetPassword />} />
 

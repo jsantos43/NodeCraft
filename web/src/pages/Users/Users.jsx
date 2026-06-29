@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User } from 'lucide-react';
+import { Shield, User, Search } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card from '../../components/ui/Card.jsx';
 import Badge from '../../components/ui/Badge.jsx';
@@ -13,10 +13,28 @@ export default function Users() {
   const navigate = useNavigate();
 
   const { data, loading } = useApi(() => usersApi.list());
-  const users = data?.users || [];
+  const [search, setSearch] = useState('');
+
+  const users = (data?.users || []).filter(u => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+  });
 
   return (
     <Layout title="Users">
+      <div className="users-toolbar">
+        <div className="users-search">
+          <Search size={14} className="search-icon" />
+          <input
+            className="search-input"
+            placeholder="Search users..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
       <Card padding={false}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
