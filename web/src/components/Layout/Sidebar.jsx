@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Server, Cpu,
-  Users, ChevronRight, ChevronLeft, Zap,
+  Users, ChevronRight, ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import './Sidebar.css';
 
 const adminNav = [
@@ -50,9 +51,9 @@ export default function Sidebar() {
     <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <Link to="/" className="sidebar-logo" title={collapsed ? 'NodeCraft' : undefined}>
         <div className="sidebar-logo-icon">
-          <Zap size={16} />
+          <PickaxeIcon size={18} />
         </div>
-        <span className="sidebar-logo-text">NodeCraft</span>
+        <span className="sidebar-logo-text">Node<span className="sidebar-logo-accent">Craft</span></span>
       </Link>
 
       <nav className="sidebar-nav">

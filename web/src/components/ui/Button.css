@@ -22,7 +22,8 @@
 /* Variants */
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
+  font-weight: 600;
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
@@ -50,10 +51,10 @@
 .btn-danger {
   background: var(--red-dim);
   color: var(--red-text);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(229, 115, 115, 0.30);
 }
 .btn-danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(229, 115, 115, 0.20);
 }
 
 .btn-icon {

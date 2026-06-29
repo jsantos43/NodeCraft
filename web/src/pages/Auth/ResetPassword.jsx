@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Zap, Lock, Eye, EyeOff, CheckCircle2, XCircle,
+  Lock, Eye, EyeOff, CheckCircle2, XCircle,
 } from 'lucide-react';
+import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
 import { authApi } from '../../api/auth.js';
@@ -49,8 +50,8 @@ export default function ResetPassword() {
         <div className="login-bg" aria-hidden />
         <div className="login-card">
           <div className="login-logo">
-            <div className="login-logo-icon"><Zap size={20} /></div>
-            <span className="login-logo-text">NodeCraft</span>
+            <div className="login-logo-icon"><PickaxeIcon size={22} /></div>
+            <span className="login-logo-text">Node<span className="login-logo-accent">Craft</span></span>
           </div>
           <div className="auth-status">
             <div className="auth-status-icon is-error"><XCircle size={28} /></div>
@@ -80,8 +81,8 @@ export default function ResetPassword() {
 
       <div className="login-card">
         <div className="login-logo">
-          <div className="login-logo-icon"><Zap size={20} /></div>
-          <span className="login-logo-text">NodeCraft</span>
+          <div className="login-logo-icon"><PickaxeIcon size={22} /></div>
+          <span className="login-logo-text">Node<span className="login-logo-accent">Craft</span></span>
         </div>
 
         {done ? (

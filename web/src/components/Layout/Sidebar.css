@@ -32,27 +32,30 @@
 }
 
 .sidebar-logo-icon {
-  width: 26px;
-  height: 26px;
-  min-width: 26px;
-  background: var(--accent-dim);
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  background: linear-gradient(160deg, #222b3a, #141925);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-text);
+  filter: drop-shadow(0 0 8px rgba(99, 194, 230, 0.35));
 }
 
 .sidebar-logo-text {
-  font-size: 14px;
+  font-family: var(--font-brand);
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   opacity: 1;
   transition: opacity 150ms ease;
   overflow: hidden;
 }
+
+.sidebar-logo-accent { color: var(--accent); }
 
 .sidebar-collapsed .sidebar-logo-text {
   opacity: 0;

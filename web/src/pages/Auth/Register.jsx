@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Zap, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import { usersApi } from '../../api/users.js';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
@@ -46,8 +47,8 @@ export default function Register() {
         </Link>
 
         <Link to="/" className="login-logo">
-          <div className="login-logo-icon"><Zap size={20} /></div>
-          <span className="login-logo-text">NodeCraft</span>
+          <div className="login-logo-icon"><PickaxeIcon size={22} /></div>
+          <span className="login-logo-text">Node<span className="login-logo-accent">Craft</span></span>
         </Link>
 
         <div className="login-header">
