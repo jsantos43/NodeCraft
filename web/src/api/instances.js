@@ -5,6 +5,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export const instancesApi = {
   list: () => api.get('/instance'),
   get: (id) => api.get(`/instance/${id}`),
+  getPermissions: (id) => api.get(`/instance/${id}/permissions`),
   create: (body) => api.post('/instance', body),
   update: (id, body) => api.put(`/instance/${id}`, body),
   delete: (id) => api.delete(`/instance/${id}`),

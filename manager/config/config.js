@@ -7,6 +7,7 @@ const config = {
   app: {
     port: process.env.PORT || 9183,
     stage: process.env.STAGE || 'PROD',
+    gmt: process.env.GMT ? Number(process.env.GMT) : 0,
   },
   database: {
     enable: process.env.DATABASE_ENABLE || false,
@@ -43,10 +44,14 @@ const config = {
     lifetime: 172800000,
     permissions: [
       'instance:read',
-      'instance:update',
+      'instance:edit',
       'instance:execute',
       'instance:backup',
-      'instance:console',
+      'instance:console:read',
+      'instance:console:write',
+      'instance:files:read',
+      'instance:files:write',
+      'instance:files:edit',
     ],
   },
 };

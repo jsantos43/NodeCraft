@@ -20,6 +20,11 @@ router
     auth('instance:read'),
     Controller.readOne,
   )
+  .get(
+    '/instance/:id/permissions',
+    auth('instance:read'),
+    Controller.readPermissions,
+  )
   .post(
     '/instance',
     auth('logged'),
@@ -28,14 +33,14 @@ router
   )
   .put(
     '/instance/:id',
-    auth('instance:update'),
+    auth('instance:edit'),
     verifyNotRunning,
     validate(updateInstance),
     Controller.update,
   )
   .delete(
     '/instance/:id',
-    auth('instance:delete'),
+    auth('instance:owner'),
     verifyNotRunning,
     Controller.delete,
   )
@@ -56,7 +61,7 @@ router
   )
   .post(
     '/instance/:id/console',
-    auth('instance:console'),
+    auth('instance:console:read'),
     Controller.consoleToken,
   )
   .post(
@@ -67,7 +72,7 @@ router
   )
   .put(
     '/instance/:id/remap',
-    auth('instance:update'),
+    auth('instance:owner'),
     verifyNotRunning,
     Controller.remapPort,
   )

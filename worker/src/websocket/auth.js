@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import jwt from 'jsonwebtoken';
 import config from '../../config/config.js';
 
@@ -12,6 +13,7 @@ const socketAuth = (socket, next) => {
 
     socket.user = { id: payload.sub };
     socket.instanceId = payload.instanceId;
+    socket.permissions = payload.permissions || [];
 
     return next();
   } catch (err) {

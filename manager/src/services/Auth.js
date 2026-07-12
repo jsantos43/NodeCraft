@@ -43,6 +43,17 @@ class Auth {
     else if (type === 'refresh') await User.update(id, { refreshTokenHash: null, refreshTokenExpires: null });
   }
 
+  // Returns the permissions a user effectively has on an instance
+  static async getInstancePermissions(user, id) {
+    if (user.admin) return [...config.instance.permissions, 'instance:owner'];
+
+    const instance = await Instance.readOne(id);
+    if (instance.owner === user.id) return [...config.instance.permissions, 'instance:owner'];
+
+    const permissions = await Link.readUserPermissions(user.id, id);
+    return permissions || [];
+  }
+
   static async checkPermission(user, permission, id) {
     if (permission === 'logged') return true;
     if (user.admin) return true;
