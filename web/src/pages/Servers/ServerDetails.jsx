@@ -255,9 +255,14 @@ function ConsoleTab({ instance }) {
         const parsed = new URL(workerUrl);
         const prefix = parsed.pathname.replace(/\/+$/, '');
 
+        // Start with HTTP long-polling (works through any proxy that forwards
+        // plain HTTP) and let Socket.IO upgrade to WebSocket when the proxy
+        // supports the Upgrade handshake. Websocket-only would hang/timeout
+        // behind a proxy that doesn't upgrade (e.g. missing nginx Upgrade
+        // headers on the worker's /socket.io/ location).
         socket = io(parsed.origin, {
           auth: { token },
-          transports: ['websocket'],
+          transports: ['polling', 'websocket'],
           path: `${prefix}/socket.io/`,
         });
         socketRef.current = socket;
