@@ -29,13 +29,46 @@ const TABS = [
   { id: 'players',   label: 'Players',    icon: Users      },
 ];
 
-const PERMISSIONS = [
-  { id: 'instance:read',    label: 'View'    },
-  { id: 'instance:update',  label: 'Update'  },
-  { id: 'instance:execute', label: 'Execute' },
-  { id: 'instance:backup',  label: 'Backup'  },
-  { id: 'instance:console', label: 'Console' },
+const PERMISSION_GROUPS = [
+  {
+    label: 'General',
+    perms: [
+      { id: 'instance:read',    label: 'View'    },
+      { id: 'instance:edit',    label: 'Edit'    },
+      { id: 'instance:execute', label: 'Execute' },
+      { id: 'instance:backup',  label: 'Backup'  },
+    ],
+  },
+  {
+    label: 'Console',
+    perms: [
+      { id: 'instance:console:read',  label: 'Read' },
+      { id: 'instance:console:write', label: 'Send' },
+    ],
+  },
+  {
+    label: 'Files',
+    perms: [
+      { id: 'instance:files:read',  label: 'Read'          },
+      { id: 'instance:files:edit',  label: 'Edit content'  },
+      { id: 'instance:files:write', label: 'Create/delete' },
+    ],
+  },
 ];
+
+// Each permission's prerequisites (flattened to include transitive deps).
+// Checking a permission auto-adds these; unchecking a prerequisite cascades
+// removal to everything that depends on it.
+const PERMISSION_DEPS = {
+  'instance:edit':          ['instance:read'],
+  'instance:execute':       ['instance:read'],
+  'instance:backup':        ['instance:read'],
+  'instance:console:read':  ['instance:read'],
+  'instance:console:write': ['instance:read', 'instance:console:read'],
+  'instance:files:read':    ['instance:read'],
+  'instance:files:write':   ['instance:read', 'instance:files:read', 'instance:files:edit'],
+  'instance:files:edit':    ['instance:read', 'instance:files:read'],
+};
 
 const ACCESS_OPTS = [
   { value: 'always',    label: 'Always',    desc: 'Always allowed to join'              },
@@ -201,6 +234,7 @@ function ConsoleTab({ instance }) {
   const [lines, setLines] = useState(instance.history || []);
   const [command, setCommand] = useState('');
   const [connected, setConnected] = useState(false);
+  const [canWrite, setCanWrite] = useState(false);
   const [error, setError] = useState(null);
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
@@ -211,7 +245,8 @@ function ConsoleTab({ instance }) {
 
     const connect = async () => {
       try {
-        const { token, workerUrl } = await instancesApi.consoleToken(instance.id);
+        const { token, workerUrl, permissions } = await instancesApi.consoleToken(instance.id);
+        setCanWrite((permissions || []).includes('console:write'));
 
         // workerUrl may include a path prefix (e.g. https://host/worker) used by
         // the nginx reverse proxy. A path in the io() URL would be treated as a
@@ -262,7 +297,7 @@ function ConsoleTab({ instance }) {
 
   const sendCommand = () => {
     const cmd = command.trim();
-    if (!cmd || !socketRef.current?.connected) return;
+    if (!cmd || !canWrite || !socketRef.current?.connected) return;
     socketRef.current.emit('send-command', { instanceId: instance.id, command: cmd });
     setLines((prev) => [...prev, `> ${cmd}`]);
     setCommand('');
@@ -292,23 +327,27 @@ function ConsoleTab({ instance }) {
         )}
         <div ref={bottomRef} />
       </div>
-      <div className="console-input-row">
-        <span className="console-prompt">&gt;</span>
-        <input
-          ref={inputRef}
-          className="console-input"
-          value={command}
-          onChange={(e) => setCommand(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Enter command..."
-          disabled={!connected}
-          autoComplete="off"
-          spellCheck={false}
-        />
-        <button className="console-send-btn" onClick={sendCommand} disabled={!connected}>
-          Send
-        </button>
-      </div>
+      {canWrite ? (
+        <div className="console-input-row">
+          <span className="console-prompt">&gt;</span>
+          <input
+            ref={inputRef}
+            className="console-input"
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Enter command..."
+            disabled={!connected}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <button className="console-send-btn" onClick={sendCommand} disabled={!connected}>
+            Send
+          </button>
+        </div>
+      ) : (
+        <div className="console-readonly-note">Read-only — you don&apos;t have permission to send commands.</div>
+      )}
     </div>
   );
 }
@@ -332,6 +371,13 @@ function FilesTab({ instanceId }) {
     () => instancesApi.listFiles(instanceId, path),
     [instanceId, path],
   );
+
+  const { data: permData } = useApi(() => instancesApi.getPermissions(instanceId), [instanceId]);
+  const perms = permData?.permissions || [];
+  const canRead = perms.includes('instance:files:read');
+  const canWrite = perms.includes('instance:files:write'); // create / upload / delete / move / unzip
+  // write implies edit — anyone who can create/delete files can also modify contents
+  const canEdit = perms.includes('instance:files:edit') || canWrite;
 
   const entries = [...(data?.content || [])].sort((a, b) => {
     if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
@@ -362,6 +408,7 @@ function FilesTab({ instanceId }) {
 
   const deleteEntry = async (e, entry) => {
     e.stopPropagation();
+    if (!canWrite) return;
     setOpError(null);
     try {
       await instancesApi.deleteFile(instanceId, join(entry.name));
@@ -377,10 +424,13 @@ function FilesTab({ instanceId }) {
   };
 
   const saveEdit = async () => {
+    if (!canEdit) return;
     setSaving(true);
     setOpError(null);
     try {
       await instancesApi.updateFile(instanceId, editFile.content, editFile.path);
+      setEditFile(null); // return to the directory listing
+      refetch();
     } catch (err) {
       setOpError(err.message || 'Failed to save');
     } finally {
@@ -389,7 +439,7 @@ function FilesTab({ instanceId }) {
   };
 
   const doCreate = async () => {
-    if (!createName.trim()) return;
+    if (!canWrite || !createName.trim()) return;
     setCreating(true);
     setOpError(null);
     try {
@@ -411,7 +461,7 @@ function FilesTab({ instanceId }) {
 
   const doUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!canWrite || !file) return;
     setOpError(null);
     setUpload({ name: file.name, percent: 0 });
     try {
@@ -439,7 +489,7 @@ function FilesTab({ instanceId }) {
   };
 
   const doAction = async () => {
-    if (!actionDialog) return;
+    if (!actionDialog || !canWrite) return;
     setActionLoading(true);
     setOpError(null);
     try {
@@ -467,9 +517,10 @@ function FilesTab({ instanceId }) {
             <ArrowLeft size={14} />
           </button>
           <span className="files-edit-name">{editFile.path.split('/').pop()}</span>
+          {!canEdit && <span className="files-edit-readonly">read-only</span>}
           <div style={{ flex: 1 }} />
           {opError && <span className="files-error-inline">{opError}</span>}
-          <Button size="sm" icon={Save} loading={saving} onClick={saveEdit}>Save</Button>
+          {canEdit && <Button size="sm" icon={Save} loading={saving} onClick={saveEdit}>Save</Button>}
         </div>
         <textarea
           className="files-editor"
@@ -478,6 +529,7 @@ function FilesTab({ instanceId }) {
           spellCheck={false}
           autoComplete="off"
           autoCorrect="off"
+          readOnly={!canEdit}
         />
       </div>
     );
@@ -502,15 +554,19 @@ function FilesTab({ instanceId }) {
           ))}
         </div>
         <div className="files-toolbar-actions">
-          <button className="files-icon-btn" title="New File" onClick={() => { setShowCreate('file'); setCreateName(''); setCreateContent(''); setOpError(null); }}>
-            <FilePlus size={14} />
-          </button>
-          <button className="files-icon-btn" title="New Folder" onClick={() => { setShowCreate('folder'); setCreateName(''); setOpError(null); }}>
-            <FolderPlus size={14} />
-          </button>
-          <button className="files-icon-btn" title="Upload" disabled={!!upload} onClick={() => uploadRef.current?.click()}>
-            <Upload size={14} />
-          </button>
+          {canWrite && (
+            <>
+              <button className="files-icon-btn" title="New File" onClick={() => { setShowCreate('file'); setCreateName(''); setCreateContent(''); setOpError(null); }}>
+                <FilePlus size={14} />
+              </button>
+              <button className="files-icon-btn" title="New Folder" onClick={() => { setShowCreate('folder'); setCreateName(''); setOpError(null); }}>
+                <FolderPlus size={14} />
+              </button>
+              <button className="files-icon-btn" title="Upload" disabled={!!upload} onClick={() => uploadRef.current?.click()}>
+                <Upload size={14} />
+              </button>
+            </>
+          )}
           <button className="files-icon-btn" title="Refresh" onClick={refetch}>
             <RefreshCw size={14} />
           </button>
@@ -536,7 +592,9 @@ function FilesTab({ instanceId }) {
 
       {opError && <div className="files-op-error">{opError}</div>}
 
-      {loading ? (
+      {permData && !canRead ? (
+        <div className="files-empty">You don&apos;t have permission to view files.</div>
+      ) : loading ? (
         <div className="files-loading"><Spinner /></div>
       ) : entries.length === 0 ? (
         <div className="files-empty">This directory is empty</div>
@@ -549,23 +607,29 @@ function FilesTab({ instanceId }) {
               </span>
               <span className="file-name">{entry.name}</span>
               <span className="file-row-actions">
-                {entry.name.endsWith('.zip') && (
+                {canWrite && entry.name.endsWith('.zip') && (
                   <button className="files-icon-btn" title="Extract" onClick={e => { e.stopPropagation(); openActionDialog('unzip', entry); }}>
                     <Archive size={13} />
                   </button>
                 )}
-                <button className="files-icon-btn" title="Copy to..." onClick={e => { e.stopPropagation(); openActionDialog('copy', entry); }}>
-                  <Copy size={13} />
-                </button>
-                <button className="files-icon-btn" title="Move to..." onClick={e => { e.stopPropagation(); openActionDialog('move', entry); }}>
-                  <Scissors size={13} />
-                </button>
+                {canWrite && (
+                  <button className="files-icon-btn" title="Copy to..." onClick={e => { e.stopPropagation(); openActionDialog('copy', entry); }}>
+                    <Copy size={13} />
+                  </button>
+                )}
+                {canWrite && (
+                  <button className="files-icon-btn" title="Move to..." onClick={e => { e.stopPropagation(); openActionDialog('move', entry); }}>
+                    <Scissors size={13} />
+                  </button>
+                )}
                 <button className="files-icon-btn" title="Download" onClick={e => downloadEntry(e, entry)}>
                   <Download size={13} />
                 </button>
-                <button className="files-icon-btn files-icon-danger" title="Delete" onClick={e => deleteEntry(e, entry)}>
-                  <Trash2 size={13} />
-                </button>
+                {canWrite && (
+                  <button className="files-icon-btn files-icon-danger" title="Delete" onClick={e => deleteEntry(e, entry)}>
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </span>
             </div>
           ))}
@@ -648,7 +712,7 @@ const BACKUP_BADGE = { success: 'backup-badge-ok', failed: 'backup-badge-fail', 
 
 const BACKUP_TIMEOUT = 5 * 60 * 1000; // give up watching after 5 min
 
-function BackupsTab({ instance, onRefetch }) {
+function BackupsTab({ instance, canBackup, onRefetch }) {
   const [backingUp, setBackingUp] = useState(false);
   const [error, setError] = useState(null);
   const [timedOut, setTimedOut] = useState(false);
@@ -719,18 +783,20 @@ function BackupsTab({ instance, onRefetch }) {
         </div>
       </div>
 
-      <div className="backups-header">
-        <Button
-          size="sm"
-          variant="secondary"
-          icon={HardDrive}
-          onClick={startBackup}
-          loading={backingUp}
-          disabled={backingUp}
-        >
-          {backingUp ? 'Backing up…' : 'Create Backup'}
-        </Button>
-      </div>
+      {canBackup && (
+        <div className="backups-header">
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={HardDrive}
+            onClick={startBackup}
+            loading={backingUp}
+            disabled={backingUp}
+          >
+            {backingUp ? 'Backing up…' : 'Create Backup'}
+          </Button>
+        </div>
+      )}
 
       {error && <span className="backup-error">{error}</span>}
       {timedOut && (
@@ -792,7 +858,29 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
   };
 
   const togglePermission = (perm) => {
-    setPermissions(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]);
+    setPermissions(prev => {
+      const set = new Set(prev);
+      if (set.has(perm)) {
+        // Remove the permission, then drop anything whose prerequisites are no
+        // longer all present (cascade), until the set stabilizes.
+        set.delete(perm);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const p of [...set]) {
+            if ((PERMISSION_DEPS[p] || []).some(dep => !set.has(dep))) {
+              set.delete(p);
+              changed = true;
+            }
+          }
+        }
+      } else {
+        // Add the permission plus all its prerequisites.
+        set.add(perm);
+        (PERMISSION_DEPS[perm] || []).forEach(dep => set.add(dep));
+      }
+      return [...set];
+    });
   };
 
   return (
@@ -856,20 +944,28 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
 
           <div className="link-form-field">
             <label className="link-form-label">Panel Permissions</label>
-            <div className="link-perms">
-              {PERMISSIONS.map(({ id: pId, label }) => (
-                <label key={pId} className="link-perm-toggle">
-                  <input type="checkbox" checked={permissions.includes(pId)} onChange={() => togglePermission(pId)} />
-                  {label}
-                </label>
-              ))}
-            </div>
+            {PERMISSION_GROUPS.map(group => (
+              <div key={group.label} className="link-perm-group">
+                <span className="link-perm-group-label">{group.label}</span>
+                <div className="link-perms">
+                  {group.perms.map(({ id: pId, label }) => (
+                    <label key={pId} className="link-perm-toggle">
+                      <input type="checkbox" checked={permissions.includes(pId)} onChange={() => togglePermission(pId)} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <label className="link-perm-toggle">
-            <input type="checkbox" checked={privileges} onChange={e => setPrivileges(e.target.checked)} />
-            Grant OP / admin privileges in-game
-          </label>
+          <div className="link-form-field">
+            <label className="link-form-label">Admin</label>
+            <label className="link-perm-toggle">
+              <input type="checkbox" checked={privileges} onChange={e => setPrivileges(e.target.checked)} />
+              Grant OP / admin privileges in-game
+            </label>
+          </div>
 
           {saveError && <span className="link-form-error">{saveError}</span>}
         </div>
@@ -891,7 +987,7 @@ const ACCESS_META = {
   monitored: { color: 'yellow', label: 'Monitored', desc: 'Joins only while a Super player is online' },
 };
 
-function RosterRow({ link, onEdit, onDelete }) {
+function RosterRow({ link, canManage, onEdit, onDelete }) {
   const del = useAction(onDelete);
   const access = ACCESS_META[link.access] || { color: 'gray', label: link.access, desc: '' };
   const name = link.user?.name || 'Anonymous';
@@ -915,12 +1011,14 @@ function RosterRow({ link, onEdit, onDelete }) {
         )}
       </div>
       <span className={`roster-access roster-access-${access.color}`} title={access.desc}>{access.label}</span>
-      <div className="roster-actions">
-        <button className="files-icon-btn" onClick={onEdit} title="Edit"><Edit2 size={13} /></button>
-        <button className="files-icon-btn files-icon-danger" onClick={del.execute} disabled={del.loading} title="Remove">
-          {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
-        </button>
-      </div>
+      {canManage && (
+        <div className="roster-actions">
+          <button className="files-icon-btn" onClick={onEdit} title="Edit"><Edit2 size={13} /></button>
+          <button className="files-icon-btn files-icon-danger" onClick={del.execute} disabled={del.loading} title="Remove">
+            {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1072,7 +1170,7 @@ function ConnectTab({ instance, onRefetch }) {
   );
 }
 
-function PlayersTab({ instance }) {
+function PlayersTab({ instance, canManage }) {
   const { data, loading, refetch } = useApi(() => instancesApi.listLinks(instance.id), [instance.id]);
   const links = data?.links || [];
   const [dialog, setDialog] = useState(null);
@@ -1089,7 +1187,7 @@ function PlayersTab({ instance }) {
             {links.length === 0 ? 'No players yet' : `${links.length} ${links.length === 1 ? 'player' : 'players'} invited`}
           </span>
         </div>
-        <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>
+        {canManage && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>}
       </div>
 
       {loading ? (
@@ -1099,12 +1197,12 @@ function PlayersTab({ instance }) {
           <Users size={26} />
           <h3>No one’s been invited yet</h3>
           <p>Add a player to let them join and choose what they can do on the server.</p>
-          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>
+          {canManage && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>}
         </div>
       ) : (
         <div className="roster">
           {links.map(link => (
-            <RosterRow key={link.id} link={link} onEdit={() => setDialog(link)} onDelete={() => onDelete(link.id)} />
+            <RosterRow key={link.id} link={link} canManage={canManage} onEdit={() => setDialog(link)} onDelete={() => onDelete(link.id)} />
           ))}
         </div>
       )}
@@ -1121,7 +1219,7 @@ function PlayersTab({ instance }) {
   );
 }
 
-function VariablesTab({ instance, onSaved }) {
+function VariablesTab({ instance, canEdit, onSaved }) {
   const [inst, setInst] = useState({
     name:       instance.name       ?? '',
     memory:     instance.memory     ?? 1024,
@@ -1172,7 +1270,7 @@ function VariablesTab({ instance, onSaved }) {
     if (f.type === 'select') {
       const opts = f.options || [];
       return (
-        <Select key={f.key} label={f.label} value={value ?? ''} onChange={e => {
+        <Select key={f.key} label={f.label} value={value ?? ''} disabled={!canEdit} onChange={e => {
           const raw = e.target.value;
           const isNumOpts = opts.length > 0 && typeof opts[0] === 'object' && typeof opts[0].value === 'number';
           onChange(isNumOpts ? Number(raw) : raw);
@@ -1194,6 +1292,7 @@ function VariablesTab({ instance, onSaved }) {
         max={f.max}
         step={f.step}
         value={value ?? ''}
+        disabled={!canEdit}
         onChange={e => onChange(f.type === 'number' ? e.target.value : e.target.value)}
       />
     );
@@ -1226,6 +1325,7 @@ function VariablesTab({ instance, onSaved }) {
                 <input
                   type="checkbox"
                   checked={!!game[key]}
+                  disabled={!canEdit}
                   onChange={e => setG(key, e.target.checked)}
                 />
                 <span className="toggle-track" />
@@ -1236,11 +1336,13 @@ function VariablesTab({ instance, onSaved }) {
         </div>
       )}
 
-      <div className="vars-footer">
-        {saveError && <span className="vars-error">{saveError}</span>}
-        {saved && <span className="vars-saved">Saved</span>}
-        <Button icon={Save} loading={loading} onClick={save}>Save Changes</Button>
-      </div>
+      {canEdit && (
+        <div className="vars-footer">
+          {saveError && <span className="vars-error">{saveError}</span>}
+          {saved && <span className="vars-saved">Saved</span>}
+          <Button icon={Save} loading={loading} onClick={save}>Save Changes</Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1255,6 +1357,13 @@ export default function ServerDetails() {
 
   const { data, loading, refetch } = useApi(() => instancesApi.get(id), [id]);
   const instance = data?.instance;
+
+  const { data: permData } = useApi(() => instancesApi.getPermissions(id), [id]);
+  const permissions = permData?.permissions || [];
+  const canExecute = permissions.includes('instance:execute');
+  const canEditInstance = permissions.includes('instance:edit');
+  const canBackup = permissions.includes('instance:backup');
+  const canManageLinks = permissions.includes('instance:owner');
 
   // Resolve pending when real status matches expected
   useEffect(() => {
@@ -1339,20 +1448,22 @@ export default function ServerDetails() {
             <span className="server-details-game">{GAME_LABELS[instance.type] || instance.type}</span>
           </div>
           <div className="server-details-actions">
-            {!isRunning && (
+            {canExecute && !isRunning && (
               <Button icon={Play} size="sm" disabled={transitioning} onClick={handleRun}>
                 Start
               </Button>
             )}
-            {isRunning && (
+            {canExecute && isRunning && (
               <Button icon={Square} variant="danger" size="sm" disabled={transitioning} onClick={handleStop}>
                 Stop
               </Button>
             )}
-            <Button icon={RotateCcw} variant="secondary" size="sm" disabled={transitioning} onClick={handleRestart}>
-              Restart
-            </Button>
-            <Button icon={Trash2} variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} />
+            {canExecute && (
+              <Button icon={RotateCcw} variant="secondary" size="sm" disabled={transitioning} onClick={handleRestart}>
+                Restart
+              </Button>
+            )}
+            {canManageLinks && <Button icon={Trash2} variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} />}
           </div>
         </div>
 
@@ -1373,10 +1484,10 @@ export default function ServerDetails() {
           {tab === 'overview' && <Card><OverviewTab instance={instance} /></Card>}
           {tab === 'console'  && <Card padding={false}><ConsoleTab instance={instance} /></Card>}
           {tab === 'files'    && <Card><FilesTab instanceId={id} /></Card>}
-          {tab === 'backups'  && <Card><BackupsTab instance={instance} onRefetch={refetch} /></Card>}
-          {tab === 'env'      && <Card><VariablesTab instance={instance} onSaved={refetch} /></Card>}
+          {tab === 'backups'  && <Card><BackupsTab instance={instance} canBackup={canBackup} onRefetch={refetch} /></Card>}
+          {tab === 'env'      && <Card><VariablesTab instance={instance} canEdit={canEditInstance} onSaved={refetch} /></Card>}
           {tab === 'connect'  && <Card><ConnectTab instance={instance} onRefetch={refetch} /></Card>}
-          {tab === 'players'  && <Card><PlayersTab instance={instance} /></Card>}
+          {tab === 'players'  && <Card><PlayersTab instance={instance} canManage={canManageLinks} /></Card>}
         </div>
       </div>
 

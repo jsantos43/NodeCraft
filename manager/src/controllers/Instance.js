@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Internal, InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import WorkerService from '../services/Worker.js';
+import AuthService from '../services/Auth.js';
 import Quota from '../services/Quota.js';
 
 class Instance {
@@ -170,6 +171,19 @@ class Instance {
     }
   }
 
+  static async readPermissions(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { user } = req;
+
+      const permissions = await AuthService.getInstancePermissions(user, id);
+
+      return res.status(200).json({ success: true, permissions });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   static async consoleToken(req, res, next) {
     try {
       const { id } = req.params;
@@ -178,13 +192,25 @@ class Instance {
       const instance = await Service.readOne(id);
       const worker = await WorkerService.readOne(instance.workerId);
 
+      // Verify if user can write in console too
+      const canWrite = await AuthService.checkPermission(user, 'instance:console:write', id);
+      const permissions = ['console:read'];
+      if (canWrite) permissions.push('console:write');
+
       const token = jwt.sign(
-        { sub: user.id, instanceId: id, purpose: 'console' },
+        {
+          sub: user.id,
+          instanceId: id,
+          purpose: 'console',
+          permissions,
+        },
         worker.secret,
         { expiresIn: 120 },
       );
 
-      return res.status(200).json({ success: true, token, workerUrl: worker.url });
+      return res.status(200).json({
+        success: true, token, workerUrl: worker.url, permissions,
+      });
     } catch (err) {
       return next(err);
     }

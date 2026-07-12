@@ -1,8 +1,10 @@
 import { Op } from 'sequelize';
 import { Worker as WorkerModel, Instance as InstanceModel, instanceInclude } from '../models/index.js';
 import logger from '../../config/logger.js';
+import config from '../../config/config.js';
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
+const ONE_HOUR = 60 * 60 * 1000;
 
 class BackupScheduler {
   static start() {
@@ -10,9 +12,9 @@ class BackupScheduler {
 
     setInterval(async () => {
       try {
-        const now = new Date();
-        const isThreeAM = now.getHours() === 3;
-        const today = now.toLocaleDateString('sv-SE');
+        const now = new Date(Date.now() + config.app.gmt * ONE_HOUR);
+        const isThreeAM = now.getUTCHours() === 3;
+        const today = now.toISOString().slice(0, 10);
 
         if (isThreeAM && lastRunDate !== today) {
           lastRunDate = today;

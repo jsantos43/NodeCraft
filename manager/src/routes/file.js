@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import Controller from '../controllers/File.js';
-import { auth, validate, verifyNotRunning } from '../middlewares/index.js';
+import { auth, validate } from '../middlewares/index.js';
 import { createFile, updateFile } from '../schemas/index.js';
 
 const router = Router();
@@ -8,48 +8,45 @@ const router = Router();
 router
   .get( // [Query: path, download]
     '/:id/files',
-    auth('instance:file:read'),
+    auth('instance:files:read'),
     Controller.read,
   )
 
   .post( // [Body: type, content | Query: destiny]
     '/:id/files/create',
-    auth('instance:file:write'),
+    auth('instance:files:write'),
     validate(createFile),
     Controller.create,
   )
 
   .post( // [Query: destiny]
     '/:id/files/upload',
-    auth('instance:file:write'),
+    auth('instance:files:write'),
     Controller.upload,
   )
 
   .put( // [Body: content | Query: path]
     '/:id/files/edit',
-    auth('instance:file:write'),
-    // verifyNotRunning,
+    auth('instance:files:edit'),
     validate(updateFile),
     Controller.update,
   )
 
   .delete( // [Query: path]
     '/:id/files/delete',
-    auth('instance:file:write'),
-    // verifyNotRunning,
+    auth('instance:files:write'),
     Controller.delete,
   )
 
   .post( // [Query: path, destiny, actions(copy or move)]
     '/:id/files/transfer',
-    auth('instance:file:transfer'),
-    // verifyNotRunning,
+    auth('instance:files:write'),
     Controller.transfer,
   )
 
   .post( // [Query: path, destiny]
     '/:id/files/unzip',
-    auth('instance:file:zip'),
+    auth('instance:files:write'),
     Controller.unzip,
   );
 
