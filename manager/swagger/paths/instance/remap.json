@@ -1,6 +1,7 @@
 {
   "put": {
     "summary": "remap Port",
+    "description": "Assigns a new random port (range 5621–5671) to the instance. The instance must be stopped. Requires being the instance owner.",
     "tags": [
       "Instance"
     ],

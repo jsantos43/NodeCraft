@@ -1,16 +1,13 @@
 {
   "post": {
-    "summary": "restart Instance",
-    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+    "summary": "receive a heartbeat from a Worker (worker auth)",
+    "description": "Called by the worker itself every 15s. Authenticated with the worker apiKey (Bearer). Updates hardware metrics and marks the worker healthy.",
     "tags": [
-      "Instance"
+      "Worker"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/instance.json#/default"
-      },
-      "400": {
-        "$ref": "../../components/responses/error.json#/InvalidRequest"
+        "$ref": "../../components/responses/worker.json#/ok"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -24,6 +21,9 @@
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/worker.json#/heartbeat"
     }
   },
   "parameters": [
@@ -34,7 +34,7 @@
       "schema": {
         "type": "string"
       },
-      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
     }
   ]
 }

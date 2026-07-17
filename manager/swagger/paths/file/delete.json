@@ -1,6 +1,7 @@
 {
   "delete": {
     "summary": "delete File",
+    "description": "Deletes the file or directory at `path` inside the instance game folder. Proxied to the worker. Requires `instance:files:write`.",
     "tags": [
       "Files"
     ],

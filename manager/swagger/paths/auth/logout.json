@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "logout User",
+    "description": "Logs the current user out: wipes the stored refresh token and clears the `accessToken`/`refreshToken` cookies. Requires a valid access token.",
     "tags": [
       "Auth"
     ],

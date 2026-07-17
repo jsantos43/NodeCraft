@@ -1,13 +1,13 @@
 {
   "post": {
-    "summary": "restart Instance",
-    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+    "summary": "generate a console access token for a Instance",
+    "description": "Issues a short-lived (120s) JWT the frontend uses to open the console WebSocket directly on the worker. The token carries `console:read`, plus `console:write` when the user has that permission. Requires `instance:console:read`.",
     "tags": [
       "Instance"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/instance.json#/default"
+        "$ref": "../../components/responses/instance.json#/console"
       },
       "400": {
         "$ref": "../../components/responses/error.json#/InvalidRequest"

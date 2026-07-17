@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+    },
+    "name": {
+      "type": "string",
+      "example": "worker-sp-01"
+    },
+    "url": {
+      "type": "string",
+      "nullable": true,
+      "example": "http://worker.webisk.com.br:9184"
+    },
+    "healthy": {
+      "type": "boolean",
+      "example": true
+    },
+    "lastSeenAt": {
+      "type": "integer",
+      "format": "int64",
+      "nullable": true,
+      "description": "Epoch millis of the last received heartbeat.",
+      "example": 1752710400000
+    },
+    "cpuUsage": {
+      "type": "number",
+      "nullable": true,
+      "description": "CPU usage percentage (0-100).",
+      "example": 23.5
+    },
+    "memorieTotal": {
+      "type": "integer",
+      "nullable": true,
+      "description": "Total memory in MB.",
+      "example": 16384
+    },
+    "memorieUsed": {
+      "type": "integer",
+      "nullable": true,
+      "description": "Used memory in MB.",
+      "example": 4096
+    },
+    "diskAvailable": {
+      "type": "integer",
+      "nullable": true,
+      "description": "Available disk in MB.",
+      "example": 204800
+    }
+  }
+}

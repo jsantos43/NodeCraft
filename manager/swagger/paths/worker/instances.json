@@ -1,16 +1,13 @@
 {
-  "post": {
-    "summary": "restart Instance",
-    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+  "get": {
+    "summary": "list the Instances assigned to a Worker (worker auth or admin)",
+    "description": "Lists the instances currently assigned to the worker. Accessible by the worker itself (worker auth) or by an admin.",
     "tags": [
-      "Instance"
+      "Worker"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/instance.json#/default"
-      },
-      "400": {
-        "$ref": "../../components/responses/error.json#/InvalidRequest"
+        "$ref": "../../components/responses/worker.json#/instances"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -34,7 +31,7 @@
       "schema": {
         "type": "string"
       },
-      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
     }
   ]
 }

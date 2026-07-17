@@ -1,7 +1,7 @@
 {
-  "post": {
-    "summary": "restart Instance",
-    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+  "put": {
+    "summary": "change the Worker of a Instance (admin only)",
+    "description": "Moves the instance to a different worker, or detaches it by sending `workerId: null`. The instance must be stopped. Admin only.",
     "tags": [
       "Instance"
     ],
@@ -24,6 +24,9 @@
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/instance.json#/worker"
     }
   },
   "parameters": [

@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "login User",
+    "description": "Authenticates the user with email and password. On success sets the `accessToken` (JWT, 15min) and `refreshToken` (3 days) as httpOnly cookies and returns the user. Public route.",
     "tags": [
       "Auth"
     ],

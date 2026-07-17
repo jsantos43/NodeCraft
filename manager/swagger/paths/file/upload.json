@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "upload File",
+    "description": "Uploads a file (multipart/form-data) into the instance game folder at `destiny`. Streamed through to the worker. Requires `instance:files:write`.",
     "tags": [
       "Files"
     ],

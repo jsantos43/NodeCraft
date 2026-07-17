@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "validate User account",
+    "description": "Validates a user account with the token sent by email, marking it as verified. Requires a valid access token and the email service to be available.",
     "tags": [
       "Auth"
     ],

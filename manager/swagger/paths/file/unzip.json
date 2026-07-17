@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "unzip File",
+    "description": "Extracts the zip at `path` into `destiny` inside the instance game folder. Proxied to the worker. Requires `instance:files:write`.",
     "tags": [
       "Files"
     ],

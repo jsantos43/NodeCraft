@@ -3,18 +3,32 @@
     "content": {
       "application/json": {
         "schema": {
+          "type": "object",
+          "required": [
+            "name",
+            "email",
+            "password"
+          ],
           "properties": {
             "name": {
               "type": "string",
+              "minLength": 3,
+              "maxLength": 32,
               "example": "Joao"
             },
             "email": {
               "type": "string",
+              "format": "email",
               "example": "joao@email.com"
             },
             "password": {
               "type": "string",
               "example": "nodecraft123456"
+            },
+            "birthDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2007-05-14"
             }
           }
         }
@@ -26,10 +40,20 @@
       "application/json": {
         "schema": {
           "type": "object",
+          "required": [
+            "name"
+          ],
           "properties": {
             "name": {
               "type": "string",
+              "minLength": 3,
+              "maxLength": 32,
               "example": "Joao Pedro"
+            },
+            "birthDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2007-05-14"
             }
           }
         }
@@ -41,14 +65,68 @@
       "application/json": {
         "schema": {
           "type": "object",
+          "description": "Admin-only update of another user, including quotas and access limits.",
           "properties": {
+            "admin": {
+              "type": "boolean",
+              "example": false
+            },
             "name": {
               "type": "string",
+              "minLength": 3,
+              "maxLength": 32,
               "example": "Joao Pedro"
             },
-            "quota": {
+            "birthDate": {
+              "type": "string",
+              "format": "date",
+              "example": "2007-05-14"
+            },
+            "maxInstances": {
               "type": "integer",
+              "minimum": 0,
               "example": 3
+            },
+            "maxMemory": {
+              "type": "integer",
+              "minimum": 0,
+              "example": 8192
+            },
+            "maxCpu": {
+              "type": "integer",
+              "minimum": 0,
+              "example": 4
+            },
+            "maxDisk": {
+              "type": "integer",
+              "minimum": 0,
+              "example": 5120
+            },
+            "allowedGames": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "minecraft",
+                  "hytale",
+                  "counterstrike",
+                  "terraria",
+                  "kerbal"
+                ]
+              },
+              "example": [
+                "minecraft",
+                "terraria"
+              ]
+            },
+            "allowedWorkers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+              ]
             }
           }
         }

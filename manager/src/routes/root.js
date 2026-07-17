@@ -8,9 +8,9 @@ router
       success: true,
       name: 'Nodecraft API',
       version: '3.0',
-      summary: 'Api to create and manage game servers with docker',
+      summary: 'Central manager API of the NodeCraft platform — create, configure and run game server instances via Docker, with authentication, per-instance permissions, automatic backups and worker fleet monitoring.',
       docs: '/docs',
-      github: 'https://github.com.br/JoaoSantos2007',
+      github: 'https://github.com/jsantos43',
       author: 'João Pedro Tomaz dos Santos',
     });
   });

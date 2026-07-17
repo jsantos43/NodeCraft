@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "verify User account",
+    "description": "Sends (or re-sends) the account-verification email to the logged-in user. Returns 400 if the account is already verified. Requires a valid access token and the email service.",
     "tags": [
       "Auth"
     ],

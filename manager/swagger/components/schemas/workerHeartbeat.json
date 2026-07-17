@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "example": "9f1c7b4e-2a3d-4e5f-8b6c-1d2e3f4a5b6c"
+    },
+    "workerId": {
+      "type": "string",
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+    },
+    "cpuUsage": {
+      "type": "number",
+      "nullable": true,
+      "example": 23.5
+    },
+    "memorieTotal": {
+      "type": "integer",
+      "nullable": true,
+      "example": 16384
+    },
+    "memorieUsed": {
+      "type": "integer",
+      "nullable": true,
+      "example": 4096
+    },
+    "diskAvailable": {
+      "type": "integer",
+      "nullable": true,
+      "example": 204800
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "example": "2026-07-17T03:00:00.000Z"
+    }
+  }
+}

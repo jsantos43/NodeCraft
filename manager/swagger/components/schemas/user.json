@@ -21,9 +21,58 @@
       "type": "boolean",
       "example": false
     },
-    "quota": {
+    "birthDate": {
+      "type": "string",
+      "format": "date",
+      "nullable": true,
+      "example": "2007-05-14"
+    },
+    "maxInstances": {
       "type": "integer",
+      "description": "Max number of instances the user can own.",
       "example": 3
+    },
+    "maxMemory": {
+      "type": "integer",
+      "description": "Max total memory (MB) across the user's instances.",
+      "example": 8192
+    },
+    "maxCpu": {
+      "type": "integer",
+      "description": "Max total CPU cores across the user's instances.",
+      "example": 4
+    },
+    "maxDisk": {
+      "type": "integer",
+      "description": "Max total disk (MB) across the user's instances.",
+      "example": 5120
+    },
+    "allowedGames": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "minecraft",
+          "hytale",
+          "counterstrike",
+          "terraria",
+          "kerbal"
+        ]
+      },
+      "example": [
+        "minecraft",
+        "terraria"
+      ]
+    },
+    "allowedWorkers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Worker ids the user may create instances on. Empty blocks instance creation.",
+      "example": [
+        "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+      ]
     }
   }
 }

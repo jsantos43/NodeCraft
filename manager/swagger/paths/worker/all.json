@@ -1,13 +1,13 @@
 {
   "get": {
-    "summary": "read all Users",
-    "description": "Lists every registered user. Admin only.",
+    "summary": "list all Workers (admin only)",
+    "description": "Lists every worker with full hardware metrics and health status. Admin only.",
     "tags": [
-      "User"
+      "Worker"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/user.json#/readAll"
+        "$ref": "../../components/responses/worker.json#/readAll"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"

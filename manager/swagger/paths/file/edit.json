@@ -1,6 +1,7 @@
 {
   "put": {
     "summary": "update File",
+    "description": "Overwrites the content of an existing file at `path`. Proxied to the worker. Requires `instance:files:edit`.",
     "tags": [
       "Files"
     ],

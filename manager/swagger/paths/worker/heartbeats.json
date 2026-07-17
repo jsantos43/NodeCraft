@@ -1,0 +1,54 @@
+{
+  "get": {
+    "summary": "read a Worker's heartbeat history (admin only)",
+    "description": "Returns the worker's recorded heartbeats within `range` (default 7 days), oldest first — used to plot hardware-usage history. Admin only.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/worker.json#/heartbeats"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+    },
+    {
+      "name": "range",
+      "in": "query",
+      "required": false,
+      "description": "Time window of heartbeats to return. Defaults to 7 days.",
+      "schema": {
+        "type": "string",
+        "enum": [
+          "1h",
+          "6h",
+          "24h",
+          "3d",
+          "7d"
+        ]
+      },
+      "example": "24h"
+    }
+  ]
+}

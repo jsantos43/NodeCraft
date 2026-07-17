@@ -1,7 +1,7 @@
 {
-  "post": {
-    "summary": "restart Instance",
-    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+  "put": {
+    "summary": "transfer Instance ownership (admin only)",
+    "description": "Transfers ownership of the instance to another user; any now-redundant link from the new owner is removed. The instance must be stopped. Admin only.",
     "tags": [
       "Instance"
     ],
@@ -24,6 +24,9 @@
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/instance.json#/owner"
     }
   },
   "parameters": [

@@ -1,16 +1,13 @@
 {
-  "post": {
-    "summary": "restart Instance",
-    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+  "put": {
+    "summary": "report an Instance's status/history to the manager (worker auth)",
+    "description": "Called by the worker every 15s to push instance status, new console/log lines and disk usage.",
     "tags": [
-      "Instance"
+      "Worker"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/instance.json#/default"
-      },
-      "400": {
-        "$ref": "../../components/responses/error.json#/InvalidRequest"
+        "$ref": "../../components/responses/worker.json#/ok"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -24,11 +21,23 @@
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
       }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/worker.json#/updateInstance"
     }
   },
   "parameters": [
     {
-      "name": "id",
+      "name": "workerId",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+    },
+    {
+      "name": "instanceId",
       "in": "path",
       "required": true,
       "schema": {

@@ -44,19 +44,41 @@
               "users": [
                 {
                   "id": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
-                  "admin": "true",
+                  "admin": true,
                   "name": "Joao",
                   "email": "joao@email.com",
                   "verified": true,
-                  "quota": 5
+                  "birthDate": "2007-05-14",
+                  "maxInstances": 5,
+                  "maxMemory": 16384,
+                  "maxCpu": 8,
+                  "maxDisk": 10240,
+                  "allowedGames": [
+                    "minecraft",
+                    "hytale",
+                    "counterstrike",
+                    "terraria",
+                    "kerbal"
+                  ],
+                  "allowedWorkers": [
+                    "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+                  ]
                 },
                 {
                   "id": "7c9c1f23-3b9d-4c3e-bf55-123456789abc",
-                  "admin": "false",
+                  "admin": false,
                   "name": "Pedro",
                   "email": "pedro@email.com",
                   "verified": false,
-                  "quota": 3
+                  "birthDate": null,
+                  "maxInstances": 3,
+                  "maxMemory": 8192,
+                  "maxCpu": 4,
+                  "maxDisk": 5120,
+                  "allowedGames": [
+                    "minecraft"
+                  ],
+                  "allowedWorkers": []
                 }
               ]
             }
