@@ -53,15 +53,12 @@ export default function CreateServer() {
   const { data: workersData } = useApi(() => workersApi.available());
   const workers = workersData?.workers || [];
 
-  // Quota usage across the instances this user owns. Mirrors the manager's
-  // Quota.verifyCanCreate checks so the user gets feedback before submitting.
+  // Quota usage across the instances this user owns. Only the instance count is
+  // enforced at create time; memory/cpu limits are enforced when the instance is
+  // started (Quota.verifyCanStart), so they are shown here only as guidance.
   const { data: instData } = useApi(() => instancesApi.list());
   const owned = (instData?.instances || []).filter(i => i.owner === user?.id);
-  const usage = owned.reduce((a, i) => ({
-    count: a.count + 1,
-    memory: a.memory + (i.memory || 0),
-    cpu: a.cpu + (i.cpu || 0),
-  }), { count: 0, memory: 0, cpu: 0 });
+  const usage = owned.reduce((a) => ({ count: a.count + 1 }), { count: 0 });
 
   const limits = {
     instances: user?.maxInstances ?? 0,
@@ -70,20 +67,16 @@ export default function CreateServer() {
   };
   const remaining = {
     instances: limits.instances - usage.count,
-    memory: limits.memory - usage.memory,
-    cpu: limits.cpu - usage.cpu,
   };
+
+  // A single instance sized above the account cap could never be started.
+  const memoryUnstartable = Number(form.memory) > limits.memory;
+  const cpuUnstartable = Number(form.cpu) > limits.cpu;
 
   // Reasons the current configuration cannot be created (empty = OK).
   const quotaIssues = [];
   if (remaining.instances <= 0) {
     quotaIssues.push(`Instance limit reached (${usage.count}/${limits.instances}).`);
-  }
-  if (Number(form.memory) > remaining.memory) {
-    quotaIssues.push(`Memory exceeds your quota (${Math.max(0, remaining.memory)} MB available).`);
-  }
-  if (Number(form.cpu) > remaining.cpu) {
-    quotaIssues.push(`CPU exceeds your quota (${Math.max(0, remaining.cpu)} core(s) available).`);
   }
   if (form.type && !allowedGames.includes(form.type)) {
     quotaIssues.push('This game is not allowed for your account.');
@@ -114,8 +107,6 @@ export default function CreateServer() {
       if (!form.name || form.name.length < 3) e.name = 'Min 3 characters';
       if (form.memory < 512) e.memory = 'Min 512 MB';
       if (remaining.instances <= 0) e.quota = `Instance limit reached (${usage.count}/${limits.instances})`;
-      if (Number(form.memory) > remaining.memory) e.memory = `Exceeds available memory (${Math.max(0, remaining.memory)} MB left)`;
-      if (Number(form.cpu) > remaining.cpu) e.cpu = `Exceeds available CPU (${Math.max(0, remaining.cpu)} core(s) left)`;
     }
     if (step === 2 && !form.workerId) e.workerId = 'Select a worker';
     setErrors(e);
@@ -200,15 +191,24 @@ export default function CreateServer() {
                   <span className="quota-item-label">Instances</span>
                   <span className="quota-item-val">{usage.count} / {limits.instances}</span>
                 </div>
-                <div className={`quota-item ${Number(form.memory) > remaining.memory ? 'quota-over' : ''}`}>
-                  <span className="quota-item-label">Memory available</span>
-                  <span className="quota-item-val">{Math.max(0, remaining.memory)} MB</span>
+                <div className={`quota-item ${memoryUnstartable ? 'quota-over' : ''}`}>
+                  <span className="quota-item-label">Memory limit</span>
+                  <span className="quota-item-val">{limits.memory} MB</span>
                 </div>
-                <div className={`quota-item ${Number(form.cpu) > remaining.cpu ? 'quota-over' : ''}`}>
-                  <span className="quota-item-label">CPU available</span>
-                  <span className="quota-item-val">{Math.max(0, remaining.cpu)} core(s)</span>
+                <div className={`quota-item ${cpuUnstartable ? 'quota-over' : ''}`}>
+                  <span className="quota-item-label">CPU limit</span>
+                  <span className="quota-item-val">{limits.cpu} core(s)</span>
                 </div>
               </div>
+              <p className="create-section-sub">
+                Memory and CPU limits are enforced when you start the server — across all
+                your running instances at once — not when creating it.
+              </p>
+              {(memoryUnstartable || cpuUnstartable) && (
+                <span className="ui-input-error">
+                  This size exceeds your account limit and could not be started.
+                </span>
+              )}
               {errors.quota && <span className="ui-input-error">{errors.quota}</span>}
 
               <div className="create-form">
@@ -228,7 +228,7 @@ export default function CreateServer() {
                     value={form.memory}
                     onChange={e => set('memory', e.target.value)}
                     error={errors.memory}
-                    hint={`Min 512 MB · ${Math.max(0, remaining.memory)} MB available`}
+                    hint={`Min 512 MB · ${limits.memory} MB account limit`}
                   />
                   <Input
                     label="CPU Cores"
@@ -237,7 +237,7 @@ export default function CreateServer() {
                     value={form.cpu}
                     onChange={e => set('cpu', e.target.value)}
                     error={errors.cpu}
-                    hint={`${Math.max(0, remaining.cpu)} core(s) available`}
+                    hint={`${limits.cpu} core(s) account limit`}
                   />
                 </div>
                 <Input

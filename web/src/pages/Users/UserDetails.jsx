@@ -68,12 +68,17 @@ export default function UserDetails() {
   const workers = workerData?.workers || [];
   const owned = (instData?.instances || []).filter(i => i.owner === id);
 
-  const usage = owned.reduce((a, i) => ({
-    count: a.count + 1,
-    memory: a.memory + (i.memory || 0),
-    cpu: a.cpu + (i.cpu || 0),
-    disk: a.disk + (i.diskUsage || 0),
-  }), {
+  // Memory/CPU limits are enforced across running instances only (that is when
+  // the resources are actually occupied); disk counts every owned instance.
+  const usage = owned.reduce((a, i) => {
+    const running = i.status === 'running';
+    return {
+      count: a.count + 1,
+      memory: a.memory + (running ? (i.memory || 0) : 0),
+      cpu: a.cpu + (running ? (i.cpu || 0) : 0),
+      disk: a.disk + (i.diskUsage || 0),
+    };
+  }, {
     count: 0, memory: 0, cpu: 0, disk: 0,
   });
 
@@ -171,12 +176,12 @@ export default function UserDetails() {
 
         <div className="user-details-grid">
           <Card>
-            <CardHeader title="Quota Usage" subtitle="Across this user's owned instances" />
+            <CardHeader title="Quota Usage" subtitle="Memory & CPU across running instances; disk across all" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <UsageBar label="Instances" value={usage.count} max={user.maxInstances ?? 0} unit="" />
               <UsageBar label="CPU" value={usage.cpu} max={user.maxCpu ?? 0} unit="cores" />
-              <UsageBar label="Memory" value={usage.memory} max={user.maxMemory ?? 0} unit="GB" />
-              <UsageBar label="Disk" value={usage.disk} max={user.maxDisk ?? 0} unit="GB" />
+              <UsageBar label="Memory" value={usage.memory} max={user.maxMemory ?? 0} unit="MB" />
+              <UsageBar label="Disk" value={usage.disk} max={user.maxDisk ?? 0} unit="MB" />
             </div>
           </Card>
 
@@ -211,7 +216,7 @@ export default function UserDetails() {
 
         {form && (
           <Card>
-            <CardHeader title="Account & Quotas" subtitle="Limits enforced when the user creates or starts instances" />
+            <CardHeader title="Account & Quotas" subtitle="Instance count on create; memory & CPU on start; disk monitored" />
             <div className="user-settings-top">
               <Input label="Name" value={form.name} onChange={e => set('name', e.target.value)} />
               <Select label="Role" value={form.admin ? 'admin' : 'user'} onChange={e => set('admin', e.target.value === 'admin')}>

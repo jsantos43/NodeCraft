@@ -9,6 +9,8 @@ import { NotFound, Internal } from '../errors/index.js';
 import Link from './Link.js';
 import config from '../../config/config.js';
 
+const MAX_INSTANCE_HISTORY = 45;
+
 class Instance {
   static async create(userId, instanceData, gameData) {
     // Select game model
@@ -78,6 +80,17 @@ class Instance {
     return instance;
   }
 
+  static async readByWorker(id) {
+    const instances = await Model.findAll({
+      where: {
+        workerId: id,
+      },
+      include: instanceInclude,
+    });
+
+    return instances;
+  }
+
   static async update(id, instanceData, gameData = null) {
     const instance = await Instance.readOne(id);
 
@@ -92,6 +105,24 @@ class Instance {
     });
 
     return instance;
+  }
+
+  static async updateDetails(id, data) {
+    const instance = await Instance.readOne(id);
+    const workerHistory = data?.history || [];
+
+    // Wipe old lines
+    let history = [...instance.history, ...workerHistory];
+    if (history.length > MAX_INSTANCE_HISTORY) {
+      history = history.slice(history.length - MAX_INSTANCE_HISTORY);
+    }
+
+    await instance.update({
+      status: data?.status,
+      history,
+      ...(Number.isFinite(data?.diskUsage) ? { diskUsage: Math.ceil(data.diskUsage) } : {}),
+      ...(data?.status === 'running' ? { lastActivityAt: new Date() } : {}),
+    });
   }
 
   static async delete(id) {
