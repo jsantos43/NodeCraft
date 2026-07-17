@@ -7,6 +7,8 @@ import {
 } from '../models/index.js';
 import { NotFound, Internal } from '../errors/index.js';
 import Link from './Link.js';
+import User from './User.js';
+import Worker from './Worker.js';
 import config from '../../config/config.js';
 
 const MAX_INSTANCE_HISTORY = 45;
@@ -123,6 +125,34 @@ class Instance {
       ...(Number.isFinite(data?.diskUsage) ? { diskUsage: Math.ceil(data.diskUsage) } : {}),
       ...(data?.status === 'running' ? { lastActivityAt: new Date() } : {}),
     });
+  }
+
+  static async transferOwner(id, newOwnerId) {
+    const instance = await Instance.readOne(id);
+
+    // Throws NotFound if the target user does not exist.
+    await User.readOne(newOwnerId);
+
+    if (instance.owner !== newOwnerId) {
+      // A link from the new owner to the instance is now redundant.
+      await Link.deleteByUserAndInstance(newOwnerId, id);
+      await instance.update({ owner: newOwnerId });
+    }
+
+    return Instance.readOne(id);
+  }
+
+  static async changeWorker(id, workerId) {
+    const instance = await Instance.readOne(id);
+
+    if (workerId) {
+      // Throws NotFound if the target worker does not exist.
+      await Worker.readOne(workerId);
+    }
+
+    await instance.update({ workerId: workerId || null });
+
+    return Instance.readOne(id);
   }
 
   static async delete(id) {

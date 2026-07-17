@@ -64,6 +64,32 @@ class Instance {
     }
   }
 
+  static async transferOwner(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { owner } = req.body;
+
+      const instance = await Service.transferOwner(id, owner);
+
+      return res.status(200).json({ success: true, instance });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async changeWorker(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { workerId } = req.body;
+
+      const instance = await Service.changeWorker(id, workerId);
+
+      return res.status(200).json({ success: true, instance });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   static async delete(req, res, next) {
     try {
       const { id } = req.params;

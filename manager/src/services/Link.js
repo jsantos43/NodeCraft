@@ -89,6 +89,14 @@ class Link {
     return link;
   }
 
+  // Remove the link (if any) between a user and an instance.
+  static async deleteByUserAndInstance(userId, instanceId) {
+    const link = await Link.readByUserAndInstance(userId, instanceId);
+    if (link) await link.destroy();
+
+    return link;
+  }
+
   static async readInstancesIdByUserLink(userId) {
     const instancesId = [];
 

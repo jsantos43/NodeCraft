@@ -8,6 +8,9 @@ export const instancesApi = {
   getPermissions: (id) => api.get(`/instance/${id}/permissions`),
   create: (body) => api.post('/instance', body),
   update: (id, body) => api.put(`/instance/${id}`, body),
+  transferOwner: (id, owner) => api.put(`/instance/${id}/owner`, { owner }),
+  // workerId: a worker id reassigns the instance; null detaches it.
+  changeWorker: (id, workerId) => api.put(`/instance/${id}/worker`, { workerId }),
   delete: (id) => api.delete(`/instance/${id}`),
 
   run: (id) => api.post(`/instance/${id}/run`),

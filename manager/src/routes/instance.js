@@ -5,7 +5,9 @@ import link from './link.js';
 import {
   auth, verifyNotRunning, validate,
 } from '../middlewares/index.js';
-import { createInstance, updateInstance } from '../schemas/index.js';
+import {
+  createInstance, updateInstance, transferOwner, changeWorker,
+} from '../schemas/index.js';
 
 const router = Router();
 
@@ -37,6 +39,20 @@ router
     verifyNotRunning,
     validate(updateInstance),
     Controller.update,
+  )
+  .put(
+    '/instance/:id/owner',
+    auth('admin'),
+    verifyNotRunning,
+    validate(transferOwner),
+    Controller.transferOwner,
+  )
+  .put(
+    '/instance/:id/worker',
+    auth('admin'),
+    verifyNotRunning,
+    validate(changeWorker),
+    Controller.changeWorker,
   )
   .delete(
     '/instance/:id',

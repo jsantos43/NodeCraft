@@ -6,6 +6,7 @@ import {
   Network, Variable, ArrowLeft, RefreshCw, Copy, Check, Save,
   FileText, FilePlus, FolderPlus, Upload, Download, ChevronRight, X,
   Plus, Edit2, Users, Scissors, Archive, Gamepad2, Coffee, Smartphone, Signal,
+  Shield, ArrowRight, AlertTriangle,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -15,6 +16,8 @@ import { StatusBadge } from '../../components/ui/Badge.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { usersApi } from '../../api/users.js';
+import { workersApi } from '../../api/workers.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './ServerDetails.css';
@@ -28,6 +31,9 @@ const TABS = [
   { id: 'connect',   label: 'Connect',    icon: Gamepad2   },
   { id: 'players',   label: 'Players',    icon: Users      },
 ];
+
+// Admin-only tab, appended to TABS only when the current user is an admin.
+const ADMIN_TAB = { id: 'admin', label: 'Admin', icon: Shield };
 
 const PERMISSION_GROUPS = [
   {
@@ -183,6 +189,82 @@ function CopyButton({ text }) {
   );
 }
 
+// Admin-only control to reassign the instance to another user.
+function OwnerTransfer({ instance, onChanged }) {
+  const { data: usersData } = useApi(() => usersApi.list(), []);
+  const users = usersData?.users || [];
+  const [selected, setSelected] = useState('');
+  const [confirming, setConfirming] = useState(false);
+
+  const isRunning = instance.status === 'running';
+  const currentOwner = users.find(u => u.id === instance.owner);
+  const target = users.find(u => u.id === selected);
+  const staged = !!selected && selected !== instance.owner;
+
+  const transfer = useAction(async () => {
+    if (!staged) return;
+    await instancesApi.transferOwner(instance.id, selected);
+    setConfirming(false);
+    setSelected('');
+    if (onChanged) onChanged();
+  });
+
+  return (
+    <section className="admin-panel">
+      <div className="admin-panel-head">
+        <span className="admin-panel-eyebrow">Ownership</span>
+        <p className="admin-panel-desc">Who this server is billed to and fully controls.</p>
+      </div>
+
+      <div className={`admin-move ${staged ? 'is-staged' : ''}`}>
+        <span className="admin-move-label admin-slot-a admin-row-label">Current</span>
+        <div className="admin-chip admin-slot-a admin-row-control">
+          <span className="admin-chip-name">{currentOwner?.name || 'Unknown'}</span>
+          <span className="admin-chip-sub">{currentOwner?.email || instance.owner}</span>
+        </div>
+
+        <ArrowRight className="admin-arrow" size={16} />
+
+        <span className="admin-move-label admin-slot-b admin-row-label">New owner</span>
+        <Select
+          className="admin-select admin-slot-b admin-row-control"
+          value={selected}
+          disabled={isRunning}
+          onChange={e => { setSelected(e.target.value); setConfirming(false); }}
+        >
+          <option value="">Select a user…</option>
+          {users.filter(u => u.id !== instance.owner).map(u => (
+            <option key={u.id} value={u.id}>{u.name} — {u.email}</option>
+          ))}
+        </Select>
+      </div>
+
+      {isRunning && (
+        <p className="admin-note admin-note-error">Stop the server before transferring ownership.</p>
+      )}
+      {transfer.error && (
+        <p className="admin-note admin-note-error">{transfer.error.message || 'Transfer failed'}</p>
+      )}
+
+      <div className="admin-panel-foot">
+        {!confirming ? (
+          <Button size="sm" variant="secondary" disabled={isRunning || !staged} onClick={() => setConfirming(true)}>
+            Transfer ownership
+          </Button>
+        ) : (
+          <div className="admin-confirm">
+            <span className="admin-confirm-q">Give this server to <b>{target?.name}</b>?</span>
+            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button>
+            <Button size="sm" variant="danger" loading={transfer.loading} onClick={transfer.execute}>
+              Transfer
+            </Button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function OverviewTab({ instance }) {
   const details = [
     ['ID',          instance.id],
@@ -226,6 +308,118 @@ function OverviewTab({ instance }) {
             ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Admin-only control to reassign the instance to a different worker or detach it.
+function WorkerAssign({ instance, onChanged }) {
+  const { data: workersData } = useApi(() => workersApi.list(), []);
+  const workers = workersData?.workers || [];
+  // '' represents "no worker" (detach); otherwise a worker id.
+  const [selected, setSelected] = useState(instance.workerId || '');
+  const [confirming, setConfirming] = useState(false);
+
+  const isRunning = instance.status === 'running';
+  const current = workers.find(w => w.id === instance.workerId);
+  const dirty = (selected || null) !== (instance.workerId || null);
+
+  const change = useAction(async () => {
+    await instancesApi.changeWorker(instance.id, selected || null);
+    setConfirming(false);
+    if (onChanged) onChanged();
+  });
+
+  const target = workers.find(w => w.id === selected);
+
+  return (
+    <section className="admin-panel">
+      <div className="admin-panel-head">
+        <span className="admin-panel-eyebrow">Placement</span>
+        <p className="admin-panel-desc">Which worker machine runs this server.</p>
+      </div>
+
+      <div className={`admin-move ${dirty ? 'is-staged' : ''}`}>
+        <span className="admin-move-label admin-slot-a admin-row-label">Current</span>
+        <div className="admin-chip admin-slot-a admin-row-control">
+          {current ? (
+            <>
+              <span className="admin-chip-name">{current.name}</span>
+              <span className="admin-chip-sub">{current.url}</span>
+            </>
+          ) : (
+            <span className="admin-chip-name admin-chip-empty">Not assigned</span>
+          )}
+        </div>
+
+        <ArrowRight className="admin-arrow" size={16} />
+
+        <span className="admin-move-label admin-slot-b admin-row-label">Target worker</span>
+        <Select
+          className="admin-select admin-slot-b admin-row-control"
+          value={selected}
+          disabled={isRunning}
+          onChange={e => { setSelected(e.target.value); setConfirming(false); }}
+        >
+          <option value="">— Detach (no worker) —</option>
+          {workers.map(w => (
+            <option key={w.id} value={w.id}>{w.name} — {w.url}</option>
+          ))}
+        </Select>
+      </div>
+
+      <p className="admin-note admin-note-warn">
+        <AlertTriangle size={14} />
+        <span>Data isn't migrated. The server starts fresh on the new worker unless you restore a backup there.</span>
+      </p>
+
+      {isRunning && (
+        <p className="admin-note admin-note-error">Stop the server before changing its worker.</p>
+      )}
+      {change.error && (
+        <p className="admin-note admin-note-error">{change.error.message || 'Failed to change worker'}</p>
+      )}
+
+      <div className="admin-panel-foot">
+        {!confirming ? (
+          <Button size="sm" variant="secondary" disabled={isRunning || !dirty} onClick={() => setConfirming(true)}>
+            {selected ? 'Change worker' : 'Detach worker'}
+          </Button>
+        ) : (
+          <div className="admin-confirm">
+            <span className="admin-confirm-q">
+              {selected
+                ? <>Move to <b>{target?.name}</b>?</>
+                : <>Detach from <b>{current?.name || 'its worker'}</b>?</>}
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button>
+            <Button size="sm" variant="danger" loading={change.loading} onClick={change.execute}>
+              {selected ? 'Move' : 'Detach'}
+            </Button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Admin-only tab: instance-level actions reserved for administrators.
+function AdminTab({ instance, onOwnerChanged }) {
+  return (
+    <div className="admin-tab">
+      <header className="admin-banner">
+        <span className="admin-banner-badge"><Shield size={15} /></span>
+        <div className="admin-banner-text">
+          <h3 className="admin-banner-title">Administrative controls</h3>
+          <p className="admin-banner-desc">
+            Reassignments available to admins only. Changes apply immediately, and the
+            server must be stopped first.
+          </p>
+        </div>
+      </header>
+
+      <OwnerTransfer instance={instance} onChanged={onOwnerChanged} />
+      <WorkerAssign instance={instance} onChanged={onOwnerChanged} />
     </div>
   );
 }
@@ -1363,6 +1557,9 @@ export default function ServerDetails() {
   const { data, loading, refetch } = useApi(() => instancesApi.get(id), [id]);
   const instance = data?.instance;
 
+  const { user: authUser } = useAuth();
+  const isAdmin = !!authUser?.admin;
+
   const { data: permData } = useApi(() => instancesApi.getPermissions(id), [id]);
   const permissions = permData?.permissions || [];
   const canExecute = permissions.includes('instance:execute');
@@ -1473,7 +1670,7 @@ export default function ServerDetails() {
         </div>
 
         <div className="server-tabs">
-          {TABS.map(({ id: tid, label, icon: Icon }) => (
+          {(isAdmin ? [...TABS, ADMIN_TAB] : TABS).map(({ id: tid, label, icon: Icon }) => (
             <button
               key={tid}
               className={`server-tab ${tab === tid ? 'tab-active' : ''}`}
@@ -1493,6 +1690,7 @@ export default function ServerDetails() {
           {tab === 'env'      && <Card><VariablesTab instance={instance} canEdit={canEditInstance} onSaved={refetch} /></Card>}
           {tab === 'connect'  && <Card><ConnectTab instance={instance} onRefetch={refetch} /></Card>}
           {tab === 'players'  && <Card><PlayersTab instance={instance} canManage={canManageLinks} /></Card>}
+          {tab === 'admin' && isAdmin && <Card><AdminTab instance={instance} onOwnerChanged={refetch} /></Card>}
         </div>
       </div>
 
