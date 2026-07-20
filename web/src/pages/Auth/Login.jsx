@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import './Login.css';
 
 export default function Login() {
@@ -15,21 +16,26 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const handle = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(null);
     setLoading(true);
     try {
       const loggedUser = await login(form.email, form.password);
       navigate(loggedUser?.admin ? '/dashboard' : '/servers');
     } catch (err) {
-      setError(err.message || 'Invalid credentials');
+      setError(err);
     } finally {
       setLoading(false);
     }
   };
+
+  // A 401 on the login form means bad credentials, not an expired session.
+  const errorOverride = error?.code === 'UNATHORIZED'
+    ? { title: 'Sign in failed', description: 'Wrong email or password.', icon: 'lock', tone: 'warning' }
+    : undefined;
 
   return (
     <div className="login-page">
@@ -52,7 +58,7 @@ export default function Login() {
 
         <form onSubmit={handle} className="login-form">
           {registered && <div className="login-success">Account created! Check your email to verify your account.</div>}
-          {error && <div className="login-error">{error}</div>}
+          {error && <Alert error={error} override={errorOverride} compact />}
 
           <Input
             label="Email address"

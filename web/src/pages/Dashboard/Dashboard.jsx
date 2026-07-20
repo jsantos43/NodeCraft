@@ -7,6 +7,7 @@ import MetricsChart from '../../components/ui/MetricsChart.jsx';
 import RangeSelector from '../../components/ui/RangeSelector.jsx';
 import ResourceBar from '../../components/ui/ResourceBar.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { workersApi } from '../../api/workers.js';
@@ -25,8 +26,8 @@ const GAME_LABELS = {
 
 export default function Dashboard() {
   const [range, setRange] = useState('1h');
-  const { data: instancesData, loading: loadingI } = useApi(() => instancesApi.list());
-  const { data: workersData,  loading: loadingW } = useApi(() => workersApi.list());
+  const { data: instancesData, loading: loadingI, error: instErr } = useApi(() => instancesApi.list());
+  const { data: workersData,  loading: loadingW, error: workErr } = useApi(() => workersApi.list());
   const { data: usersData } = useApi(() => usersApi.list());
 
   const { data: histData } = useApi(async () => {
@@ -55,8 +56,16 @@ export default function Dashboard() {
   const totalMemTotal = workers.reduce((s, w) => s + (w.memorieTotal || 0), 0);
   const memPct = totalMemTotal > 0 ? Math.round((totalMemUsed / totalMemTotal) * 100) : 0;
 
+  const loadError = instErr || workErr;
+
   return (
     <Layout title="Dashboard">
+
+      {loadError && (
+        <div style={{ marginBottom: 16 }}>
+          <Alert error={loadError} override={{ title: "Couldn't load dashboard data" }} />
+        </div>
+      )}
 
       {/* ── Stat cards ── */}
       <div className="dash-grid">

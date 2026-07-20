@@ -95,7 +95,7 @@ export default function CreateServer() {
     };
     const res = await instancesApi.create(payload);
     navigate(`/servers/${res.instance.id}`);
-  });
+  }, { errorToast: { title: "Couldn't create the server" } });
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
   const setGame = (key, val) => setForm(f => ({ ...f, game: { ...f.game, [key]: val } }));

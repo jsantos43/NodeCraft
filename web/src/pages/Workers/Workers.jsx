@@ -8,6 +8,7 @@ import { StatusBadge } from '../../components/ui/Badge.jsx';
 import ResourceBar from '../../components/ui/ResourceBar.jsx';
 import Modal, { ModalFooter } from '../../components/ui/Modal.jsx';
 import Input from '../../components/ui/Input.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { workersApi } from '../../api/workers.js';
 import Spinner from '../../components/ui/Spinner.jsx';
@@ -20,7 +21,7 @@ export default function Workers() {
   const [newName, setNewName] = useState('');
   const [createdKeys, setCreatedKeys] = useState(null); // { apiKey, secret }
 
-  const { data, loading, refetch } = useApi(() => workersApi.list());
+  const { data, loading, error, refetch } = useApi(() => workersApi.list());
   const createWorker = useAction(async () => {
     const res = await workersApi.create({ name: newName });
     setCreatedKeys({ apiKey: res.apiKey, secret: res.secret });
@@ -64,6 +65,8 @@ export default function Workers() {
         <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
           <Spinner size={24} />
         </div>
+      ) : error ? (
+        <Alert error={error} override={{ title: "Couldn't load workers" }} />
       ) : workers.length === 0 ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '48px 24px' }}>
@@ -144,6 +147,7 @@ export default function Workers() {
             value={newName}
             onChange={e => setNewName(e.target.value)}
           />
+          {createWorker.error && <Alert error={createWorker.error} override={{ title: "Couldn't create the worker" }} compact />}
           <ModalFooter>
             <Button variant="secondary" onClick={() => setCreateOpen(false)}>Cancel</Button>
             <Button loading={createWorker.loading} onClick={createWorker.execute} disabled={!newName}>

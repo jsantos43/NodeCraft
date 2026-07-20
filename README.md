@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎮 NodeCraft
+# NodeCraft
 
 **A self-hosted, multi-node game server hosting platform — think Aternos / Apex Hosting, built from scratch.**
 

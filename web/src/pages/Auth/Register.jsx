@@ -5,6 +5,7 @@ import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import { usersApi } from '../../api/users.js';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import './Login.css';
 
 export default function Register() {
@@ -13,13 +14,13 @@ export default function Register() {
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
 
   const handle = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(null);
 
     if (form.password !== form.confirm) {
       setError('Passwords do not match');
@@ -31,7 +32,7 @@ export default function Register() {
       await usersApi.create({ name: form.name, email: form.email, password: form.password });
       navigate('/login', { state: { registered: true } });
     } catch (err) {
-      setError(err.message || 'Could not create account');
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ export default function Register() {
         </div>
 
         <form onSubmit={handle} className="login-form">
-          {error && <div className="login-error">{error}</div>}
+          {error && <Alert error={error} override={typeof error === 'string' ? { title: 'Check your details', tone: 'warning', icon: 'invalid' } : { title: "Couldn't create your account" }} compact />}
 
           <Input
             label="Display name"

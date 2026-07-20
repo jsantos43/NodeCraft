@@ -8,6 +8,7 @@ import Card, { CardHeader } from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
 import Badge from '../../components/ui/Badge.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAction } from '../../hooks/useApi.js';
@@ -63,7 +64,7 @@ export default function Settings() {
     await fetchUser();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  });
+  }, { errorToast: { title: "Couldn't save your profile" } });
 
   const sendVerification = useAction(async () => {
     await authApi.verifyEmail();
@@ -79,7 +80,7 @@ export default function Settings() {
     await usersApi.delete();
     await logout();
     navigate('/login', { replace: true });
-  });
+  }, { errorToast: { title: "Couldn't delete your account" } });
 
   const nameChanged = name.trim() !== (user?.name || '');
   const nameValid = name.trim().length >= 3 && name.trim().length <= 32;
@@ -153,7 +154,7 @@ export default function Settings() {
               </Button>
             </div>
             {sendVerification.error && (
-              <span className="settings-error">{sendVerification.error.message || 'Could not send the verification email.'}</span>
+              <Alert error={sendVerification.error} override={{ title: "Couldn't send the verification email" }} compact />
             )}
           </Card>
         )}
@@ -201,7 +202,7 @@ export default function Settings() {
                 </Button>
               </div>
               {changePassword.error && (
-                <span className="settings-error">{changePassword.error.message || 'Could not send the reset email.'}</span>
+                <Alert error={changePassword.error} override={{ title: "Couldn't send the reset email" }} compact />
               )}
             </div>
           </Card>

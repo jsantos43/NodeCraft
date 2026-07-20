@@ -5,6 +5,7 @@ import Layout from '../../components/Layout/Layout.jsx';
 import Card from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import Spinner from '../../components/ui/Spinner.jsx';
@@ -28,7 +29,7 @@ export default function Servers() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
-  const { data, loading } = useApi(() => instancesApi.list());
+  const { data, loading, error } = useApi(() => instancesApi.list());
 
   const instances = (data?.instances || []).filter(i =>
     !search || i.name.toLowerCase().includes(search.toLowerCase())
@@ -54,6 +55,8 @@ export default function Servers() {
       <Card padding={false}>
         {loading ? (
           <div className="servers-loading"><Spinner /></div>
+        ) : error ? (
+          <div style={{ padding: 20 }}><Alert error={error} override={{ title: "Couldn't load your servers" }} /></div>
         ) : instances.length === 0 ? (
           <div className="servers-empty">
             <Server size={32} className="empty-icon" />

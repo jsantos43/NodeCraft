@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button.jsx';
 import Input, { Select } from '../../components/ui/Input.jsx';
 import Badge, { StatusBadge } from '../../components/ui/Badge.jsx';
 import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { usersApi } from '../../api/users.js';
@@ -60,7 +61,7 @@ export default function UserDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data, loading, refetch } = useApi(() => usersApi.get(id), [id]);
+  const { data, loading, error: loadError, refetch } = useApi(() => usersApi.get(id), [id]);
   const { data: instData } = useApi(() => instancesApi.list(), [id]);
   const { data: workerData } = useApi(() => workersApi.list(), []);
 
@@ -84,7 +85,6 @@ export default function UserDetails() {
 
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -116,32 +116,27 @@ export default function UserDetails() {
       : [...f.allowedWorkers, wid],
   }));
 
-  const { execute: save, loading: saving } = useAction(async () => {
+  const { execute: save, loading: saving, error: saveError } = useAction(async () => {
     setSaved(false);
-    setSaveError(null);
-    try {
-      await usersApi.updateOther(id, {
-        name: form.name,
-        admin: form.admin,
-        maxInstances: Number(form.maxInstances),
-        maxMemory: Number(form.maxMemory),
-        maxCpu: Number(form.maxCpu),
-        maxDisk: Number(form.maxDisk),
-        allowedGames: form.allowedGames,
-        allowedWorkers: form.allowedWorkers,
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-      refetch();
-    } catch (err) {
-      setSaveError(err.message || 'Failed to save');
-    }
+    await usersApi.updateOther(id, {
+      name: form.name,
+      admin: form.admin,
+      maxInstances: Number(form.maxInstances),
+      maxMemory: Number(form.maxMemory),
+      maxCpu: Number(form.maxCpu),
+      maxDisk: Number(form.maxDisk),
+      allowedGames: form.allowedGames,
+      allowedWorkers: form.allowedWorkers,
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+    refetch();
   });
 
   const { execute: deleteUser, loading: deleting } = useAction(async () => {
     await usersApi.deleteOther(id);
     navigate('/users');
-  });
+  }, { errorToast: { title: "Couldn't delete this user" } });
 
   if (loading) return (
     <Layout breadcrumbs={['Users', '...']}>
@@ -150,8 +145,14 @@ export default function UserDetails() {
   );
 
   if (!user) return (
-    <Layout breadcrumbs={['Users', 'Not Found']}>
+    <Layout breadcrumbs={['Users', loadError ? 'Error' : 'Not Found']}>
+      {loadError ? (
+        <div style={{ maxWidth: 480, margin: '60px auto 0' }}>
+          <Alert error={loadError} override={{ title: "Couldn't load this user" }} />
+        </div>
+      ) : (
       <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>User not found</div>
+      )}
     </Layout>
   );
 
@@ -267,8 +268,8 @@ export default function UserDetails() {
               )}
             </div>
 
+            {saveError && <Alert error={saveError} override={{ title: "Couldn't save changes" }} compact />}
             <div className="user-settings-footer">
-              {saveError && <span className="user-save-error">{saveError}</span>}
               {saved && <span className="user-save-ok">Saved</span>}
               <Button icon={Save} loading={saving} onClick={save}>Save Changes</Button>
             </div>

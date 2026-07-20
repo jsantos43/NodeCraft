@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
 import ResourceBar from '../../components/ui/ResourceBar.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { workersApi } from '../../api/workers.js';
 import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
@@ -33,7 +34,7 @@ function CopyButton({ text }) {
 export default function WorkerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, loading, refetch } = useApi(() => workersApi.get(id), [id]);
+  const { data, loading, error: loadError, refetch } = useApi(() => workersApi.get(id), [id]);
   const { data: instData } = useApi(() => workersApi.listInstances(id), [id]);
 
   const worker = data?.worker;
@@ -41,13 +42,12 @@ export default function WorkerDetails() {
 
   const [form, setForm] = useState({ name: '', url: '', secret: '' });
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { execute: deleteWorker, loading: deleting } = useAction(async () => {
     await workersApi.delete(id);
     navigate('/workers');
-  });
+  }, { errorToast: { title: "Couldn't delete the worker" } });
 
   useEffect(() => {
     if (worker) setForm({ name: worker.name || '', url: worker.url || '', secret: worker.secret || '' });
@@ -55,17 +55,12 @@ export default function WorkerDetails() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const { execute: save, loading: saving } = useAction(async () => {
+  const { execute: save, loading: saving, error: saveError } = useAction(async () => {
     setSaved(false);
-    setSaveError(null);
-    try {
-      await workersApi.update(id, { name: form.name, url: form.url, secret: form.secret });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-      refetch();
-    } catch (err) {
-      setSaveError(err.message || 'Failed to save');
-    }
+    await workersApi.update(id, { name: form.name, url: form.url, secret: form.secret });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+    refetch();
   });
 
   if (loading) return (
@@ -75,8 +70,14 @@ export default function WorkerDetails() {
   );
 
   if (!worker) return (
-    <Layout breadcrumbs={['Workers', 'Not Found']}>
-      <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>Worker not found</div>
+    <Layout breadcrumbs={['Workers', loadError ? 'Error' : 'Not Found']}>
+      {loadError ? (
+        <div style={{ maxWidth: 480, margin: '60px auto 0' }}>
+          <Alert error={loadError} override={{ title: "Couldn't load this worker" }} />
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>Worker not found</div>
+      )}
     </Layout>
   );
 
@@ -161,8 +162,8 @@ export default function WorkerDetails() {
               onChange={e => set('secret', e.target.value)}
             />
           </div>
+          {saveError && <Alert error={saveError} override={{ title: "Couldn't save worker settings" }} compact />}
           <div className="worker-settings-footer">
-            {saveError && <span className="worker-url-error">{saveError}</span>}
             {saved && <span className="worker-url-saved">Saved</span>}
             <Button icon={Save} loading={saving} onClick={save}>Save Changes</Button>
           </div>

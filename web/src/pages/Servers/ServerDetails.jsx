@@ -13,11 +13,13 @@ import Card, { CardHeader } from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Input, { Select } from '../../components/ui/Input.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
 import { usersApi } from '../../api/users.js';
 import { workersApi } from '../../api/workers.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
 import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
 import './ServerDetails.css';
@@ -191,6 +193,7 @@ function CopyButton({ text }) {
 
 // Admin-only control to reassign the instance to another user.
 function OwnerTransfer({ instance, onChanged }) {
+  const toast = useToast();
   const { data: usersData } = useApi(() => usersApi.list(), []);
   const users = usersData?.users || [];
   const [selected, setSelected] = useState('');
@@ -203,9 +206,15 @@ function OwnerTransfer({ instance, onChanged }) {
 
   const transfer = useAction(async () => {
     if (!staged) return;
-    await instancesApi.transferOwner(instance.id, selected);
+    try {
+      await instancesApi.transferOwner(instance.id, selected);
+    } catch (err) {
+      toast.error(err, { title: "Couldn't transfer ownership" });
+      throw err;
+    }
     setConfirming(false);
     setSelected('');
+    toast.success('Ownership transferred', `${target?.name || 'The new owner'} now controls this server.`);
     if (onChanged) onChanged();
   });
 
@@ -241,9 +250,6 @@ function OwnerTransfer({ instance, onChanged }) {
 
       {isRunning && (
         <p className="admin-note admin-note-error">Stop the server before transferring ownership.</p>
-      )}
-      {transfer.error && (
-        <p className="admin-note admin-note-error">{transfer.error.message || 'Transfer failed'}</p>
       )}
 
       <div className="admin-panel-foot">
@@ -314,6 +320,7 @@ function OverviewTab({ instance }) {
 
 // Admin-only control to reassign the instance to a different worker or detach it.
 function WorkerAssign({ instance, onChanged }) {
+  const toast = useToast();
   const { data: workersData } = useApi(() => workersApi.list(), []);
   const workers = workersData?.workers || [];
   // '' represents "no worker" (detach); otherwise a worker id.
@@ -325,8 +332,17 @@ function WorkerAssign({ instance, onChanged }) {
   const dirty = (selected || null) !== (instance.workerId || null);
 
   const change = useAction(async () => {
-    await instancesApi.changeWorker(instance.id, selected || null);
+    try {
+      await instancesApi.changeWorker(instance.id, selected || null);
+    } catch (err) {
+      toast.error(err, { title: "Couldn't change the worker" });
+      throw err;
+    }
     setConfirming(false);
+    toast.success(
+      'Worker changed',
+      selected ? `This server was moved to ${target?.name || 'the selected worker'}.` : 'This server was detached from its worker.',
+    );
     if (onChanged) onChanged();
   });
 
@@ -375,9 +391,6 @@ function WorkerAssign({ instance, onChanged }) {
 
       {isRunning && (
         <p className="admin-note admin-note-error">Stop the server before changing its worker.</p>
-      )}
-      {change.error && (
-        <p className="admin-note admin-note-error">{change.error.message || 'Failed to change worker'}</p>
       )}
 
       <div className="admin-panel-foot">
@@ -552,11 +565,14 @@ function ConsoleTab({ instance }) {
 }
 
 function FilesTab({ instanceId }) {
+  const toast = useToast();
   const [path, setPath] = useState('');
   const [editFile, setEditFile] = useState(null); // { path, content }
   const [showCreate, setShowCreate] = useState(null); // 'file' | 'folder'
   const [createName, setCreateName] = useState('');
   const [createContent, setCreateContent] = useState('');
+  // dialogError holds the raw error for whichever dialog is open (create / move / unzip),
+  // shown inline via <Alert> so a modal never hides its own failure behind a toast.
   const [opError, setOpError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -566,7 +582,7 @@ function FilesTab({ instanceId }) {
   const [upload, setUpload] = useState(null); // { name, percent }
   const uploadRef = useRef(null);
 
-  const { data, loading, refetch } = useApi(
+  const { data, loading, error: listError, refetch } = useApi(
     () => instancesApi.listFiles(instanceId, path),
     [instanceId, path],
   );
@@ -600,7 +616,7 @@ function FilesTab({ instanceId }) {
         const res = await instancesApi.listFiles(instanceId, join(entry.name));
         setEditFile({ path: join(entry.name), content: res.content ?? '' });
       } catch (err) {
-        setOpError(err.message || 'Failed to open file');
+        toast.error(err, { title: "Couldn't open the file" });
       }
     }
   };
@@ -608,12 +624,11 @@ function FilesTab({ instanceId }) {
   const deleteEntry = async (e, entry) => {
     e.stopPropagation();
     if (!canWrite) return;
-    setOpError(null);
     try {
       await instancesApi.deleteFile(instanceId, join(entry.name));
       refetch();
     } catch (err) {
-      setOpError(err.message || 'Failed to delete');
+      toast.error(err, { title: `Couldn't delete ${entry.name}` });
     }
   };
 
@@ -625,13 +640,14 @@ function FilesTab({ instanceId }) {
   const saveEdit = async () => {
     if (!canEdit) return;
     setSaving(true);
-    setOpError(null);
     try {
       await instancesApi.updateFile(instanceId, editFile.content, editFile.path);
+      const name = editFile.path.split('/').pop();
       setEditFile(null); // return to the directory listing
       refetch();
+      toast.success('File saved', name);
     } catch (err) {
-      setOpError(err.message || 'Failed to save');
+      toast.error(err, { title: "Couldn't save the file" });
     } finally {
       setSaving(false);
     }
@@ -652,7 +668,7 @@ function FilesTab({ instanceId }) {
       setCreateContent('');
       refetch();
     } catch (err) {
-      setOpError(err.message || 'Failed to create');
+      setOpError(err);
     } finally {
       setCreating(false);
     }
@@ -661,7 +677,6 @@ function FilesTab({ instanceId }) {
   const doUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!canWrite || !file) return;
-    setOpError(null);
     setUpload({ name: file.name, percent: 0 });
     try {
       const formData = new FormData();
@@ -670,8 +685,9 @@ function FilesTab({ instanceId }) {
         setUpload({ name: file.name, percent });
       });
       refetch();
+      toast.success('Upload complete', file.name);
     } catch (err) {
-      setOpError(err.message || 'Upload failed');
+      toast.error(err, { title: `Couldn't upload ${file.name}` });
     } finally {
       setUpload(null);
       e.target.value = '';
@@ -701,7 +717,7 @@ function FilesTab({ instanceId }) {
       setActionDialog(null);
       refetch();
     } catch (err) {
-      setOpError(err.message || 'Operation failed');
+      setOpError(err);
     } finally {
       setActionLoading(false);
     }
@@ -718,7 +734,6 @@ function FilesTab({ instanceId }) {
           <span className="files-edit-name">{editFile.path.split('/').pop()}</span>
           {!canEdit && <span className="files-edit-readonly">read-only</span>}
           <div style={{ flex: 1 }} />
-          {opError && <span className="files-error-inline">{opError}</span>}
           {canEdit && <Button size="sm" icon={Save} loading={saving} onClick={saveEdit}>Save</Button>}
         </div>
         <textarea
@@ -789,12 +804,17 @@ function FilesTab({ instanceId }) {
         </div>
       )}
 
-      {opError && <div className="files-op-error">{opError}</div>}
-
       {permData && !canRead ? (
         <div className="files-empty">You don&apos;t have permission to view files.</div>
       ) : loading ? (
         <div className="files-loading"><Spinner /></div>
+      ) : listError ? (
+        <Alert
+          error={listError}
+          override={listError.code === 'SERVICE_UNAVAILABLE'
+            ? { title: 'Worker offline', description: "This server's worker isn't responding, so its files can't be loaded right now." }
+            : undefined}
+        />
       ) : entries.length === 0 ? (
         <div className="files-empty">This directory is empty</div>
       ) : (
@@ -853,7 +873,7 @@ function FilesTab({ instanceId }) {
                 onKeyDown={e => e.key === 'Enter' && doAction()}
                 autoFocus
               />
-              {opError && <span className="files-error-inline">{opError}</span>}
+              {opError && <Alert error={opError} compact />}
             </div>
             <div className="files-dialog-footer">
               <Button variant="secondary" size="sm" onClick={() => setActionDialog(null)}>Cancel</Button>
@@ -894,7 +914,7 @@ function FilesTab({ instanceId }) {
                   </div>
                 </div>
               )}
-              {opError && <span className="files-error-inline">{opError}</span>}
+              {opError && <Alert error={opError} compact />}
             </div>
             <div className="files-dialog-footer">
               <Button variant="secondary" size="sm" onClick={() => setShowCreate(null)}>Cancel</Button>
@@ -912,8 +932,8 @@ const BACKUP_BADGE = { success: 'backup-badge-ok', failed: 'backup-badge-fail', 
 const BACKUP_TIMEOUT = 5 * 60 * 1000; // give up watching after 5 min
 
 function BackupsTab({ instance, canBackup, onRefetch }) {
+  const toast = useToast();
   const [backingUp, setBackingUp] = useState(false);
-  const [error, setError] = useState(null);
   const [timedOut, setTimedOut] = useState(false);
   const baselineRef = useRef(null);   // lastBackupAt captured when we triggered
   const pollRef = useRef(null);
@@ -923,23 +943,27 @@ function BackupsTab({ instance, canBackup, onRefetch }) {
   useEffect(() => () => stopPolling(), []);
 
   // The worker stamps lastBackupAt when a backup finishes (success or failed).
-  // Once it moves past our baseline, the backup is done.
+  // Once it moves past our baseline, the backup is done — report the outcome.
   useEffect(() => {
     if (!backingUp) return;
     if (instance.lastBackupAt !== baselineRef.current) {
       setBackingUp(false);
       stopPolling();
+      if (instance.lastBackupStatus === 'failed') {
+        toast.toast({ tone: 'danger', icon: 'server', title: 'Backup failed', description: 'The worker could not finish the backup. Check the worker and try again.' });
+      } else {
+        toast.success('Backup complete', 'This server was backed up successfully.');
+      }
     }
   }, [instance.lastBackupAt, backingUp]);
 
   const startBackup = async () => {
-    setError(null);
     setTimedOut(false);
     baselineRef.current = instance.lastBackupAt ?? null;
     try {
       await instancesApi.backup(instance.id);
     } catch (err) {
-      setError(err.message || 'Failed to start backup');
+      toast.error(err, { title: "Couldn't start the backup" });
       return;
     }
     setBackingUp(true);
@@ -997,7 +1021,6 @@ function BackupsTab({ instance, canBackup, onRefetch }) {
         </div>
       )}
 
-      {error && <span className="backup-error">{error}</span>}
       {timedOut && (
         <span className="backup-error">
           Still running after 5 minutes — check the status again shortly.
@@ -1023,16 +1046,27 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState(null);
 
-  const { execute: save, loading: saving, error: saveError } = useAction(async () => {
-    const body = { gamertags, permissions, access, privileges };
-    if (userId.trim()) body.userId = userId.trim();
-    if (isEdit) {
-      await instancesApi.updateLink(instanceId, link.id, body);
-    } else {
-      await instancesApi.createLink(instanceId, body);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  const save = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const body = { gamertags, permissions, access, privileges };
+      if (userId.trim()) body.userId = userId.trim();
+      if (isEdit) {
+        await instancesApi.updateLink(instanceId, link.id, body);
+      } else {
+        await instancesApi.createLink(instanceId, body);
+      }
+      onSaved();
+    } catch (err) {
+      setSaveError(err);
+    } finally {
+      setSaving(false);
     }
-    onSaved();
-  });
+  };
 
   const lookupUser = async () => {
     if (!userId.trim()) return;
@@ -1166,7 +1200,7 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
             </label>
           </div>
 
-          {saveError && <span className="link-form-error">{saveError}</span>}
+          {saveError && <Alert error={saveError} compact />}
         </div>
 
         <div className="files-dialog-footer">
@@ -1187,7 +1221,12 @@ const ACCESS_META = {
 };
 
 function RosterRow({ link, canManage, onEdit, onDelete }) {
+  const toast = useToast();
   const del = useAction(onDelete);
+  const removeLink = async () => {
+    try { await del.execute(); }
+    catch (err) { toast.error(err, { title: "Couldn't remove this player" }); }
+  };
   const access = ACCESS_META[link.access] || { color: 'gray', label: link.access, desc: '' };
   const name = link.user?.name || 'Anonymous';
   const initial = link.user ? name.charAt(0).toUpperCase() : '∗';
@@ -1213,7 +1252,7 @@ function RosterRow({ link, canManage, onEdit, onDelete }) {
       {canManage && (
         <div className="roster-actions">
           <button className="files-icon-btn" onClick={onEdit} title="Edit"><Edit2 size={13} /></button>
-          <button className="files-icon-btn files-icon-danger" onClick={del.execute} disabled={del.loading} title="Remove">
+          <button className="files-icon-btn files-icon-danger" onClick={removeLink} disabled={del.loading} title="Remove">
             {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
           </button>
         </div>
@@ -1278,7 +1317,12 @@ function EditionCard({ icon: Icon, title, fields, steps }) {
 }
 
 function ConnectTab({ instance, onRefetch }) {
-  const remapPort = useAction(async () => { await instancesApi.remapPort(instance.id); onRefetch?.(); });
+  const toast = useToast();
+  const remapPort = useAction(async () => {
+    try { await instancesApi.remapPort(instance.id); }
+    catch (err) { toast.error(err, { title: "Couldn't remap the port" }); throw err; }
+    onRefetch?.();
+  });
   const host = parseHost(instance.worker?.url);
   const port = instance.port;
   const address = host && port ? `${host}:${port}` : null;
@@ -1458,7 +1502,7 @@ function VariablesTab({ instance, canEdit, onSaved }) {
       setTimeout(() => setSaved(false), 2500);
       onSaved?.();
     } catch (err) {
-      setSaveError(err.message || 'Failed to save');
+      setSaveError(err);
     }
   });
 
@@ -1537,7 +1581,7 @@ function VariablesTab({ instance, canEdit, onSaved }) {
 
       {canEdit && (
         <div className="vars-footer">
-          {saveError && <span className="vars-error">{saveError}</span>}
+          {saveError && <Alert error={saveError} compact />}
           {saved && <span className="vars-saved">Saved</span>}
           <Button icon={Save} loading={loading} onClick={save}>Save Changes</Button>
         </div>
@@ -1549,6 +1593,7 @@ function VariablesTab({ instance, canEdit, onSaved }) {
 export default function ServerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [tab, setTab] = useState('overview');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null); // 'starting' | 'stopping' | null
@@ -1597,7 +1642,12 @@ export default function ServerDetails() {
 
   const runAction = useAction(async (fn) => { await fn(); });
   const deleteAction = useAction(async () => {
-    await instancesApi.delete(id);
+    try {
+      await instancesApi.delete(id);
+    } catch (err) {
+      toast.error(err, { title: "Couldn't delete the server" });
+      throw err;
+    }
     navigate('/servers');
   });
 
@@ -1623,17 +1673,20 @@ export default function ServerDetails() {
 
   const handleRun = async () => {
     setPendingStatus('starting');
-    try { await runAction.execute(() => instancesApi.run(id)); } catch { setPendingStatus(null); return; }
+    try { await runAction.execute(() => instancesApi.run(id)); }
+    catch (err) { setPendingStatus(null); toast.error(err, { title: "Couldn't start the server" }); return; }
     startPolling();
   };
   const handleStop = async () => {
     setPendingStatus('stopping');
-    try { await runAction.execute(() => instancesApi.stop(id)); } catch { setPendingStatus(null); return; }
+    try { await runAction.execute(() => instancesApi.stop(id)); }
+    catch (err) { setPendingStatus(null); toast.error(err, { title: "Couldn't stop the server" }); return; }
     startPolling();
   };
   const handleRestart = async () => {
     setPendingStatus('starting');
-    try { await runAction.execute(() => instancesApi.restart(id)); } catch { setPendingStatus(null); return; }
+    try { await runAction.execute(() => instancesApi.restart(id)); }
+    catch (err) { setPendingStatus(null); toast.error(err, { title: "Couldn't restart the server" }); return; }
     startPolling();
   };
 
