@@ -1,0 +1,23 @@
+{
+  "get": {
+    "summary": "list all Workers (admin only)",
+    "description": "Lists every worker with full hardware metrics and health status. Admin only.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/worker.json#/readAll"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  }
+}

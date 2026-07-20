@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read Files",
+    "description": "Lists a directory or reads a file at `path` inside the instance game folder. With `download=true` the raw file is streamed back. Proxied to the worker. Requires `instance:files:read`.",
     "tags": [
       "Files"
     ],

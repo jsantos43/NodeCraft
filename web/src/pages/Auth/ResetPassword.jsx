@@ -6,6 +6,7 @@ import {
 import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { authApi } from '../../api/auth.js';
 import './Login.css';
 import './Auth.css';
@@ -21,7 +22,7 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
 
   const tooShort = password.length > 0 && password.length < MIN_LEN;
@@ -31,13 +32,13 @@ export default function ResetPassword() {
   const handle = async (e) => {
     e.preventDefault();
     if (!canSubmit) return;
-    setError('');
+    setError(null);
     setLoading(true);
     try {
       await authApi.resetPassword(token, password);
       setDone(true);
     } catch (err) {
-      setError(err?.message || 'This reset link is invalid or has expired.');
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ export default function ResetPassword() {
             </div>
 
             <form onSubmit={handle} className="login-form">
-              {error && <div className="login-error">{error}</div>}
+              {error && <Alert error={error} override={error.code ? undefined : { title: 'Reset link problem', description: 'This reset link is invalid or has expired.' }} compact />}
 
               <div className="login-pw-wrap">
                 <Input

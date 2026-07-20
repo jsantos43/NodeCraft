@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read all Links",
+    "description": "Lists all links (shared-access grants) for the instance. Requires the `instance:read` permission.",
     "tags": [
       "Link"
     ],
@@ -24,6 +25,7 @@
   },
   "post": {
     "summary": "create Link",
+    "description": "Creates a link granting another user (or gamertags) scoped access to the instance, with `permissions`, an `access` level and `privileges`. Requires being the instance owner.",
     "tags": [
       "Link"
     ],

@@ -1,4 +1,5 @@
 import Service from '../services/Worker.js';
+import InstanceService from '../services/Instance.js';
 
 class Worker {
   static async readAll(req, res, next) {
@@ -101,7 +102,7 @@ class Worker {
   static async readInstances(req, res, next) {
     try {
       const id = req?.params?.id;
-      const instances = await Service.readInstancesByWorker(id);
+      const instances = await InstanceService.readByWorker(id);
 
       return res.status(200).json({ success: true, instances });
     } catch (err) {
@@ -114,7 +115,7 @@ class Worker {
       const id = req?.params?.instanceId;
       const data = req?.body;
 
-      await Service.updateInstanceDetails(id, data);
+      await InstanceService.updateDetails(id, data);
 
       return res.status(200).json({ success: true });
     } catch (err) {
@@ -127,7 +128,7 @@ class Worker {
       const instanceId = req?.params?.instanceId;
       const data = req?.body;
 
-      await Service.updateInstanceBackupStatus(instanceId, data);
+      await InstanceService.updateBackupStatus(instanceId, data);
 
       return res.status(200).json({ success: true });
     } catch (err) {

@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "backup Instance",
+    "description": "Triggers an on-demand backup of the instance on its worker. The instance must be stopped. Requires the `instance:backup` permission. Returns 503 if the worker is unavailable.",
     "tags": [
       "Instance"
     ],

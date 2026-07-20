@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "create File",
+    "description": "Creates a file or directory at `destiny` inside the instance game folder. Proxied to the worker. Requires `instance:files:write`.",
     "tags": [
       "Files"
     ],

@@ -1,0 +1,128 @@
+{
+  "create": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 32,
+              "example": "worker-sp-01"
+            }
+          }
+        }
+      }
+    }
+  },
+  "update": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 32,
+              "example": "worker-sp-01"
+            },
+            "url": {
+              "type": "string",
+              "example": "http://worker.webisk.com.br:9184"
+            }
+          }
+        }
+      }
+    }
+  },
+  "heartbeat": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "cpuUsage": {
+              "type": "number",
+              "example": 23.5
+            },
+            "memorieTotal": {
+              "type": "integer",
+              "example": 16384
+            },
+            "memorieUsed": {
+              "type": "integer",
+              "example": 4096
+            },
+            "diskAvailable": {
+              "type": "integer",
+              "example": 204800
+            }
+          }
+        }
+      }
+    }
+  },
+  "updateInstance": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "running",
+                "stopped",
+                "failed"
+              ],
+              "example": "running"
+            },
+            "history": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "New console/log lines appended to the instance history.",
+              "example": [
+                "[03:00:00] Server started"
+              ]
+            },
+            "diskUsage": {
+              "type": "integer",
+              "description": "Current disk usage of the instance in MB.",
+              "example": 512
+            }
+          }
+        }
+      }
+    }
+  },
+  "backup": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "success",
+                "failed",
+                "skipped"
+              ],
+              "example": "success"
+            }
+          }
+        }
+      }
+    }
+  }
+}

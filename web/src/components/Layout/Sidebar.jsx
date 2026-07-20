@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Server, Cpu,
-  Users, ChevronRight, ChevronLeft,
+  Users, ChevronRight, ChevronLeft, X,
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext.jsx';
 import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import './Sidebar.css';
 
@@ -31,10 +30,7 @@ function NavItem({ to, label, icon: Icon, collapsed }) {
   );
 }
 
-export default function Sidebar() {
-  const { user } = useAuth();
-  const isAdmin = user?.admin;
-
+export default function Sidebar({ mobileOpen = false, onClose }) {
   const [collapsed, setCollapsed] = useState(() =>
     localStorage.getItem('sidebar-collapsed') === 'true'
   );
@@ -48,12 +44,21 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
+    <>
+      {mobileOpen && <div className="sidebar-backdrop" onClick={onClose} aria-hidden />}
+      <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''} ${mobileOpen ? 'sidebar-mobile-open' : ''}`}>
       <Link to="/" className="sidebar-logo" title={collapsed ? 'NodeCraft' : undefined}>
         <div className="sidebar-logo-icon">
           <PickaxeIcon size={18} />
         </div>
         <span className="sidebar-logo-text">Node<span className="sidebar-logo-accent">Craft</span></span>
+        <button
+          className="sidebar-close"
+          onClick={(e) => { e.preventDefault(); onClose?.(); }}
+          aria-label="Close menu"
+        >
+          <X size={16} />
+        </button>
       </Link>
 
       <nav className="sidebar-nav">
@@ -74,6 +79,7 @@ export default function Sidebar() {
         </button>
 
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

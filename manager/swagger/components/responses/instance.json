@@ -18,6 +18,69 @@
       }
     }
   },
+  "permissions": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "permissions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "instance:read",
+                "instance:console:read",
+                "instance:console:write",
+                "instance:owner"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "console": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "token": {
+              "type": "string",
+              "description": "Short-lived (120s) JWT used to authenticate the console WebSocket on the worker.",
+              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            },
+            "workerUrl": {
+              "type": "string",
+              "example": "http://worker.webisk.com.br:9184"
+            },
+            "permissions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "console:read",
+                "console:write"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
   "readAll": {
     "description": "OK",
     "content": {

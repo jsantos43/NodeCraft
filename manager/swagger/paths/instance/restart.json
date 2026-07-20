@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "restart Instance",
+    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
     "tags": [
       "Instance"
     ],

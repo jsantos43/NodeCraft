@@ -3,7 +3,7 @@ import { Internal, InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import WorkerService from '../services/Worker.js';
 import AuthService from '../services/Auth.js';
-import Quota from '../services/Quota.js';
+import Limit from '../services/Limit.js';
 
 class Instance {
   static async create(req, res, next) {
@@ -15,9 +15,7 @@ class Instance {
       delete instanceData.game;
       const gameData = body?.game || {};
 
-      // Enforce the owner's quota before allocating any resources
-      await Quota.verifyCanCreate(user.id, instanceData);
-
+      await Limit.verifyCanCreate(user.id, instanceData);
       const instance = await Service.create(user.id, instanceData, gameData);
 
       return res.status(201).json({ success: true, instance });
@@ -66,6 +64,32 @@ class Instance {
     }
   }
 
+  static async transferOwner(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { owner } = req.body;
+
+      const instance = await Service.transferOwner(id, owner);
+
+      return res.status(200).json({ success: true, instance });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async changeWorker(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { workerId } = req.body;
+
+      const instance = await Service.changeWorker(id, workerId);
+
+      return res.status(200).json({ success: true, instance });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   static async delete(req, res, next) {
     try {
       const { id } = req.params;
@@ -82,12 +106,11 @@ class Instance {
       const { id } = req.params;
 
       const instance = await Service.readOne(id);
-      const running = instance?.status === 'running';
 
+      const running = instance?.status === 'running';
       if (running) throw new InvalidRequest('You cannot do this while instance is running!');
 
-      // Enforce the owner's disk quota before starting
-      await Quota.verifyCanStart(instance);
+      await Limit.verifyCanStart(instance);
 
       const worker = await WorkerService.readOne(instance.workerId);
 
@@ -141,6 +164,7 @@ class Instance {
       const instance = await Service.readOne(id);
 
       const worker = await WorkerService.readOne(instance.workerId);
+
       const route = `${worker.url}/server/${id}/restart`;
       const response = await fetch(route, {
         method: 'POST',

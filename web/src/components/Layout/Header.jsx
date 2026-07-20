@@ -1,17 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { User, LogOut, ChevronDown, Settings } from 'lucide-react';
+import { User, LogOut, ChevronDown, Settings, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import './Header.css';
 
-export default function Header({ title, breadcrumbs, showLogo }) {
+export default function Header({ title, breadcrumbs, showLogo, onMenuClick }) {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   return (
     <header className="topbar">
       <div className="topbar-left">
+        {onMenuClick && (
+          <button className="topbar-menu-btn" onClick={onMenuClick} aria-label="Open navigation menu">
+            <Menu size={18} />
+          </button>
+        )}
         {showLogo ? (
           // Common users only ever see the brand here — no titles or
           // breadcrumbs, since servers is the only area they navigate.

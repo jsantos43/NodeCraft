@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read all Users",
+    "description": "Lists every registered user. Admin only.",
     "tags": [
       "User"
     ],

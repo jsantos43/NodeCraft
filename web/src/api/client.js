@@ -34,20 +34,31 @@ async function request(method, path, body, options = {}) {
     config.body = JSON.stringify(body);
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, config);
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, config);
+  } catch {
+    // fetch only rejects on network failure / CORS / offline — never on HTTP status
+    throw new ApiError(0, 'Network request failed', 'NETWORK_ERROR');
+  }
 
   if (res.status === 401 && !options._retry) {
     const refreshed = await tryRefresh();
     if (refreshed) {
       return request(method, path, body, { ...options, _retry: true });
     }
-    throw new ApiError(401, 'Unauthorized');
+    throw new ApiError(401, "You aren't authorized!", 'UNATHORIZED');
   }
 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new ApiError(res.status, data?.message || data?.error || 'Request failed');
+    throw new ApiError(
+      res.status,
+      data?.message || 'Request failed',
+      data?.error || null,
+      data?.details || [],
+    );
   }
 
   return data;
@@ -72,9 +83,12 @@ async function tryRefresh() {
 }
 
 export class ApiError extends Error {
-  constructor(status, message) {
+  constructor(status, message, code = null, details = []) {
     super(message);
+    this.name = 'ApiError';
     this.status = status;
+    this.code = code;
+    this.details = Array.isArray(details) ? details : [details];
   }
 }
 

@@ -1,0 +1,91 @@
+{
+  "get": {
+    "summary": "read a Worker (admin only)",
+    "description": "Reads a single worker by id. Admin only.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/worker.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "put": {
+    "summary": "update a Worker (admin only)",
+    "description": "Updates a worker (e.g. `name`, `url`). Admin only.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/worker.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/worker.json#/update"
+    }
+  },
+  "delete": {
+    "summary": "delete a Worker (admin only)",
+    "description": "Deletes a worker by id. Admin only.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/worker.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+    }
+  ]
+}

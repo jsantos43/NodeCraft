@@ -3,15 +3,14 @@ import Auth from './Auth.js';
 import {
   Worker as Model,
   WorkerHeartbeat as HeartbeatModel,
-  Instance as InstanceModel,
-  instanceInclude,
 } from '../models/index.js';
 import { NotFound } from '../errors/index.js';
-import Instance from './Instance.js';
+import logger from '../../config/logger.js';
 
-const MAX_INSTANCE_HISTORY = 45;
 const HEARTBEAT_RETENTION_DAYS = 7;
 const HEARTBEAT_RETENTION_MS = HEARTBEAT_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+const DEAD_THRESHOLD = 3 * 60 * 1000; // 3 minutes
+const CHECK_INTERVAL = 60 * 1000; // 1 minute
 
 const HEARTBEAT_RANGES = {
   '1h': 60 * 60 * 1000,
@@ -89,7 +88,6 @@ class Worker {
     };
 
     const worker = await Worker.update(id, info);
-
     await Worker.recordHeartbeat(id, data);
 
     return worker;
@@ -135,43 +133,34 @@ class Worker {
     return heartbeats;
   }
 
-  static async readInstancesByWorker(id) {
-    const instances = await InstanceModel.findAll({
-      where: {
-        workerId: id,
-      },
-      include: instanceInclude,
-    });
-
-    return instances;
-  }
-
-  static async updateInstanceDetails(id, data) {
-    const instance = await Instance.readOne(id);
-    const workerHistory = data?.history || [];
-
-    // Wipe old lines
-    let history = [...instance.history, ...workerHistory];
-    if (history.length > MAX_INSTANCE_HISTORY) {
-      history = history.slice(history.length - MAX_INSTANCE_HISTORY);
-    }
-
-    await instance.update({
-      status: data?.status,
-      history,
-      ...(Number.isFinite(data?.diskUsage) ? { diskUsage: Math.ceil(data.diskUsage) } : {}),
-      ...(data?.status === 'running' ? { lastActivityAt: new Date() } : {}),
-    });
-  }
-
-  static async updateInstanceBackupStatus(instanceId, data) {
-    await Instance.updateBackupStatus(instanceId, data);
-  }
-
   static compareApiKey(apiKey, storedApiKey) {
     const hashedApiKey = Auth.hashToken(apiKey);
 
     return hashedApiKey === storedApiKey;
+  }
+
+  static startChecker() {
+    setInterval(Worker.checkAll, CHECK_INTERVAL);
+
+    Worker.checkAll();
+  }
+
+  static async checkAll() {
+    try {
+      const timeoff = Date.now() - DEAD_THRESHOLD;
+
+      await Model.update(
+        { healthy: false },
+        {
+          where: {
+            healthy: true,
+            lastSeenAt: { [Op.lt]: timeoff },
+          },
+        },
+      );
+    } catch (err) {
+      logger.error({ err }, 'Error to verify dead worker!');
+    }
   }
 }
 

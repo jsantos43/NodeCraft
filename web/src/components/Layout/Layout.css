@@ -18,7 +18,11 @@
 }
 
 @media (max-width: 768px) {
-  .layout { flex-direction: column; }
-  .sidebar { display: none; }
+  /* Sidebar becomes an off-canvas drawer (see Sidebar.css), so the main column
+     takes the full width; the drawer overlays it rather than sitting beside it. */
   .layout-content { padding: 16px; }
+}
+
+@media (max-width: 480px) {
+  .layout-content { padding: 12px; }
 }

@@ -1,0 +1,40 @@
+{
+  "post": {
+    "summary": "receive a heartbeat from a Worker (worker auth)",
+    "description": "Called by the worker itself every 15s. Authenticated with the worker apiKey (Bearer). Updates hardware metrics and marks the worker healthy.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/worker.json#/ok"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/worker.json#/heartbeat"
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+    }
+  ]
+}

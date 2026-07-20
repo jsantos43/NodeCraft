@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read a Instance",
+    "description": "Reads a single instance with its game-specific config and linked players. Requires the `instance:read` permission.",
     "tags": [
       "Instance"
     ],
@@ -27,6 +28,7 @@
   },
   "put": {
     "summary": "update a Instance",
+    "description": "Updates the instance settings (name, memory, cpu, maxPlayers and the game-specific `game` block). The instance must be stopped. Requires the `instance:edit` permission.",
     "tags": [
       "Instance"
     ],
@@ -56,6 +58,7 @@
   },
   "delete": {
     "summary": "delete a Instance",
+    "description": "Permanently deletes the instance. The instance must be stopped. Requires being the instance owner (`instance:owner`).",
     "tags": [
       "Instance"
     ],

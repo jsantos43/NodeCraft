@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read a Link",
+    "description": "Reads a single link by id. Requires the `instance:read` permission.",
     "tags": [
       "Link"
     ],
@@ -24,6 +25,7 @@
   },
   "put": {
     "summary": "update link",
+    "description": "Updates a link's permissions, gamertags, access level or privileges. Requires being the instance owner.",
     "tags": [
       "Link"
     ],
@@ -53,6 +55,7 @@
   },
   "delete": {
     "summary": "delete Link",
+    "description": "Removes a link, revoking that user's access to the instance. Requires being the instance owner.",
     "tags": [
       "Link"
     ],

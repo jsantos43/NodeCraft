@@ -6,6 +6,7 @@ import {
 import PickaxeIcon from '../../icons/PickaxeIcon/index.js';
 import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { authApi } from '../../api/auth.js';
 import './Login.css';
 import './Auth.css';
@@ -13,20 +14,20 @@ import './Auth.css';
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
 
   const handle = async (e) => {
     e.preventDefault();
     if (!email || loading) return;
-    setError('');
+    setError(null);
     setLoading(true);
     try {
       await authApi.forgotPassword(email);
       // Always show success — don't reveal whether the email exists.
       setDone(true);
     } catch (err) {
-      setError(err?.message || 'Could not send the reset link. Try again.');
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ export default function ForgotPassword() {
             </div>
 
             <form onSubmit={handle} className="login-form">
-              {error && <div className="login-error">{error}</div>}
+              {error && <Alert error={error} override={{ title: "Couldn't send the reset link" }} compact />}
 
               <Input
                 label="Email address"

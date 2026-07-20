@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "copy/move File",
+    "description": "Copies or moves (`actions=copy|move`) a file/directory from `path` to `destiny`. Proxied to the worker. Requires `instance:files:write`.",
     "tags": [
       "Files"
     ],

@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "reset User password",
+    "description": "Completes the password-reset flow: validates the token sent by email and sets the new password. Public route. Requires the email service to be available.",
     "tags": [
       "Auth"
     ],

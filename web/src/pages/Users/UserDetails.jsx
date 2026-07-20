@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button.jsx';
 import Input, { Select } from '../../components/ui/Input.jsx';
 import Badge, { StatusBadge } from '../../components/ui/Badge.jsx';
 import ConfirmDelete from '../../components/ui/ConfirmDelete.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import Spinner from '../../components/ui/Spinner.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { usersApi } from '../../api/users.js';
@@ -60,7 +61,7 @@ export default function UserDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data, loading, refetch } = useApi(() => usersApi.get(id), [id]);
+  const { data, loading, error: loadError, refetch } = useApi(() => usersApi.get(id), [id]);
   const { data: instData } = useApi(() => instancesApi.list(), [id]);
   const { data: workerData } = useApi(() => workersApi.list(), []);
 
@@ -68,18 +69,22 @@ export default function UserDetails() {
   const workers = workerData?.workers || [];
   const owned = (instData?.instances || []).filter(i => i.owner === id);
 
-  const usage = owned.reduce((a, i) => ({
-    count: a.count + 1,
-    memory: a.memory + (i.memory || 0),
-    cpu: a.cpu + (i.cpu || 0),
-    disk: a.disk + (i.diskUsage || 0),
-  }), {
+  // Memory/CPU limits are enforced across running instances only (that is when
+  // the resources are actually occupied); disk counts every owned instance.
+  const usage = owned.reduce((a, i) => {
+    const running = i.status === 'running';
+    return {
+      count: a.count + 1,
+      memory: a.memory + (running ? (i.memory || 0) : 0),
+      cpu: a.cpu + (running ? (i.cpu || 0) : 0),
+      disk: a.disk + (i.diskUsage || 0),
+    };
+  }, {
     count: 0, memory: 0, cpu: 0, disk: 0,
   });
 
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -111,32 +116,27 @@ export default function UserDetails() {
       : [...f.allowedWorkers, wid],
   }));
 
-  const { execute: save, loading: saving } = useAction(async () => {
+  const { execute: save, loading: saving, error: saveError } = useAction(async () => {
     setSaved(false);
-    setSaveError(null);
-    try {
-      await usersApi.updateOther(id, {
-        name: form.name,
-        admin: form.admin,
-        maxInstances: Number(form.maxInstances),
-        maxMemory: Number(form.maxMemory),
-        maxCpu: Number(form.maxCpu),
-        maxDisk: Number(form.maxDisk),
-        allowedGames: form.allowedGames,
-        allowedWorkers: form.allowedWorkers,
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-      refetch();
-    } catch (err) {
-      setSaveError(err.message || 'Failed to save');
-    }
+    await usersApi.updateOther(id, {
+      name: form.name,
+      admin: form.admin,
+      maxInstances: Number(form.maxInstances),
+      maxMemory: Number(form.maxMemory),
+      maxCpu: Number(form.maxCpu),
+      maxDisk: Number(form.maxDisk),
+      allowedGames: form.allowedGames,
+      allowedWorkers: form.allowedWorkers,
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+    refetch();
   });
 
   const { execute: deleteUser, loading: deleting } = useAction(async () => {
     await usersApi.deleteOther(id);
     navigate('/users');
-  });
+  }, { errorToast: { title: "Couldn't delete this user" } });
 
   if (loading) return (
     <Layout breadcrumbs={['Users', '...']}>
@@ -145,8 +145,14 @@ export default function UserDetails() {
   );
 
   if (!user) return (
-    <Layout breadcrumbs={['Users', 'Not Found']}>
+    <Layout breadcrumbs={['Users', loadError ? 'Error' : 'Not Found']}>
+      {loadError ? (
+        <div style={{ maxWidth: 480, margin: '60px auto 0' }}>
+          <Alert error={loadError} override={{ title: "Couldn't load this user" }} />
+        </div>
+      ) : (
       <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>User not found</div>
+      )}
     </Layout>
   );
 
@@ -171,12 +177,12 @@ export default function UserDetails() {
 
         <div className="user-details-grid">
           <Card>
-            <CardHeader title="Quota Usage" subtitle="Across this user's owned instances" />
+            <CardHeader title="Quota Usage" subtitle="Memory & CPU across running instances; disk across all" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <UsageBar label="Instances" value={usage.count} max={user.maxInstances ?? 0} unit="" />
               <UsageBar label="CPU" value={usage.cpu} max={user.maxCpu ?? 0} unit="cores" />
-              <UsageBar label="Memory" value={usage.memory} max={user.maxMemory ?? 0} unit="GB" />
-              <UsageBar label="Disk" value={usage.disk} max={user.maxDisk ?? 0} unit="GB" />
+              <UsageBar label="Memory" value={usage.memory} max={user.maxMemory ?? 0} unit="MB" />
+              <UsageBar label="Disk" value={usage.disk} max={user.maxDisk ?? 0} unit="MB" />
             </div>
           </Card>
 
@@ -211,7 +217,7 @@ export default function UserDetails() {
 
         {form && (
           <Card>
-            <CardHeader title="Account & Quotas" subtitle="Limits enforced when the user creates or starts instances" />
+            <CardHeader title="Account & Quotas" subtitle="Instance count on create; memory & CPU on start; disk monitored" />
             <div className="user-settings-top">
               <Input label="Name" value={form.name} onChange={e => set('name', e.target.value)} />
               <Select label="Role" value={form.admin ? 'admin' : 'user'} onChange={e => set('admin', e.target.value === 'admin')}>
@@ -262,8 +268,8 @@ export default function UserDetails() {
               )}
             </div>
 
+            {saveError && <Alert error={saveError} override={{ title: "Couldn't save changes" }} compact />}
             <div className="user-settings-footer">
-              {saveError && <span className="user-save-error">{saveError}</span>}
               {saved && <span className="user-save-ok">Saved</span>}
               <Button icon={Save} loading={saving} onClick={save}>Save Changes</Button>
             </div>
@@ -281,6 +287,7 @@ export default function UserDetails() {
               <p>This user does not own any instances</p>
             </div>
           ) : (
+            <div className="table-scroll">
             <table className="servers-table">
               <thead>
                 <tr>
@@ -307,6 +314,7 @@ export default function UserDetails() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
       </div>

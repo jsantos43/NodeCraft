@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "run Instance",
+    "description": "Starts the instance on its worker (fire-and-forget: responds immediately). Requires the `instance:execute` permission.",
     "tags": [
       "Instance"
     ],

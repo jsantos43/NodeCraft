@@ -76,8 +76,199 @@
   font-weight: 500;
 }
 
+@media (max-width: 640px) {
+  /* A horizontal-scroll tab strip is undiscoverable on touch (you only ever
+     reach the first few tabs), so wrap all 8 into pills — every tab visible
+     and tappable, no scrolling. */
+  .server-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: none;
+  }
+  .server-tab {
+    padding: 7px 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    margin-bottom: 0;
+  }
+  .server-tab.tab-active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  /* Header: title/status on row 1, action buttons on their own full-width row 2.
+     Without this the action row and the meta collide (the game label overflowed
+     onto the Stop button). The game label is redundant here — it's in the
+     breadcrumb and on the Overview tab — so drop it on mobile. */
+  .server-details-header { flex-wrap: wrap; row-gap: 10px; }
+  .server-details-meta { overflow: hidden; }
+  .server-details-title { min-width: 0; }
+  .server-details-game { display: none; }
+  .server-details-actions { width: 100%; flex-wrap: wrap; }
+}
+
 /* Overview */
 .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Admin tab — operator console for privileged "from → to" reassignments.
+   The from→to spine encodes what each action does; an amber caution rail
+   marks these as elevated, and the arrow lights up when a change is staged.
+   ───────────────────────────────────────────────────────────────────────── */
+.admin-tab { display: flex; flex-direction: column; gap: 16px; max-width: 620px; }
+
+.admin-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px 15px;
+  background: var(--yellow-dim);
+  border: 1px solid rgba(224, 178, 60, 0.22);
+  border-radius: var(--radius);
+}
+.admin-banner-badge {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  color: var(--yellow-text);
+  background: rgba(224, 178, 60, 0.14);
+  border: 1px solid rgba(224, 178, 60, 0.3);
+  border-radius: 8px;
+}
+.admin-banner-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); margin: 1px 0 2px; }
+.admin-banner-desc { font-size: 12px; line-height: 1.5; color: var(--text-muted); max-width: 54ch; }
+
+.admin-panel {
+  position: relative;
+  padding: 16px 18px 15px 21px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+/* caution rail — the one accent marking these as elevated actions */
+.admin-panel::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--yellow);
+  opacity: 0.55;
+}
+
+.admin-panel-head { margin-bottom: 15px; }
+.admin-panel-eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--yellow-text);
+}
+.admin-panel-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; }
+
+/* from → to spine: labels on row 1, chip/arrow/select on row 2 */
+.admin-move {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 13px;
+  row-gap: 6px;
+  align-items: center;
+}
+.admin-slot-a { grid-column: 1; }
+.admin-slot-b { grid-column: 3; }
+.admin-row-label { grid-row: 1; }
+.admin-row-control { grid-row: 2; }
+
+.admin-move-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.admin-chip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 46px;
+  padding: 7px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.admin-chip-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-chip-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-chip-empty { color: var(--text-muted); font-weight: 500; }
+
+.admin-arrow {
+  grid-column: 2;
+  grid-row: 2;
+  color: var(--text-muted);
+  transition: color var(--transition), transform var(--transition);
+}
+.admin-move.is-staged .admin-arrow { color: var(--accent); transform: translateX(2px); }
+
+/* select fills its slot and matches the chip height */
+.admin-select { width: 100%; }
+.admin-move .admin-select .ui-input-field { min-height: 46px; }
+
+.admin-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 8px 11px;
+  font-size: 12px;
+  line-height: 1.45;
+  border-radius: var(--radius-sm);
+}
+.admin-note svg { flex-shrink: 0; margin-top: 1px; }
+.admin-note-warn {
+  color: var(--yellow-text);
+  background: var(--yellow-dim);
+  border: 1px solid rgba(224, 178, 60, 0.2);
+}
+.admin-note-error {
+  color: var(--red-text);
+  background: var(--red-dim);
+  border: 1px solid rgba(229, 115, 115, 0.2);
+}
+
+.admin-panel-foot { display: flex; justify-content: flex-end; margin-top: 15px; }
+.admin-confirm { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.admin-confirm-q { font-size: 12.5px; color: var(--text-secondary); }
+.admin-confirm-q b { color: var(--text-primary); font-weight: 600; }
+
+/* mobile: stack the spine and turn the arrow downward */
+@media (max-width: 560px) {
+  .admin-move { grid-template-columns: 1fr; grid-template-rows: none; }
+  .admin-slot-a, .admin-slot-b, .admin-arrow { grid-column: 1; }
+  .admin-row-label, .admin-row-control, .admin-arrow { grid-row: auto; }
+  .admin-arrow { justify-self: center; transform: rotate(90deg); }
+  .admin-move.is-staged .admin-arrow { transform: rotate(90deg) translateX(2px); }
+  .admin-panel-foot, .admin-confirm { justify-content: flex-start; }
+}
 
 .overview-props { display: flex; flex-direction: column; gap: 0; }
 
@@ -94,17 +285,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px; /* keep a long value (e.g. a UUID) from butting against the label */
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .overview-row:last-child { border-bottom: none; }
 
-.overview-key { font-size: 12px; color: var(--text-muted); }
+.overview-key { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
 
-.overview-val-wrap { display: flex; align-items: center; gap: 6px; }
+.overview-val-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; justify-content: flex-end; }
 
-.overview-val { font-size: 13px; color: var(--text-primary); font-weight: 450; }
+.overview-val {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 450;
+  min-width: 0;
+  text-align: right;
+  word-break: break-word;
+}
 
 .copy-btn {
   width: 20px;

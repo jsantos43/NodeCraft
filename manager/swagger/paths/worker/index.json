@@ -1,0 +1,50 @@
+{
+  "get": {
+    "summary": "list Workers available to the current user",
+    "description": "Lists the workers the current user is allowed to create instances on (their `allowedWorkers`). Returns an empty list when none are allowed.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/worker.json#/readAll"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "post": {
+    "summary": "create a Worker (admin only)",
+    "description": "Registers a new worker and returns its freshly generated `apiKey` and `secret` — shown only once, at creation. Admin only.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/worker.json#/create"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/worker.json#/create"
+    }
+  }
+}

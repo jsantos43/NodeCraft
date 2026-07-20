@@ -3,11 +3,37 @@
   "info": {
     "title": "NodeCraft",
     "version": "1.0.0",
-    "description": "API for managing game servers via Docker."
+    "description": "Central manager API for the NodeCraft game-server hosting platform. It handles authentication, users and quotas, game instances (create/configure/run/backup), per-instance sharing via links, file management (proxied to the workers) and the worker fleet that runs the instances via Docker.\n\n**Authentication:** most routes require a JWT access token (15min) sent in the `accessToken` httpOnly cookie, refreshed through `/auth/refresh`. Some routes are admin only, and the `/worker/*` reporting routes are called by the workers themselves using their API key."
   },
   "servers": [
     {
-      "url": "http://dev.webisk.com.br:3000"
+      "url": "http://localhost:3000"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Login, token refresh/logout, account verification and password reset."
+    },
+    {
+      "name": "User",
+      "description": "User accounts, profile updates and admin-managed quotas/limits."
+    },
+    {
+      "name": "Instance",
+      "description": "Game server instances: create, configure, run/stop/restart, backup, console access and ownership/worker placement."
+    },
+    {
+      "name": "Files",
+      "description": "File manager for an instance's game folder — proxied to the worker that hosts it."
+    },
+    {
+      "name": "Link",
+      "description": "Shared-access grants that let non-owners use an instance with scoped permissions."
+    },
+    {
+      "name": "Worker",
+      "description": "Worker fleet management and the worker→manager reporting routes (heartbeats, instance status, backup results)."
     }
   ],
   "paths": {
@@ -46,6 +72,18 @@
     },
     "/instance/{id}": {
       "$ref": "./paths/instance/id.json"
+    },
+    "/instance/{id}/permissions": {
+      "$ref": "./paths/instance/permissions.json"
+    },
+    "/instance/{id}/owner": {
+      "$ref": "./paths/instance/owner.json"
+    },
+    "/instance/{id}/worker": {
+      "$ref": "./paths/instance/worker.json"
+    },
+    "/instance/{id}/console": {
+      "$ref": "./paths/instance/console.json"
     },
     "/instance/{id}/run": {
       "$ref": "./paths/instance/run.json"
@@ -89,10 +127,79 @@
     "/instance/{id}/files/unzip": {
       "$ref": "./paths/file/unzip.json"
     },
+    "/worker": {
+      "$ref": "./paths/worker/index.json"
+    },
+    "/worker/all": {
+      "$ref": "./paths/worker/all.json"
+    },
+    "/worker/{id}": {
+      "$ref": "./paths/worker/id.json"
+    },
+    "/worker/{id}/heartbeat": {
+      "$ref": "./paths/worker/heartbeat.json"
+    },
+    "/worker/{id}/heartbeats": {
+      "$ref": "./paths/worker/heartbeats.json"
+    },
+    "/worker/{id}/instances": {
+      "$ref": "./paths/worker/instances.json"
+    },
+    "/worker/{workerId}/instances/{instanceId}": {
+      "$ref": "./paths/worker/updateInstance.json"
+    },
+    "/worker/{workerId}/instances/{instanceId}/backup": {
+      "$ref": "./paths/worker/backup.json"
+    },
     "/": {
       "get": {
-        "summary": "root",
-        "responses": {}
+        "summary": "API root",
+        "description": "Public health/info endpoint. Returns basic API metadata (name, version, docs link and author). No authentication required.",
+        "tags": [
+          "Root"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "name": {
+                      "type": "string",
+                      "example": "Nodecraft API"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "3.0"
+                    },
+                    "summary": {
+                      "type": "string",
+                      "example": "Central manager API of the NodeCraft platform — create, configure and run game server instances via Docker, with authentication, per-instance permissions, automatic backups and worker fleet monitoring."
+                    },
+                    "docs": {
+                      "type": "string",
+                      "example": "/docs"
+                    },
+                    "github": {
+                      "type": "string",
+                      "example": "https://github.com/jsantos43"
+                    },
+                    "author": {
+                      "type": "string",
+                      "example": "João Pedro Tomaz dos Santos"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

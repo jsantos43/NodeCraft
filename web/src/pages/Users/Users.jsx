@@ -4,6 +4,7 @@ import { Shield, User, Search } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card from '../../components/ui/Card.jsx';
 import Badge from '../../components/ui/Badge.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { usersApi } from '../../api/users.js';
 import Spinner from '../../components/ui/Spinner.jsx';
@@ -12,7 +13,7 @@ import './Users.css';
 export default function Users() {
   const navigate = useNavigate();
 
-  const { data, loading } = useApi(() => usersApi.list());
+  const { data, loading, error } = useApi(() => usersApi.list());
   const [search, setSearch] = useState('');
 
   const users = (data?.users || []).filter(u => {
@@ -38,11 +39,14 @@ export default function Users() {
       <Card padding={false}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
+        ) : error ? (
+          <div style={{ padding: 20 }}><Alert error={error} override={{ title: "Couldn't load users" }} /></div>
         ) : users.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)', fontSize: 13 }}>
             No users found
           </div>
         ) : (
+          <div className="table-scroll">
           <table className="users-table">
             <thead>
               <tr>
@@ -72,6 +76,7 @@ export default function Users() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </Layout>

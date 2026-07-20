@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read all Instances",
+    "description": "Lists every instance the current user owns or is linked to.",
     "tags": [
       "Instance"
     ],
@@ -18,6 +19,7 @@
   },
   "post": {
     "summary": "create Instance",
+    "description": "Creates a new instance of the given game `type`. Placement is limited to the user's `allowedWorkers` and counts against their quotas. Requires authentication.",
     "tags": [
       "Instance"
     ],

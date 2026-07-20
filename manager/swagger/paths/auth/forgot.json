@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "forgot User password",
+    "description": "Starts the password-reset flow: generates a temporary reset token and emails it to the user. Public route (no authentication). Requires the email service to be available (503 otherwise).",
     "tags": [
       "Auth"
     ],

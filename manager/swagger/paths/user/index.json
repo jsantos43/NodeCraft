@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read my User",
+    "description": "Returns the user identified by the current access token.",
     "tags": [
       "User"
     ],
@@ -18,6 +19,7 @@
   },
   "post": {
     "summary": "create User",
+    "description": "Registers a new user. Public route — the account starts unverified and with default quotas.",
     "tags": [
       "User"
     ],
@@ -41,6 +43,7 @@
   },
   "put": {
     "summary": "update my User",
+    "description": "Updates the current user's own profile (name, birthDate). Email, password and quotas cannot be changed here.",
     "tags": [
       "User"
     ],
@@ -64,6 +67,7 @@
   },
   "delete": {
     "summary": "delete my user",
+    "description": "Deletes the current user's own account.",
     "tags": [
       "User"
     ],

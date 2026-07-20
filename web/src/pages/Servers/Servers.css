@@ -54,6 +54,10 @@
   border-collapse: collapse;
 }
 
+@media (max-width: 600px) {
+  .servers-table { min-width: 520px; }
+}
+
 .servers-table th {
   text-align: left;
   padding: 10px 16px;

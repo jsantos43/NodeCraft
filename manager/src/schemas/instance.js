@@ -53,4 +53,14 @@ const updateInstance = Joi.object({
   }).required(),
 });
 
-export { createInstance, updateInstance };
+const transferOwner = Joi.object({
+  owner: Joi.string().trim().uuid().required(),
+});
+
+const changeWorker = Joi.object({
+  workerId: Joi.string().trim().uuid().allow(null).required(),
+});
+
+export {
+  createInstance, updateInstance, transferOwner, changeWorker,
+};

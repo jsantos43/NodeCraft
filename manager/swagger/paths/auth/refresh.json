@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "refresh User access token",
+    "description": "Rotates the session using the `refreshToken` cookie: issues a fresh access token (and refresh token) as httpOnly cookies. Returns 401 if the refresh token is missing, expired or invalid.",
     "tags": [
       "Auth"
     ],

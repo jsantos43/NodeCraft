@@ -1,6 +1,7 @@
 {
   "post": {
     "summary": "stop Instance",
+    "description": "Stops the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
     "tags": [
       "Instance"
     ],

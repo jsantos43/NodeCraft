@@ -1,0 +1,49 @@
+{
+  "put": {
+    "summary": "report an Instance backup result to the manager (worker auth)",
+    "description": "Called by the worker after a backup run. Updates lastBackupStatus and lastBackupAt on the instance.",
+    "tags": [
+      "Worker"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/worker.json#/ok"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/worker.json#/backup"
+    }
+  },
+  "parameters": [
+    {
+      "name": "workerId",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+    },
+    {
+      "name": "instanceId",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    }
+  ]
+}

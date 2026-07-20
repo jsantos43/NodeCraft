@@ -1,0 +1,132 @@
+{
+  "default": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "worker": {
+              "$ref": "../schemas/worker.json"
+            }
+          }
+        }
+      }
+    }
+  },
+  "readAll": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "workers": {
+              "type": "array",
+              "items": {
+                "$ref": "../schemas/worker.json"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "create": {
+    "description": "CREATED. The plaintext apiKey and secret are returned only once, at creation time.",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "worker": {
+              "$ref": "../schemas/worker.json"
+            },
+            "apiKey": {
+              "type": "string",
+              "description": "Plaintext API key used by the worker to authenticate against the manager (stored hashed).",
+              "example": "70e942b1a1604772acd0c0b2958e8d4862d4af5b41955b80be2d4c0746c1ceee"
+            },
+            "secret": {
+              "type": "string",
+              "description": "Shared secret the manager uses to authenticate against the worker.",
+              "example": "eea07ccc96ed4bade91405eb9f68922b5e431eee0fbc4d0aaa82b25f4d97e723"
+            }
+          }
+        }
+      }
+    }
+  },
+  "heartbeats": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "heartbeats": {
+              "type": "array",
+              "items": {
+                "$ref": "../schemas/workerHeartbeat.json"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "instances": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "$ref": "../schemas/instance.json"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "ok": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            }
+          }
+        }
+      }
+    }
+  }
+}

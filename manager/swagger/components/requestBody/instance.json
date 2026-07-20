@@ -1,4 +1,43 @@
 {
+  "owner": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "owner"
+          ],
+          "properties": {
+            "owner": {
+              "type": "string",
+              "format": "uuid",
+              "example": "1e7ca2e6-519d-45af-ba5f-18305979ac8b"
+            }
+          }
+        }
+      }
+    }
+  },
+  "worker": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "workerId"
+          ],
+          "properties": {
+            "workerId": {
+              "type": "string",
+              "format": "uuid",
+              "nullable": true,
+              "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+            }
+          }
+        }
+      }
+    }
+  },
   "create": {
     "content": {
       "application/json": {
@@ -25,6 +64,27 @@
                 "kerbal"
               ],
               "example": "minecraft"
+            },
+            "workerId": {
+              "type": "string",
+              "description": "Worker to place the instance on. Must be one of the user's allowedWorkers.",
+              "example": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f"
+            },
+            "memory": {
+              "type": "integer",
+              "minimum": 512,
+              "example": 2048
+            },
+            "cpu": {
+              "type": "integer",
+              "minimum": 1,
+              "example": 2
+            },
+            "maxPlayers": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "example": 10
             },
             "game": {
               "oneOf": [

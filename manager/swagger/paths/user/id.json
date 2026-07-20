@@ -1,6 +1,7 @@
 {
   "get": {
     "summary": "read another User",
+    "description": "Reads another user by id. Requires authentication.",
     "tags": [
       "User"
     ],
@@ -21,6 +22,7 @@
   },
   "put": {
     "summary": "update another User",
+    "description": "Admin update of another user, including quotas (`maxInstances`, `maxMemory`, `maxCpu`, `maxDisk`) and access limits (`allowedGames`, `allowedWorkers`). Admin only.",
     "tags": [
       "User"
     ],
@@ -50,6 +52,7 @@
   },
   "delete": {
     "summary": "delete another User",
+    "description": "Deletes another user by id. Admin only.",
     "tags": [
       "User"
     ],

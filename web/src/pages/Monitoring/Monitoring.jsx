@@ -6,6 +6,7 @@ import MetricsChart from '../../components/ui/MetricsChart.jsx';
 import RangeSelector from '../../components/ui/RangeSelector.jsx';
 import ResourceBar from '../../components/ui/ResourceBar.jsx';
 import { StatusBadge } from '../../components/ui/Badge.jsx';
+import Alert from '../../components/ui/Alert.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { workersApi } from '../../api/workers.js';
 import { clusterChartData } from '../../utils/metrics.js';
@@ -15,7 +16,7 @@ import './Monitoring.css';
 export default function Monitoring() {
   const [range, setRange] = useState('1h');
 
-  const { data, loading } = useApi(async () => {
+  const { data, loading, error } = useApi(async () => {
     const { workers = [] } = await workersApi.list();
     const perWorker = await Promise.all(
       workers.map((w) => workersApi.heartbeats(w.id, range)
@@ -33,6 +34,11 @@ export default function Monitoring() {
 
   return (
     <Layout title="Monitoring">
+      {error && !loading && (
+        <div style={{ marginBottom: 16 }}>
+          <Alert error={error} override={{ title: "Couldn't load monitoring data" }} />
+        </div>
+      )}
       <div className="monitoring-grid">
         <Card className="monitoring-chart-card">
           <CardHeader
