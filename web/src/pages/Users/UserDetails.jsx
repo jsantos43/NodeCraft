@@ -287,6 +287,7 @@ export default function UserDetails() {
               <p>This user does not own any instances</p>
             </div>
           ) : (
+            <div className="table-scroll">
             <table className="servers-table">
               <thead>
                 <tr>
@@ -313,6 +314,7 @@ export default function UserDetails() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
       </div>

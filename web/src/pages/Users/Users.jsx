@@ -46,6 +46,7 @@ export default function Users() {
             No users found
           </div>
         ) : (
+          <div className="table-scroll">
           <table className="users-table">
             <thead>
               <tr>
@@ -75,6 +76,7 @@ export default function Users() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </Layout>

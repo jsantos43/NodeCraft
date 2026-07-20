@@ -66,6 +66,7 @@ export default function Servers() {
             </Button>
           </div>
         ) : (
+          <div className="table-scroll">
           <table className="servers-table">
             <thead>
               <tr>
@@ -99,6 +100,7 @@ export default function Servers() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </Layout>

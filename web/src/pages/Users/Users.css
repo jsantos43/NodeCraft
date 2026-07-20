@@ -8,6 +8,11 @@
 
 .users-table { width: 100%; border-collapse: collapse; }
 
+@media (max-width: 600px) {
+  /* Keep columns legible and let the row scroll horizontally instead of crushing. */
+  .users-table { min-width: 460px; }
+}
+
 .users-table th {
   text-align: left;
   padding: 10px 16px;

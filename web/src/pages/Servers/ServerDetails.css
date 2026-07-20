@@ -76,6 +76,37 @@
   font-weight: 500;
 }
 
+@media (max-width: 640px) {
+  /* A horizontal-scroll tab strip is undiscoverable on touch (you only ever
+     reach the first few tabs), so wrap all 8 into pills — every tab visible
+     and tappable, no scrolling. */
+  .server-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: none;
+  }
+  .server-tab {
+    padding: 7px 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    margin-bottom: 0;
+  }
+  .server-tab.tab-active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  /* Header: title/status on row 1, action buttons on their own full-width row 2.
+     Without this the action row and the meta collide (the game label overflowed
+     onto the Stop button). The game label is redundant here — it's in the
+     breadcrumb and on the Overview tab — so drop it on mobile. */
+  .server-details-header { flex-wrap: wrap; row-gap: 10px; }
+  .server-details-meta { overflow: hidden; }
+  .server-details-title { min-width: 0; }
+  .server-details-game { display: none; }
+  .server-details-actions { width: 100%; flex-wrap: wrap; }
+}
+
 /* Overview */
 .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
 
@@ -254,17 +285,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px; /* keep a long value (e.g. a UUID) from butting against the label */
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .overview-row:last-child { border-bottom: none; }
 
-.overview-key { font-size: 12px; color: var(--text-muted); }
+.overview-key { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
 
-.overview-val-wrap { display: flex; align-items: center; gap: 6px; }
+.overview-val-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; justify-content: flex-end; }
 
-.overview-val { font-size: 13px; color: var(--text-primary); font-weight: 450; }
+.overview-val {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 450;
+  min-width: 0;
+  text-align: right;
+  word-break: break-word;
+}
 
 .copy-btn {
   width: 20px;

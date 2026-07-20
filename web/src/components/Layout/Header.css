@@ -12,6 +12,21 @@
   z-index: 10;
 }
 
+/* Hamburger — only visible on mobile, for admins with a nav drawer */
+.topbar-menu-btn {
+  display: none;
+  width: 34px;
+  height: 34px;
+  margin-right: 4px;
+  margin-left: -6px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+.topbar-menu-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+
 .topbar-brand {
   display: flex;
   align-items: center;
@@ -243,4 +258,30 @@
 .topbar-menu-item:hover {
   background: rgba(255,255,255,0.04);
   color: var(--text-primary);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  min-width: 0; /* allow breadcrumbs to truncate instead of pushing the account menu off-screen */
+}
+
+.topbar-breadcrumbs { min-width: 0; overflow: hidden; }
+.breadcrumb-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .topbar { padding: 0 12px; }
+  .topbar-menu-btn { display: flex; }
+  /* Give the last breadcrumb the room; it's the one that identifies the page. */
+  .breadcrumb-item:not(.breadcrumb-current) { max-width: 90px; }
+}
+
+@media (max-width: 480px) {
+  /* Avatar + chevron are enough; the name is redundant next to the menu it opens. */
+  .topbar-username { display: none; }
+  .topbar-menu { min-width: 220px; }
 }

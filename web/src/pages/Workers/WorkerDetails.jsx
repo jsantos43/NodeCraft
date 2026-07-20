@@ -180,6 +180,7 @@ export default function WorkerDetails() {
               <p>No servers deployed on this worker</p>
             </div>
           ) : (
+            <div className="table-scroll">
             <table className="servers-table">
               <thead>
                 <tr>
@@ -206,6 +207,7 @@ export default function WorkerDetails() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
       </div>
