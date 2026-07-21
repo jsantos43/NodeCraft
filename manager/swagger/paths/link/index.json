@@ -25,7 +25,7 @@
   },
   "post": {
     "summary": "create Link",
-    "description": "Creates a link granting another user (or gamertags) scoped access to the instance, with `permissions`, an `access` level and `privileges`. Requires being the instance owner.",
+    "description": "Creates a link granting another user scoped access to the instance with `permissions`. `userId` is required and must reference an existing user. Requires being the instance owner.",
     "tags": [
       "Link"
     ],
@@ -50,7 +50,7 @@
       }
     },
     "requestBody": {
-      "$ref": "../../components/requestBody/link.json#/default"
+      "$ref": "../../components/requestBody/link.json#/create"
     }
   },
   "parameters": [

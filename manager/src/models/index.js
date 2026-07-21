@@ -13,7 +13,7 @@ import Terraria from './Terraria.js';
 // instance <-> link
 Instance.hasMany(Link, {
   foreignKey: 'instanceId',
-  as: 'players',
+  as: 'links',
   onDelete: 'CASCADE',
   hooks: true,
 });
@@ -32,7 +32,7 @@ User.hasMany(Link, {
 Link.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user',
-  constraints: false, // userId can be arbitrary.
+  onDelete: 'CASCADE',
 });
 
 // user <-> instance
@@ -159,7 +159,7 @@ const instanceInclude = [
   },
   {
     model: Link,
-    as: 'players',
+    as: 'links',
     include: {
       model: User,
       as: 'user',

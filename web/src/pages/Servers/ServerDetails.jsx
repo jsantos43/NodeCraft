@@ -6,7 +6,7 @@ import {
   Network, Variable, ArrowLeft, RefreshCw, Copy, Check, Save,
   FileText, FilePlus, FolderPlus, Upload, Download, ChevronRight, X,
   Plus, Edit2, Users, Scissors, Archive, Gamepad2, Coffee, Smartphone, Signal,
-  Shield, ArrowRight, AlertTriangle,
+  Shield, ArrowRight, AlertTriangle, Link2,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -31,8 +31,10 @@ const TABS = [
   { id: 'backups',   label: 'Backups',    icon: HardDrive  },
   { id: 'env',       label: 'Variables',  icon: Variable   },
   { id: 'connect',   label: 'Connect',    icon: Gamepad2   },
-  { id: 'players',   label: 'Players',    icon: Users      },
 ];
+
+// Owner-only tab, appended only when the current user owns the instance.
+const LINK_TAB = { id: 'links', label: 'Links', icon: Link2 };
 
 // Admin-only tab, appended to TABS only when the current user is an admin.
 const ADMIN_TAB = { id: 'admin', label: 'Admin', icon: Shield };
@@ -78,11 +80,27 @@ const PERMISSION_DEPS = {
   'instance:files:edit':    ['instance:read', 'instance:files:read'],
 };
 
-const ACCESS_OPTS = [
-  { value: 'always',    label: 'Always',    desc: 'Always allowed to join'              },
-  { value: 'super',     label: 'Super',     desc: 'Always + enables Monitored users'    },
-  { value: 'monitored', label: 'Monitored', desc: 'Only when a Super user is online'    },
-];
+// Human-readable label for each permission, used on the roster chips.
+const PERMISSION_LABELS = {
+  'instance:read':          'View',
+  'instance:edit':          'Edit settings',
+  'instance:execute':       'Start / stop',
+  'instance:backup':        'Backups',
+  'instance:console:read':  'Console: read',
+  'instance:console:write': 'Console: send',
+  'instance:files:read':    'Files: read',
+  'instance:files:edit':    'Files: edit',
+  'instance:files:write':   'Files: manage',
+};
+
+// Deterministic avatar tint per collaborator, drawn from the token palette so
+// each person keeps a stable identity color without inventing new colors.
+const AVATAR_TINTS = ['blue', 'purple', 'green', 'yellow', 'accent'];
+const tintFor = (key = '') => {
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) hash = (hash * 31 + key.charCodeAt(i)) | 0;
+  return AVATAR_TINTS[Math.abs(hash) % AVATAR_TINTS.length];
+};
 
 const GAME_LABELS = {
   minecraft: 'Minecraft', counterstrike: 'CS2', terraria: 'Terraria',
@@ -1036,29 +1054,27 @@ function BackupsTab({ instance, canBackup, onRefetch }) {
 
 function LinkDialog({ instanceId, link, onSaved, onClose }) {
   const isEdit = !!link;
-  const [userId, setUserId] = useState(link?.userId || '');
+  const [userId, setUserId] = useState('');
   const [lookedUpUser, setLookedUpUser] = useState(link?.user || null);
-  const [gamertags, setGamertags] = useState(link?.gamertags || []);
-  const [gamertagInput, setGamertagInput] = useState('');
   const [permissions, setPermissions] = useState(link?.permissions || ['instance:read']);
-  const [access, setAccess] = useState(link?.access || 'always');
-  const [privileges, setPrivileges] = useState(link?.privileges ?? false);
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState(null);
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
+  // A new link needs a resolved user; editing keeps the existing one fixed.
+  const canSave = isEdit || !!lookedUpUser;
+
   const save = async () => {
+    if (!canSave) return;
     setSaving(true);
     setSaveError(null);
     try {
-      const body = { gamertags, permissions, access, privileges };
-      if (userId.trim()) body.userId = userId.trim();
       if (isEdit) {
-        await instancesApi.updateLink(instanceId, link.id, body);
+        await instancesApi.updateLink(instanceId, link.id, { permissions });
       } else {
-        await instancesApi.createLink(instanceId, body);
+        await instancesApi.createLink(instanceId, { userId: userId.trim(), permissions });
       }
       onSaved();
     } catch (err) {
@@ -1076,18 +1092,11 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
       const res = await usersApi.get(userId.trim());
       setLookedUpUser(res.user);
     } catch {
-      setLookupError('User not found');
+      setLookupError('No user found with that ID');
       setLookedUpUser(null);
     } finally {
       setLookingUp(false);
     }
-  };
-
-  const addGamertag = () => {
-    const gt = gamertagInput.trim();
-    if (!gt || gamertags.includes(gt) || gamertags.length >= 4) return;
-    setGamertags(prev => [...prev, gt]);
-    setGamertagInput('');
   };
 
   const togglePermission = (perm) => {
@@ -1120,63 +1129,45 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
     <div className="files-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="files-dialog link-dialog">
         <div className="files-dialog-header">
-          <span className="files-dialog-title">{isEdit ? 'Edit Access Link' : 'New Access Link'}</span>
+          <span className="files-dialog-title">{isEdit ? 'Edit access' : 'Grant access'}</span>
           <button className="files-dialog-close" onClick={onClose}><X size={14} /></button>
         </div>
 
         <div className="files-dialog-body">
-          <div className="link-form-field">
-            <label className="link-form-label">User ID <span className="link-form-optional">(optional)</span></label>
-            <div className="link-form-row">
-              <Input
-                value={userId}
-                onChange={e => { setUserId(e.target.value); setLookedUpUser(null); setLookupError(null); }}
-                onKeyDown={e => e.key === 'Enter' && lookupUser()}
-                placeholder="Paste user UUID..."
-              />
-              <Button size="sm" variant="secondary" onClick={lookupUser} loading={lookingUp}>Verify</Button>
-            </div>
-            {lookupError && <span className="link-form-error">{lookupError}</span>}
-            {lookedUpUser && (
-              <span className="link-form-user-ok"><Check size={12} /> {lookedUpUser.name} ({lookedUpUser.email})</span>
-            )}
-          </div>
-
-          <div className="link-form-field">
-            <label className="link-form-label">Gamertags <span className="link-form-optional">(up to 4, used for allowlist & OP)</span></label>
-            <div className="link-form-row">
-              <Input
-                value={gamertagInput}
-                onChange={e => setGamertagInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addGamertag()}
-                placeholder="Type gamertag and press Enter..."
-                disabled={gamertags.length >= 4}
-              />
-              <Button size="sm" variant="secondary" onClick={addGamertag} disabled={gamertags.length >= 4}>Add</Button>
-            </div>
-            {gamertags.length > 0 && (
-              <div className="link-tags">
-                {gamertags.map(gt => (
-                  <span key={gt} className="link-tag">
-                    {gt}
-                    <button className="link-tag-rm" onClick={() => setGamertags(prev => prev.filter(g => g !== gt))}>×</button>
-                  </span>
-                ))}
+          {isEdit ? (
+            <div className="link-form-field">
+              <label className="link-form-label">Person</label>
+              <div className="link-user-fixed">
+                <div className={`roster-avatar avatar-${tintFor(link.userId || lookedUpUser?.id)}`}>
+                  {(lookedUpUser?.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="link-user-fixed-meta">
+                  <span className="roster-name">{lookedUpUser?.name || 'Unknown user'}</span>
+                  <span className="roster-meta">{lookedUpUser?.email || link.userId}</span>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="link-form-field">
+              <label className="link-form-label">User ID</label>
+              <div className="link-form-row">
+                <Input
+                  value={userId}
+                  onChange={e => { setUserId(e.target.value); setLookedUpUser(null); setLookupError(null); }}
+                  onKeyDown={e => e.key === 'Enter' && lookupUser()}
+                  placeholder="Paste the user's ID..."
+                />
+                <Button size="sm" variant="secondary" onClick={lookupUser} loading={lookingUp}>Verify</Button>
+              </div>
+              {lookupError && <span className="link-form-error">{lookupError}</span>}
+              {lookedUpUser
+                ? <span className="link-form-user-ok"><Check size={12} /> {lookedUpUser.name} ({lookedUpUser.email})</span>
+                : <span className="link-form-optional">Find the person by their ID, then verify to confirm.</span>}
+            </div>
+          )}
 
           <div className="link-form-field">
-            <label className="link-form-label">Access Type</label>
-            <Select value={access} onChange={e => setAccess(e.target.value)}>
-              {ACCESS_OPTS.map(o => (
-                <option key={o.value} value={o.value}>{o.label} — {o.desc}</option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="link-form-field">
-            <label className="link-form-label">Panel Permissions</label>
+            <label className="link-form-label">What they can do</label>
             {PERMISSION_GROUPS.map(group => (
               <div key={group.label} className="link-perm-group">
                 <span className="link-perm-group-label">{group.label}</span>
@@ -1192,21 +1183,13 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
             ))}
           </div>
 
-          <div className="link-form-field">
-            <label className="link-form-label">Admin</label>
-            <label className="link-perm-toggle">
-              <input type="checkbox" checked={privileges} onChange={e => setPrivileges(e.target.checked)} />
-              Grant OP / admin privileges in-game
-            </label>
-          </div>
-
           {saveError && <Alert error={saveError} compact />}
         </div>
 
         <div className="files-dialog-footer">
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" size="sm" loading={saving} onClick={save}>
-            {isEdit ? 'Save Changes' : 'Create Link'}
+          <Button variant="primary" size="sm" loading={saving} disabled={!canSave} onClick={save}>
+            {isEdit ? 'Save changes' : 'Grant access'}
           </Button>
         </div>
       </div>
@@ -1214,49 +1197,35 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
   );
 }
 
-const ACCESS_META = {
-  super:     { color: 'purple', label: 'Super',     desc: 'Always joins and lets Monitored players in' },
-  always:    { color: 'blue',   label: 'Always',    desc: 'Always allowed to join' },
-  monitored: { color: 'yellow', label: 'Monitored', desc: 'Joins only while a Super player is online' },
-};
-
-function RosterRow({ link, canManage, onEdit, onDelete }) {
+function RosterRow({ link, onEdit, onDelete }) {
   const toast = useToast();
   const del = useAction(onDelete);
   const removeLink = async () => {
     try { await del.execute(); }
-    catch (err) { toast.error(err, { title: "Couldn't remove this player" }); }
+    catch (err) { toast.error(err, { title: "Couldn't remove this person" }); }
   };
-  const access = ACCESS_META[link.access] || { color: 'gray', label: link.access, desc: '' };
-  const name = link.user?.name || 'Anonymous';
-  const initial = link.user ? name.charAt(0).toUpperCase() : '∗';
+  const name = link.user?.name || 'Unknown user';
+  const initial = name.charAt(0).toUpperCase();
   return (
     <div className="roster-row">
-      <div className={`roster-avatar avatar-${access.color}`}>{initial}</div>
+      <div className={`roster-avatar avatar-${tintFor(link.userId)}`}>{initial}</div>
       <div className="roster-main">
-        <div className="roster-line">
-          <span className="roster-name">{name}</span>
-          {link.privileges && <span className="roster-op" title="OP / admin in-game">OP</span>}
-        </div>
-        <span className="roster-meta">
-          {link.user ? link.user.email : 'No linked account'}
-          {link.gamertags?.length > 0 && <> · {link.gamertags.join(', ')}</>}
-        </span>
+        <span className="roster-name">{name}</span>
+        <span className="roster-meta">{link.user?.email || link.userId}</span>
         {link.permissions?.length > 0 && (
           <div className="roster-perms">
-            {link.permissions.map(p => <span key={p} className="roster-perm">{p.replace('instance:', '')}</span>)}
+            {link.permissions.map(p => (
+              <span key={p} className="roster-perm">{PERMISSION_LABELS[p] || p.replace('instance:', '')}</span>
+            ))}
           </div>
         )}
       </div>
-      <span className={`roster-access roster-access-${access.color}`} title={access.desc}>{access.label}</span>
-      {canManage && (
-        <div className="roster-actions">
-          <button className="files-icon-btn" onClick={onEdit} title="Edit"><Edit2 size={13} /></button>
-          <button className="files-icon-btn files-icon-danger" onClick={removeLink} disabled={del.loading} title="Remove">
-            {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
-          </button>
-        </div>
-      )}
+      <div className="roster-actions">
+        <button className="files-icon-btn" onClick={onEdit} title="Edit access"><Edit2 size={13} /></button>
+        <button className="files-icon-btn files-icon-danger" onClick={removeLink} disabled={del.loading} title="Remove access">
+          {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1413,7 +1382,7 @@ function ConnectTab({ instance, onRefetch }) {
   );
 }
 
-function PlayersTab({ instance, canManage }) {
+function LinkTab({ instance }) {
   const { data, loading, refetch } = useApi(() => instancesApi.listLinks(instance.id), [instance.id]);
   const links = data?.links || [];
   const [dialog, setDialog] = useState(null);
@@ -1425,12 +1394,12 @@ function PlayersTab({ instance, canManage }) {
     <div className="players-wrap">
       <div className="players-head">
         <div className="players-head-text">
-          <span className="players-title">Player access</span>
+          <span className="players-title">People with access</span>
           <span className="players-count">
-            {links.length === 0 ? 'No players yet' : `${links.length} ${links.length === 1 ? 'player' : 'players'} invited`}
+            {links.length === 0 ? 'Only you can access this server' : `${links.length} ${links.length === 1 ? 'person' : 'people'} added`}
           </span>
         </div>
-        {canManage && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>}
+        <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add person</Button>
       </div>
 
       {loading ? (
@@ -1438,14 +1407,14 @@ function PlayersTab({ instance, canManage }) {
       ) : links.length === 0 ? (
         <div className="players-empty">
           <Users size={26} />
-          <h3>No one’s been invited yet</h3>
-          <p>Add a player to let them join and choose what they can do on the server.</p>
-          {canManage && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>}
+          <h3>No one else has access yet</h3>
+          <p>Add someone by their user ID and pick exactly what they can do on this server.</p>
+          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add person</Button>
         </div>
       ) : (
         <div className="roster">
           {links.map(link => (
-            <RosterRow key={link.id} link={link} canManage={canManage} onEdit={() => setDialog(link)} onDelete={() => onDelete(link.id)} />
+            <RosterRow key={link.id} link={link} onEdit={() => setDialog(link)} onDelete={() => onDelete(link.id)} />
           ))}
         </div>
       )}
@@ -1723,7 +1692,11 @@ export default function ServerDetails() {
         </div>
 
         <div className="server-tabs">
-          {(isAdmin ? [...TABS, ADMIN_TAB] : TABS).map(({ id: tid, label, icon: Icon }) => (
+          {[
+            ...TABS,
+            ...(canManageLinks ? [LINK_TAB] : []),
+            ...(isAdmin ? [ADMIN_TAB] : []),
+          ].map(({ id: tid, label, icon: Icon }) => (
             <button
               key={tid}
               className={`server-tab ${tab === tid ? 'tab-active' : ''}`}
@@ -1742,7 +1715,7 @@ export default function ServerDetails() {
           {tab === 'backups'  && <Card><BackupsTab instance={instance} canBackup={canBackup} onRefetch={refetch} /></Card>}
           {tab === 'env'      && <Card><VariablesTab instance={instance} canEdit={canEditInstance} onSaved={refetch} /></Card>}
           {tab === 'connect'  && <Card><ConnectTab instance={instance} onRefetch={refetch} /></Card>}
-          {tab === 'players'  && <Card><PlayersTab instance={instance} canManage={canManageLinks} /></Card>}
+          {tab === 'links'    && canManageLinks && <Card><LinkTab instance={instance} /></Card>}
           {tab === 'admin' && isAdmin && <Card><AdminTab instance={instance} onOwnerChanged={refetch} /></Card>}
         </div>
       </div>

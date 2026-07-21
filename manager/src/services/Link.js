@@ -3,18 +3,22 @@ import { Link as Model, User as UserModel } from '../models/index.js';
 import User from './User.js';
 
 class Link {
-  static async readUserLinks() {
+  static async readAll() {
     const links = await Model.findAll();
 
     return links;
   }
 
-  static async readAllFromInstance(instanceId) {
+  static async readAllByInstance(instanceId) {
     const links = await Model.findAll({
       where: {
         instanceId,
       },
-      include: [{ model: UserModel, as: 'user', attributes: ['id', 'name', 'email'] }],
+      include: [{
+        model: UserModel,
+        as: 'user',
+        attributes: ['id', 'name', 'email'],
+      }],
     });
 
     return links;
@@ -22,7 +26,6 @@ class Link {
 
   static async readOne(linkId) {
     const link = await Model.findByPk(linkId);
-
     if (!link) throw new NotFound('Link not found!');
 
     return link;
@@ -36,12 +39,12 @@ class Link {
       },
     });
 
+    if (!link) throw new NotFound('Link not found!');
+
     return link;
   }
 
-  static async verifyUserIsLinked(userId, instanceId) {
-    if (!userId) return false;
-
+  static async verifyUserIsAlreadyLinked(userId, instanceId) {
     const user = await User.readOne(userId);
 
     if (!user.instances) return false;
@@ -51,17 +54,14 @@ class Link {
 
   static async create(instanceId, data) {
     // Verify if user is already linked with instance
-    if (await Link.verifyUserIsLinked(data.userId, instanceId)) {
+    if (await Link.verifyUserIsAlreadyLinked(data.userId, instanceId)) {
       throw new InvalidRequest('User is already linked with this instance');
     }
 
     const link = await Model.create({
       instanceId,
-      userId: data.userId || null,
-      gamertags: data.gamertags || [],
+      userId: data.userId,
       permissions: data.permissions,
-      privileges: data.privileges,
-      access: data.access,
     });
 
     return link;
@@ -69,14 +69,6 @@ class Link {
 
   static async update(linkId, data) {
     const link = await Link.readOne(linkId);
-
-    // Only check for duplicate if userId is changing to a different user
-    if (data.userId && data.userId !== link.userId) {
-      if (await Link.verifyUserIsLinked(data.userId, link.instanceId)) {
-        throw new InvalidRequest('User is already linked with this instance');
-      }
-    }
-
     await link.update(data);
 
     return link;
@@ -89,7 +81,6 @@ class Link {
     return link;
   }
 
-  // Remove the link (if any) between a user and an instance.
   static async deleteByUserAndInstance(userId, instanceId) {
     const link = await Link.readByUserAndInstance(userId, instanceId);
     if (link) await link.destroy();
@@ -114,12 +105,7 @@ class Link {
   }
 
   static async readUserPermissions(userId, instanceId) {
-    const link = await Model.findOne({
-      where: {
-        instanceId,
-        userId,
-      },
-    });
+    const link = await Link.readByUserAndInstance(userId, instanceId);
 
     return link?.permissions || [];
   }

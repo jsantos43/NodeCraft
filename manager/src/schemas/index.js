@@ -3,7 +3,7 @@ import {
 } from './instance.js';
 import { createUser, updateUser, adminUpdateUser } from './user.js';
 import { createFile, updateFile } from './file.js';
-import link from './link.js';
+import { createLink, updateLink } from './link.js';
 import minecraft from './minecraft.js';
 
 export {
@@ -16,6 +16,7 @@ export {
   adminUpdateUser,
   createFile,
   updateFile,
-  link,
+  createLink,
+  updateLink,
   minecraft,
 };

@@ -46,28 +46,18 @@
                   "id": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd",
                   "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
                   "userId": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
-                  "gamertags": [
-                    "JPGamerPlay"
-                  ],
                   "permissions": [
                     "instance:read",
                     "instance:execute"
-                  ],
-                  "privileges": true,
-                  "access": "always"
+                  ]
                 },
                 {
                   "id": "7c9c1f23-3b9d-4c3e-bf55-123456789abc",
                   "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
-                  "userId": null,
-                  "gamertags": [
-                    "JPGamerPlay7"
-                  ],
+                  "userId": "9b2c1f23-3b9d-4c3e-bf55-123456789abc",
                   "permissions": [
                     "instance:read"
-                  ],
-                  "privileges": false,
-                  "access": "monitored"
+                  ]
                 }
               ]
             }

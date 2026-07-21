@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { auth, validate } from '../middlewares/index.js';
-import { link } from '../schemas/index.js';
+import { createLink, updateLink } from '../schemas/index.js';
 import Controller from '../controllers/Link.js';
 
 const router = Router();
@@ -19,13 +19,13 @@ router
   .post(
     '/:id/link',
     auth('instance:owner'),
-    validate(link),
+    validate(createLink),
     Controller.create,
   )
   .put(
     '/:id/link/:linkId',
     auth('instance:owner'),
-    validate(link),
+    validate(updateLink),
     Controller.update,
   )
   .delete(

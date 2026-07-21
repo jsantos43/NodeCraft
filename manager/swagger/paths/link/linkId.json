@@ -25,7 +25,7 @@
   },
   "put": {
     "summary": "update link",
-    "description": "Updates a link's permissions, gamertags, access level or privileges. Requires being the instance owner.",
+    "description": "Updates a link's `permissions`. `userId` and `instanceId` cannot be changed. Requires being the instance owner.",
     "tags": [
       "Link"
     ],
@@ -50,7 +50,7 @@
       }
     },
     "requestBody": {
-      "$ref": "../../components/requestBody/link.json#/default"
+      "$ref": "../../components/requestBody/link.json#/update"
     }
   },
   "delete": {

@@ -17,7 +17,7 @@ class Link {
   static async readAll(req, res, next) {
     try {
       const id = req?.params?.id;
-      const links = await Service.readAllFromInstance(id);
+      const links = await Service.readAllByInstance(id);
 
       return res.status(200).json({ success: true, links });
     } catch (err) {
