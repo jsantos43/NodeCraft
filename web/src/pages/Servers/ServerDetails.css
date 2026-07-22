@@ -925,6 +925,10 @@
 }
 .roster-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 
+/* Roster player identifier (Mojang UUID / XUID / SteamID) */
+.roster-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; }
+.player-op-toggle { margin-top: 2px; }
+
 @media (max-width: 560px) {
   .server-plate { grid-template-columns: 1fr; gap: 12px; }
   .server-plate .copy-value { width: 100%; justify-content: space-between; }

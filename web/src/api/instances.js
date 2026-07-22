@@ -64,4 +64,12 @@ export const instancesApi = {
   createLink: (id, body) => api.post(`/instance/${id}/link`, body),
   updateLink: (id, linkId, body) => api.put(`/instance/${id}/link/${linkId}`, body),
   deleteLink: (id, linkId) => api.delete(`/instance/${id}/link/${linkId}`),
+
+  // Roster: game-identity allow-list (barrier). On create the server resolves
+  // the typed name into the account's permanent id; update only tweaks
+  // access/privileged (identity is immutable).
+  listRoster: (id) => api.get(`/instance/${id}/roster`),
+  createRoster: (id, body) => api.post(`/instance/${id}/roster`, body),
+  updateRoster: (id, rosterId, body) => api.put(`/instance/${id}/roster/${rosterId}`, body),
+  deleteRoster: (id, rosterId) => api.delete(`/instance/${id}/roster/${rosterId}`),
 };

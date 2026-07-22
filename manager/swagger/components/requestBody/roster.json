@@ -1,0 +1,72 @@
+{
+  "create": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "platform",
+            "name",
+            "access"
+          ],
+          "properties": {
+            "platform": {
+              "type": "string",
+              "enum": [
+                "java",
+                "bedrock",
+                "steam"
+              ],
+              "example": "java"
+            },
+            "name": {
+              "type": "string",
+              "description": "Typed gamertag/username. The server resolves it against the platform's API into the canonical `identifier`; `identifier` cannot be sent by the client.",
+              "example": "Notch"
+            },
+            "access": {
+              "type": "string",
+              "enum": [
+                "host",
+                "member",
+                "guest"
+              ],
+              "example": "member"
+            },
+            "privileged": {
+              "type": "boolean",
+              "example": false
+            }
+          }
+        }
+      }
+    }
+  },
+  "update": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "access"
+          ],
+          "properties": {
+            "access": {
+              "type": "string",
+              "enum": [
+                "host",
+                "member",
+                "guest"
+              ],
+              "example": "host"
+            },
+            "privileged": {
+              "type": "boolean",
+              "example": true
+            }
+          }
+        }
+      }
+    }
+  }
+}

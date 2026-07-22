@@ -12,7 +12,7 @@ import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Input, { Select } from '../../components/ui/Input.jsx';
-import { StatusBadge } from '../../components/ui/Badge.jsx';
+import Badge, { StatusBadge } from '../../components/ui/Badge.jsx';
 import Alert from '../../components/ui/Alert.jsx';
 import { useApi, useAction } from '../../hooks/useApi.js';
 import { instancesApi } from '../../api/instances.js';
@@ -30,6 +30,7 @@ const TABS = [
   { id: 'files',     label: 'Files',      icon: Folder     },
   { id: 'backups',   label: 'Backups',    icon: HardDrive  },
   { id: 'env',       label: 'Variables',  icon: Variable   },
+  { id: 'players',   label: 'Players',    icon: Users      },
   { id: 'connect',   label: 'Connect',    icon: Gamepad2   },
 ];
 
@@ -64,6 +65,12 @@ const PERMISSION_GROUPS = [
       { id: 'instance:files:write', label: 'Create/delete' },
     ],
   },
+  {
+    label: 'Players',
+    perms: [
+      { id: 'instance:roster:edit', label: 'Manage' },
+    ],
+  },
 ];
 
 // Each permission's prerequisites (flattened to include transitive deps).
@@ -78,6 +85,7 @@ const PERMISSION_DEPS = {
   'instance:files:read':    ['instance:read'],
   'instance:files:write':   ['instance:read', 'instance:files:read', 'instance:files:edit'],
   'instance:files:edit':    ['instance:read', 'instance:files:read'],
+  'instance:roster:edit':   ['instance:read'],
 };
 
 // Human-readable label for each permission, used on the roster chips.
@@ -91,7 +99,22 @@ const PERMISSION_LABELS = {
   'instance:files:read':    'Files: read',
   'instance:files:edit':    'Files: edit',
   'instance:files:write':   'Files: manage',
+  'instance:roster:edit':   'Players: manage',
 };
+
+// Roster (player allow-list) options — mirror the manager's config.roster.
+const ROSTER_PLATFORMS = [
+  { id: 'java',    label: 'Java',    icon: Coffee,     color: 'green', placeholder: 'Java username…' },
+  { id: 'bedrock', label: 'Bedrock', icon: Smartphone, color: 'blue',  placeholder: 'Xbox gamertag…' },
+  { id: 'steam',   label: 'Steam',   icon: Signal,     color: 'gray',  placeholder: 'Steam vanity URL…' },
+];
+const ROSTER_ACCESS = [
+  { id: 'host',   label: 'Host',   color: 'purple', hint: 'Always allowed in — and while they’re online, Guests can join too.' },
+  { id: 'member', label: 'Member', color: 'blue',   hint: 'Always allowed in.' },
+  { id: 'guest',  label: 'Guest',  color: 'gray',   hint: 'Can only join while a Host is online.' },
+];
+const platformMeta = (p) => ROSTER_PLATFORMS.find(x => x.id === p) || { id: p, label: p, color: 'gray', placeholder: '' };
+const accessMeta = (a) => ROSTER_ACCESS.find(x => x.id === a) || { id: a, label: a, color: 'gray', hint: '' };
 
 // Deterministic avatar tint per collaborator, drawn from the token palette so
 // each person keeps a stable identity color without inventing new colors.
@@ -1230,6 +1253,204 @@ function RosterRow({ link, onEdit, onDelete }) {
   );
 }
 
+// ---- Players (roster / barrier allow-list) --------------------------------
+
+function PlayersTab({ instance, canEdit }) {
+  const { data, loading, refetch } = useApi(() => instancesApi.listRoster(instance.id), [instance.id]);
+  const players = data?.rosters || [];
+  const [dialog, setDialog] = useState(null);
+
+  const onSaved = () => { setDialog(null); refetch(); };
+  const onDelete = (rosterId) => instancesApi.deleteRoster(instance.id, rosterId).then(refetch);
+
+  return (
+    <div className="players-wrap">
+      <div className="players-head">
+        <div className="players-head-text">
+          <span className="players-title">Allowed players</span>
+          <span className="players-count">
+            {players.length === 0
+              ? 'No players on the allow-list yet'
+              : `${players.length} ${players.length === 1 ? 'player' : 'players'} on the list`}
+          </span>
+        </div>
+        {canEdit && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>}
+      </div>
+
+      {loading ? (
+        <div className="players-loading"><Spinner size={18} /></div>
+      ) : players.length === 0 ? (
+        <div className="players-empty">
+          <Users size={26} />
+          <h3>No players yet</h3>
+          <p>Add players by their in-game name to control who can join. We store each account&apos;s permanent ID, so a rename never breaks access.</p>
+          {canEdit && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>}
+        </div>
+      ) : (
+        <div className="roster">
+          {players.map(entry => (
+            <PlayerRow
+              key={entry.id}
+              entry={entry}
+              canEdit={canEdit}
+              onEdit={() => setDialog(entry)}
+              onDelete={() => onDelete(entry.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {dialog && (
+        <PlayerDialog
+          instanceId={instance.id}
+          entry={dialog === 'new' ? null : dialog}
+          onSaved={onSaved}
+          onClose={() => setDialog(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function PlayerRow({ entry, canEdit, onEdit, onDelete }) {
+  const toast = useToast();
+  const del = useAction(onDelete);
+  const remove = async () => {
+    try { await del.execute(); }
+    catch (err) { toast.error(err, { title: "Couldn't remove this player" }); }
+  };
+
+  const pm = platformMeta(entry.platform);
+  const am = accessMeta(entry.access);
+  const initial = (entry.name || '?').charAt(0).toUpperCase();
+
+  return (
+    <div className="roster-row">
+      <div className={`roster-avatar avatar-${tintFor(entry.identifier || entry.id)}`}>{initial}</div>
+      <div className="roster-main">
+        <span className="roster-name">{entry.name}</span>
+        <span className="roster-meta roster-id">{entry.identifier}</span>
+        <div className="roster-perms">
+          <Badge color={pm.color}>{pm.label}</Badge>
+          <Badge color={am.color}>{am.label}</Badge>
+          {entry.privileged && <Badge color="yellow">Op</Badge>}
+        </div>
+      </div>
+      {canEdit && (
+        <div className="roster-actions">
+          <button className="files-icon-btn" onClick={onEdit} title="Edit player"><Edit2 size={13} /></button>
+          <button className="files-icon-btn files-icon-danger" onClick={remove} disabled={del.loading} title="Remove player">
+            {del.loading ? <Spinner size={13} /> : <Trash2 size={13} />}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlayerDialog({ instanceId, entry, onSaved, onClose }) {
+  const isEdit = !!entry;
+  const [platform, setPlatform] = useState(entry?.platform || 'java');
+  const [name, setName] = useState(entry?.name || '');
+  const [access, setAccess] = useState(entry?.access || 'member');
+  const [privileged, setPrivileged] = useState(entry?.privileged || false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  // A new entry needs a name to resolve; editing keeps the identity fixed.
+  const canSave = isEdit || name.trim().length > 0;
+
+  const save = async () => {
+    if (!canSave) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (isEdit) {
+        await instancesApi.updateRoster(instanceId, entry.id, { access, privileged });
+      } else {
+        await instancesApi.createRoster(instanceId, { platform, name: name.trim(), access, privileged });
+      }
+      onSaved();
+    } catch (err) {
+      setSaveError(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const pm = platformMeta(isEdit ? entry.platform : platform);
+  const am = accessMeta(access);
+
+  return (
+    <div className="files-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="files-dialog link-dialog">
+        <div className="files-dialog-header">
+          <span className="files-dialog-title">{isEdit ? 'Edit player' : 'Add player'}</span>
+          <button className="files-dialog-close" onClick={onClose}><X size={14} /></button>
+        </div>
+
+        <div className="files-dialog-body">
+          {isEdit ? (
+            <div className="link-form-field">
+              <label className="link-form-label">Player</label>
+              <div className="link-user-fixed">
+                <div className={`roster-avatar avatar-${tintFor(entry.identifier || entry.id)}`}>
+                  {(entry.name || '?').charAt(0).toUpperCase()}
+                </div>
+                <div className="link-user-fixed-meta">
+                  <span className="roster-name">{entry.name}</span>
+                  <span className="roster-meta roster-id">{pm.label} · {entry.identifier}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="link-form-field">
+                <label className="link-form-label">Platform</label>
+                <Select value={platform} onChange={e => setPlatform(e.target.value)}>
+                  {ROSTER_PLATFORMS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                </Select>
+              </div>
+              <div className="link-form-field">
+                <label className="link-form-label">In-game name</label>
+                <Input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && save()}
+                  placeholder={pm.placeholder}
+                />
+                <span className="link-form-optional">We look this up and store the account&apos;s permanent ID, so a rename never breaks access.</span>
+              </div>
+            </>
+          )}
+
+          <div className="link-form-field">
+            <label className="link-form-label">Access</label>
+            <Select value={access} onChange={e => setAccess(e.target.value)}>
+              {ROSTER_ACCESS.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+            </Select>
+            <span className="link-form-optional">{am.hint}</span>
+          </div>
+
+          <label className="link-perm-toggle player-op-toggle">
+            <input type="checkbox" checked={privileged} onChange={e => setPrivileged(e.target.checked)} />
+            Privileged — becomes op/admin on the server
+          </label>
+
+          {saveError && <Alert error={saveError} compact />}
+        </div>
+
+        <div className="files-dialog-footer">
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" size="sm" loading={saving} disabled={!canSave} onClick={save}>
+            {isEdit ? 'Save changes' : 'Add player'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Extract a connectable host from a worker URL (with or without protocol).
 function parseHost(url) {
   if (!url) return null;
@@ -1580,6 +1801,7 @@ export default function ServerDetails() {
   const canEditInstance = permissions.includes('instance:edit');
   const canBackup = permissions.includes('instance:backup');
   const canManageLinks = permissions.includes('instance:owner');
+  const canEditRoster = permissions.includes('instance:roster:edit') || permissions.includes('instance:owner');
 
   // Resolve pending when real status matches expected
   useEffect(() => {
@@ -1714,6 +1936,7 @@ export default function ServerDetails() {
           {tab === 'files'    && <Card><FilesTab instanceId={id} /></Card>}
           {tab === 'backups'  && <Card><BackupsTab instance={instance} canBackup={canBackup} onRefetch={refetch} /></Card>}
           {tab === 'env'      && <Card><VariablesTab instance={instance} canEdit={canEditInstance} onSaved={refetch} /></Card>}
+          {tab === 'players'  && <Card><PlayersTab instance={instance} canEdit={canEditRoster} /></Card>}
           {tab === 'connect'  && <Card><ConnectTab instance={instance} onRefetch={refetch} /></Card>}
           {tab === 'links'    && canManageLinks && <Card><LinkTab instance={instance} /></Card>}
           {tab === 'admin' && isAdmin && <Card><AdminTab instance={instance} onOwnerChanged={refetch} /></Card>}

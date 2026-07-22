@@ -4,6 +4,7 @@ import {
 import { createUser, updateUser, adminUpdateUser } from './user.js';
 import { createFile, updateFile } from './file.js';
 import { createLink, updateLink } from './link.js';
+import { createRoster, updateRoster } from './roster.js';
 import minecraft from './minecraft.js';
 
 export {
@@ -18,5 +19,7 @@ export {
   updateFile,
   createLink,
   updateLink,
+  createRoster,
+  updateRoster,
   minecraft,
 };

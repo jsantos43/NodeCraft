@@ -1,0 +1,100 @@
+{
+  "get": {
+    "summary": "read a Roster entry",
+    "description": "Reads a single roster entry by id. Requires the `instance:read` permission.",
+    "tags": [
+      "Roster"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/roster.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "put": {
+    "summary": "update Roster entry",
+    "description": "Updates a roster entry's `access` tier and/or `privileged` flag. The identity (`identifier`, `name`, `platform`) cannot be changed — delete and recreate to change it. Requires the `instance:roster:edit` permission.",
+    "tags": [
+      "Roster"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/roster.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/roster.json#/update"
+    }
+  },
+  "delete": {
+    "summary": "delete Roster entry",
+    "description": "Removes a roster entry, revoking that identity's authorization on the instance. Requires the `instance:roster:edit` permission.",
+    "tags": [
+      "Roster"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/roster.json#/default"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    },
+    {
+      "name": "rosterId",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd"
+    }
+  ]
+}

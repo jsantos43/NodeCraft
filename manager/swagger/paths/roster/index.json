@@ -1,0 +1,67 @@
+{
+  "get": {
+    "summary": "read all Roster entries",
+    "description": "Lists every roster entry (authorized player identities) for the instance. Requires the `instance:read` permission.",
+    "tags": [
+      "Roster"
+    ],
+    "responses": {
+      "200": {
+        "$ref": "../../components/responses/roster.json#/readAll"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    }
+  },
+  "post": {
+    "summary": "create Roster entry",
+    "description": "Authorizes a player on the instance. The client sends the typed `name` and `platform`; the server resolves it against the platform's API (Mojang / GeyserMC / Steam) into the canonical `identifier` and stores both. Duplicate `identifier` for the same platform on the instance is rejected. Requires the `instance:roster:edit` permission.",
+    "tags": [
+      "Roster"
+    ],
+    "responses": {
+      "201": {
+        "$ref": "../../components/responses/roster.json#/default"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
+      },
+      "401": {
+        "$ref": "../../components/responses/error.json#/Unathorized"
+      },
+      "403": {
+        "$ref": "../../components/responses/error.json#/Forbidden"
+      },
+      "404": {
+        "$ref": "../../components/responses/error.json#/NotFound"
+      },
+      "500": {
+        "$ref": "../../components/responses/error.json#/Internal"
+      }
+    },
+    "requestBody": {
+      "$ref": "../../components/requestBody/roster.json#/create"
+    }
+  },
+  "parameters": [
+    {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+        "type": "string"
+      },
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "default": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "roster": {
+              "$ref": "../schemas/roster.json"
+            }
+          }
+        }
+      }
+    }
+  },
+  "readAll": {
+    "description": "OK",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "example": true
+            },
+            "rosters": {
+              "type": "array",
+              "items": {
+                "$ref": "../schemas/roster.json"
+              }
+            }
+          }
+        },
+        "examples": {
+          "many roster entries": {
+            "value": {
+              "success": true,
+              "rosters": [
+                {
+                  "id": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd",
+                  "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
+                  "identifier": "069a79f444e94726a5befca90e38aaf5",
+                  "name": "Notch",
+                  "platform": "java",
+                  "access": "host",
+                  "privileged": true
+                },
+                {
+                  "id": "7c9c1f23-3b9d-4c3e-bf55-123456789abc",
+                  "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
+                  "identifier": "2535413706216793",
+                  "name": "Steve",
+                  "platform": "bedrock",
+                  "access": "member",
+                  "privileged": false
+                }
+              ]
+            }
+          },
+          "empty": {
+            "value": {
+              "success": true,
+              "rosters": []
+            }
+          }
+        }
+      }
+    }
+  }
+}

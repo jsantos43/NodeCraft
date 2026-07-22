@@ -24,8 +24,13 @@ class Link {
     return links;
   }
 
-  static async readOne(linkId) {
-    const link = await Model.findByPk(linkId);
+  static async readOne(instanceId, linkId) {
+    const link = await Model.findOne({
+      where: {
+        id: linkId,
+        instanceId,
+      },
+    });
     if (!link) throw new NotFound('Link not found!');
 
     return link;
@@ -67,15 +72,15 @@ class Link {
     return link;
   }
 
-  static async update(linkId, data) {
-    const link = await Link.readOne(linkId);
+  static async update(instanceId, linkId, data) {
+    const link = await Link.readOne(instanceId, linkId);
     await link.update(data);
 
     return link;
   }
 
-  static async delete(linkId) {
-    const link = await Link.readOne(linkId);
+  static async delete(instanceId, linkId) {
+    const link = await Link.readOne(instanceId, linkId);
     await link.destroy();
 
     return link;
