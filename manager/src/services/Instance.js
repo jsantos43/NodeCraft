@@ -109,8 +109,11 @@ class Instance {
     return instance;
   }
 
-  static async updateDetails(id, data) {
-    const instance = await Instance.readOne(id);
+  static async updateDetails(workerId, id, data) {
+    // Scope by workerId: a worker may only report on instances it hosts,
+    // never on instances placed on another worker.
+    const instance = await Model.findOne({ where: { id, workerId } });
+    if (!instance) throw new NotFound('Instance not found on this worker!');
     const workerHistory = data?.history || [];
 
     // Wipe old lines
@@ -162,8 +165,10 @@ class Instance {
     return instance;
   }
 
-  static async updateBackupStatus(id, data) {
-    const instance = await Instance.readOne(id);
+  static async updateBackupStatus(workerId, id, data) {
+    // Scope by workerId: a worker may only report backups for instances it hosts.
+    const instance = await Model.findOne({ where: { id, workerId } });
+    if (!instance) throw new NotFound('Instance not found on this worker!');
 
     await instance.update({
       lastBackupStatus: data.status,
