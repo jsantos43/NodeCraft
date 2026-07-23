@@ -39,6 +39,9 @@
     "sqlite3": "^6.0.1",
     "swagger-ui-express": "^5.0.1"
   },
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "devDependencies": {
     "@eslint/create-config": "eslint/create-config",
     "eslint": "^7.32.0 || ^8.2.0",
