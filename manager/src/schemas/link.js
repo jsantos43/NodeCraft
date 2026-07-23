@@ -1,13 +1,17 @@
 import Joi from 'joi';
 
-const link = Joi.object({
+const createLink = Joi.object({
   id: Joi.forbidden(),
   instanceId: Joi.forbidden(),
-  userId: Joi.string().trim().uuid(),
-  gamertags: Joi.array(),
+  userId: Joi.string().trim().uuid().required(),
   permissions: Joi.array(),
-  privileges: Joi.boolean(),
-  access: Joi.string().trim().valid('super', 'always', 'monitored'),
 });
 
-export default link;
+const updateLink = Joi.object({
+  id: Joi.forbidden(),
+  instanceId: Joi.forbidden(),
+  userId: Joi.forbidden(),
+  permissions: Joi.array(),
+});
+
+export { createLink, updateLink };

@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "example": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd"
+    },
+    "instanceId": {
+      "type": "string",
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
+    },
+    "identifier": {
+      "type": "string",
+      "description": "Canonical, immutable game identity resolved by the server: Mojang UUID (java), XUID (bedrock) or SteamID64 (steam).",
+      "example": "069a79f444e94726a5befca90e38aaf5"
+    },
+    "name": {
+      "type": "string",
+      "description": "Last known display name for the identity (cache used to build the whitelist/ops and for the UI).",
+      "example": "Notch"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "java",
+        "bedrock",
+        "steam"
+      ],
+      "example": "java"
+    },
+    "access": {
+      "type": "string",
+      "enum": [
+        "host",
+        "member",
+        "guest"
+      ],
+      "description": "Barrier tier: `host` (always in + their presence lets guests join), `member` (always in), `guest` (only in while a host is online).",
+      "example": "member"
+    },
+    "privileged": {
+      "type": "boolean",
+      "description": "Whether the identity becomes op/admin on the server.",
+      "example": false
+    }
+  }
+}

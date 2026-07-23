@@ -41,6 +41,17 @@ class User {
     return user;
   }
 
+  // Public profile lookup (GET /user/:id): scalar fields only (default scope
+  // already hides secrets). Omits the `instances` link list so a logged user
+  // can't enumerate which instances another user is linked to.
+  static async readProfile(id) {
+    const user = await Model.findOne({ where: { id } });
+
+    if (!user) throw new NotFound('User not found!');
+
+    return user;
+  }
+
   static async readAllAttributes(id = null, email = null, token = null, tokenType = 'email') {
     const where = {};
     if (id) {

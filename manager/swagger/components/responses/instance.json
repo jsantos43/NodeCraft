@@ -145,19 +145,14 @@
                   "kerbal": null,
                   "hytale": null,
                   "terraria": null,
-                  "players": [
+                  "links": [
                     {
                       "id": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd",
                       "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
-                      "userId": null,
-                      "gamertags": [
-                        "JPGamerPlay"
-                      ],
+                      "userId": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
                       "permissions": [
                         "instance:read"
                       ],
-                      "privileges": true,
-                      "access": "monitored",
                       "user": null
                     }
                   ]
@@ -186,7 +181,7 @@
                     "gamemode": "adventure"
                   },
                   "terraria": null,
-                  "players": []
+                  "links": []
                 }
               ]
             }

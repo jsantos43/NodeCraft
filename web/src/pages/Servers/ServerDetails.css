@@ -883,12 +883,25 @@
 .players-head-text { display: flex; flex-direction: column; gap: 2px; }
 .players-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .players-count { font-size: 12px; color: var(--text-muted); }
+.players-note {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 11px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--blue-text);
+  background: var(--blue-dim);
+  border: 1px solid rgba(99, 194, 230, 0.2);
+  border-radius: var(--radius-sm);
+}
+.players-note svg { flex-shrink: 0; }
 .players-loading { display: flex; justify-content: center; padding: 40px; }
 
 .roster { display: flex; flex-direction: column; gap: 8px; }
 .roster-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
@@ -911,31 +924,23 @@
 .roster-avatar.avatar-purple { background: var(--purple-dim); color: var(--purple-text); }
 .roster-avatar.avatar-blue   { background: var(--blue-dim);   color: var(--blue-text); }
 .roster-avatar.avatar-yellow { background: var(--yellow-dim); color: var(--yellow-text); }
+.roster-avatar.avatar-green  { background: var(--green-dim);  color: var(--green-text); }
+.roster-avatar.avatar-accent { background: var(--accent-dim); color: var(--accent-text); }
 
 .roster-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.roster-line { display: flex; align-items: center; gap: 8px; }
 .roster-name { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.roster-op {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
-  padding: 1px 6px; border-radius: 4px;
-  background: var(--accent-dim); color: var(--accent-text);
-}
 .roster-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.roster-perms { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.roster-perms { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .roster-perm {
-  font-size: 10px; padding: 1px 6px; border-radius: 4px;
-  background: rgba(255,255,255,0.04); color: var(--text-muted);
+  font-size: 11px; padding: 2px 7px; border-radius: 5px;
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
   border: 1px solid var(--border);
 }
-.roster-access {
-  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
-  padding: 3px 9px; border-radius: 999px; white-space: nowrap;
-}
-.roster-access-purple { background: var(--purple-dim); color: var(--purple-text); }
-.roster-access-blue   { background: var(--blue-dim);   color: var(--blue-text); }
-.roster-access-yellow { background: var(--yellow-dim); color: var(--yellow-text); }
-.roster-access-gray   { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
 .roster-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+
+/* Roster player identifier (Mojang UUID / XUID / SteamID) */
+.roster-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; }
+.player-op-toggle { margin-top: 2px; }
 
 @media (max-width: 560px) {
   .server-plate { grid-template-columns: 1fr; gap: 12px; }
@@ -945,48 +950,20 @@
   .plate-ping { animation: none; }
 }
 
-.link-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-.link-tags-sm { }
-
-.link-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 2px 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-}
-
-.link-tag-sm { font-size: 11px; padding: 1px 6px; }
-
-.link-tag-rm {
-  font-size: 14px;
-  line-height: 1;
-  color: var(--text-muted);
-  padding: 0;
-  margin-left: 2px;
-  transition: color var(--transition);
-}
-
-.link-tag-rm:hover { color: var(--red-text); }
-
-.link-perms-row { display: flex; flex-wrap: wrap; gap: 4px; }
-
-.link-perm-chip {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
 /* Link form (inside dialog) */
 .link-dialog { width: 480px; }
+
+/* Fixed person identity shown while editing an existing link */
+.link-user-fixed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-subtle);
+}
+.link-user-fixed-meta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 .link-form-field { display: flex; flex-direction: column; gap: 6px; }
 

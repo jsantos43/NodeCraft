@@ -1,13 +1,13 @@
 {
   "get": {
-    "summary": "read a Link",
-    "description": "Reads a single link by id. Requires the `instance:read` permission.",
+    "summary": "read a Roster entry",
+    "description": "Reads a single roster entry by id. Requires the `instance:read` permission.",
     "tags": [
-      "Link"
+      "Roster"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/link.json#/default"
+        "$ref": "../../components/responses/roster.json#/default"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -24,14 +24,14 @@
     }
   },
   "put": {
-    "summary": "update link",
-    "description": "Updates a link's `permissions`. `userId` and `instanceId` cannot be changed. Requires being the instance owner.",
+    "summary": "update Roster entry",
+    "description": "Updates a roster entry's `access` tier and/or `privileged` flag. The identity (`identifier`, `name`, `platform`) cannot be changed — delete and recreate to change it. Requires the `instance:roster:edit` permission.",
     "tags": [
-      "Link"
+      "Roster"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/link.json#/default"
+        "$ref": "../../components/responses/roster.json#/default"
       },
       "400": {
         "$ref": "../../components/responses/error.json#/InvalidRequest"
@@ -50,18 +50,18 @@
       }
     },
     "requestBody": {
-      "$ref": "../../components/requestBody/link.json#/update"
+      "$ref": "../../components/requestBody/roster.json#/update"
     }
   },
   "delete": {
-    "summary": "delete Link",
-    "description": "Removes a link, revoking that user's access to the instance. Requires being the instance owner.",
+    "summary": "delete Roster entry",
+    "description": "Removes a roster entry, revoking that identity's authorization on the instance. Requires the `instance:roster:edit` permission.",
     "tags": [
-      "Link"
+      "Roster"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/link.json#/default"
+        "$ref": "../../components/responses/roster.json#/default"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -88,7 +88,7 @@
       "example": "76ad39e5-827f-4e0f-9715-e590be710595"
     },
     {
-      "name": "linkId",
+      "name": "rosterId",
       "in": "path",
       "required": true,
       "schema": {

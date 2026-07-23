@@ -1,18 +1,16 @@
 {
-  "default": {
+  "create": {
     "content": {
       "application/json": {
         "schema": {
+          "type": "object",
+          "required": [
+            "userId"
+          ],
           "properties": {
             "userId": {
               "type": "string",
               "example": "1e7ca2e6-519d-45af-ba5f-18305979ac8b"
-            },
-            "gamertags": {
-              "type": "array",
-              "example": [
-                "JPGamerPlay"
-              ]
             },
             "permissions": {
               "type": "array",
@@ -20,14 +18,24 @@
                 "instance:read",
                 "instance:execute"
               ]
-            },
-            "privileges": {
-              "type": "boolean",
-              "example": true
-            },
-            "access": {
-              "type": "string",
-              "example": "always"
+            }
+          }
+        }
+      }
+    }
+  },
+  "update": {
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "permissions": {
+              "type": "array",
+              "example": [
+                "instance:read",
+                "instance:execute"
+              ]
             }
           }
         }

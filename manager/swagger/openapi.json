@@ -32,6 +32,10 @@
       "description": "Shared-access grants that let non-owners use an instance with scoped permissions."
     },
     {
+      "name": "Roster",
+      "description": "Authorized player identities (allow-list / barrier) per instance, resolved to canonical game ids."
+    },
+    {
       "name": "Worker",
       "description": "Worker fleet management and the worker→manager reporting routes (heartbeats, instance status, backup results)."
     }
@@ -105,6 +109,12 @@
     },
     "/instance/{id}/link/{linkId}": {
       "$ref": "./paths/link/linkId.json"
+    },
+    "/instance/{id}/roster": {
+      "$ref": "./paths/roster/index.json"
+    },
+    "/instance/{id}/roster/{rosterId}": {
+      "$ref": "./paths/roster/rosterId.json"
     },
     "/instance/{id}/files": {
       "$ref": "./paths/file/read.json"

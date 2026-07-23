@@ -112,10 +112,11 @@ class Worker {
 
   static async updateInstance(req, res, next) {
     try {
+      const workerId = req?.params?.workerId;
       const id = req?.params?.instanceId;
       const data = req?.body;
 
-      await InstanceService.updateDetails(id, data);
+      await InstanceService.updateDetails(workerId, id, data);
 
       return res.status(200).json({ success: true });
     } catch (err) {
@@ -125,10 +126,11 @@ class Worker {
 
   static async reportBackupResult(req, res, next) {
     try {
+      const workerId = req?.params?.workerId;
       const instanceId = req?.params?.instanceId;
       const data = req?.body;
 
-      await InstanceService.updateBackupStatus(instanceId, data);
+      await InstanceService.updateBackupStatus(workerId, instanceId, data);
 
       return res.status(200).json({ success: true });
     } catch (err) {

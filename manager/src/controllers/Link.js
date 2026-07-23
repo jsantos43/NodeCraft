@@ -17,7 +17,7 @@ class Link {
   static async readAll(req, res, next) {
     try {
       const id = req?.params?.id;
-      const links = await Service.readAllFromInstance(id);
+      const links = await Service.readAllByInstance(id);
 
       return res.status(200).json({ success: true, links });
     } catch (err) {
@@ -27,8 +27,9 @@ class Link {
 
   static async readOne(req, res, next) {
     try {
+      const id = req?.params?.id;
       const linkId = req?.params?.linkId;
-      const link = await Service.readOne(linkId);
+      const link = await Service.readOne(id, linkId);
 
       return res.status(200).json({ success: true, link });
     } catch (err) {
@@ -38,10 +39,11 @@ class Link {
 
   static async update(req, res, next) {
     try {
+      const id = req?.params?.id;
       const linkId = req?.params?.linkId;
       const data = req?.body;
 
-      const link = await Service.update(linkId, data);
+      const link = await Service.update(id, linkId, data);
 
       return res.status(200).json({ success: true, link });
     } catch (err) {
@@ -51,8 +53,9 @@ class Link {
 
   static async delete(req, res, next) {
     try {
+      const id = req?.params?.id;
       const linkId = req?.params?.linkId;
-      const link = await Service.delete(linkId);
+      const link = await Service.delete(id, linkId);
 
       return res.status(200).json({ success: true, link });
     } catch (err) {

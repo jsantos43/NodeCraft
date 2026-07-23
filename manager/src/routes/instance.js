@@ -2,6 +2,7 @@ import { Router } from 'express';
 import Controller from '../controllers/Instance.js';
 import file from './file.js';
 import link from './link.js';
+import roster from './roster.js';
 import {
   auth, verifyNotRunning, validate,
 } from '../middlewares/index.js';
@@ -93,6 +94,7 @@ router
     Controller.remapPort,
   )
   .use('/instance', file)
+  .use('/instance', roster)
   .use('/instance', link);
 
 export default router;

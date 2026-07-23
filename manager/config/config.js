@@ -52,7 +52,17 @@ const config = {
       'instance:files:read',
       'instance:files:write',
       'instance:files:edit',
+      'instance:roster:edit',
     ],
+  },
+  roster: {
+    access: ['host', 'member', 'guest'],
+    platforms: ['java', 'bedrock', 'steam'],
+    platformsByGame: {
+      minecraft: ['java', 'bedrock'],
+      counterstrike: ['steam'],
+      terraria: ['steam'],
+    },
   },
 };
 

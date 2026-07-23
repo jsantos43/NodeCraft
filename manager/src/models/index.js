@@ -9,11 +9,12 @@ import CounterStrike from './CounterStrike.js';
 import Kerbal from './Kerbal.js';
 import Hytale from './Hytale.js';
 import Terraria from './Terraria.js';
+import Roster from './Roster.js';
 
 // instance <-> link
 Instance.hasMany(Link, {
   foreignKey: 'instanceId',
-  as: 'players',
+  as: 'links',
   onDelete: 'CASCADE',
   hooks: true,
 });
@@ -32,7 +33,7 @@ User.hasMany(Link, {
 Link.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user',
-  constraints: false, // userId can be arbitrary.
+  onDelete: 'CASCADE',
 });
 
 // user <-> instance
@@ -134,6 +135,19 @@ Terraria.belongsTo(Instance, {
   foreignKey: 'instanceId',
 });
 
+// instance <-> roster
+Instance.hasMany(Roster, {
+  foreignKey: 'instanceId',
+  as: 'roster',
+  onDelete: 'CASCADE',
+  hooks: true,
+});
+
+Roster.belongsTo(Instance, {
+  foreignKey: 'instanceId',
+  as: 'instance',
+});
+
 // Set default game models
 const gameModels = {
   minecraft: Minecraft,
@@ -159,12 +173,17 @@ const instanceInclude = [
   },
   {
     model: Link,
-    as: 'players',
+    as: 'links',
     include: {
       model: User,
       as: 'user',
       required: false,
     },
+  },
+  {
+    model: Roster,
+    as: 'roster',
+    required: false,
   },
 ];
 
@@ -177,4 +196,5 @@ export {
   Link,
   Worker,
   WorkerHeartbeat,
+  Roster,
 };

@@ -1,13 +1,13 @@
 {
   "get": {
-    "summary": "read all Links",
-    "description": "Lists all links (shared-access grants) for the instance. Requires the `instance:read` permission.",
+    "summary": "read all Roster entries",
+    "description": "Lists every roster entry (authorized player identities) for the instance. Requires the `instance:read` permission.",
     "tags": [
-      "Link"
+      "Roster"
     ],
     "responses": {
       "200": {
-        "$ref": "../../components/responses/link.json#/readAll"
+        "$ref": "../../components/responses/roster.json#/readAll"
       },
       "401": {
         "$ref": "../../components/responses/error.json#/Unathorized"
@@ -24,14 +24,14 @@
     }
   },
   "post": {
-    "summary": "create Link",
-    "description": "Creates a link granting another user scoped access to the instance with `permissions`. `userId` is required and must reference an existing user. Requires being the instance owner.",
+    "summary": "create Roster entry",
+    "description": "Authorizes a player on the instance. The client sends the typed `name` and `platform`; the server resolves it against the platform's API (Mojang / GeyserMC / Steam) into the canonical `identifier` and stores both. The `platform` must be valid for the instance's game (e.g. `java`/`bedrock` for Minecraft, `steam` for Counter-Strike) — an unsupported platform returns `400`. Duplicate `identifier` for the same platform on the instance is rejected. Requires the `instance:roster:edit` permission.",
     "tags": [
-      "Link"
+      "Roster"
     ],
     "responses": {
       "201": {
-        "$ref": "../../components/responses/link.json#/default"
+        "$ref": "../../components/responses/roster.json#/default"
       },
       "400": {
         "$ref": "../../components/responses/error.json#/InvalidRequest"
@@ -50,7 +50,7 @@
       }
     },
     "requestBody": {
-      "$ref": "../../components/requestBody/link.json#/create"
+      "$ref": "../../components/requestBody/roster.json#/create"
     }
   },
   "parameters": [
@@ -58,9 +58,10 @@
       "name": "id",
       "in": "path",
       "required": true,
-      "deprecated": false,
-      "schema": {},
-      "example": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd"
+      "schema": {
+        "type": "string"
+      },
+      "example": "76ad39e5-827f-4e0f-9715-e590be710595"
     }
   ]
 }
