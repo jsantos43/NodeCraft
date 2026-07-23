@@ -1,6 +1,7 @@
 import { InvalidRequest, NotFound } from '../errors/index.js';
-import { Roster as Model } from '../models/index.js';
+import { Roster as Model, Instance as InstanceModel } from '../models/index.js';
 import providers from '../utils/resolvers.js';
+import config from '../../config/config.js';
 
 class Roster {
   static async readAllByInstance(instanceId) {
@@ -25,6 +26,8 @@ class Roster {
   }
 
   static async create(id, data) {
+    await Roster.assertPlatformAllowed(id, data.platform);
+
     const { identifier, name } = await Roster.resolve(data.platform, data.name);
 
     const roster = await Model.create({
@@ -51,6 +54,16 @@ class Roster {
     await roster.destroy();
 
     return roster;
+  }
+
+  static async assertPlatformAllowed(instanceId, platform) {
+    const instance = await InstanceModel.findByPk(instanceId);
+    if (!instance) throw new NotFound('Instance not found!');
+
+    const allowed = config.roster.platformsByGame[instance.type] || config.roster.platforms;
+    if (!allowed.includes(platform)) {
+      throw new InvalidRequest(`Platform "${platform}" is not available for ${instance.type}!`);
+    }
   }
 
   static async resolve(platform, input) {

@@ -58,6 +58,11 @@ const config = {
   roster: {
     access: ['host', 'member', 'guest'],
     platforms: ['java', 'bedrock', 'steam'],
+    platformsByGame: {
+      minecraft: ['java', 'bedrock'],
+      counterstrike: ['steam'],
+      terraria: ['steam'],
+    },
   },
 };
 

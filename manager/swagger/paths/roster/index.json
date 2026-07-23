@@ -25,7 +25,7 @@
   },
   "post": {
     "summary": "create Roster entry",
-    "description": "Authorizes a player on the instance. The client sends the typed `name` and `platform`; the server resolves it against the platform's API (Mojang / GeyserMC / Steam) into the canonical `identifier` and stores both. Duplicate `identifier` for the same platform on the instance is rejected. Requires the `instance:roster:edit` permission.",
+    "description": "Authorizes a player on the instance. The client sends the typed `name` and `platform`; the server resolves it against the platform's API (Mojang / GeyserMC / Steam) into the canonical `identifier` and stores both. The `platform` must be valid for the instance's game (e.g. `java`/`bedrock` for Minecraft, `steam` for Counter-Strike) — an unsupported platform returns `400`. Duplicate `identifier` for the same platform on the instance is rejected. Requires the `instance:roster:edit` permission.",
     "tags": [
       "Roster"
     ],

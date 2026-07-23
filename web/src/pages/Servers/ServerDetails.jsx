@@ -6,7 +6,7 @@ import {
   Network, Variable, ArrowLeft, RefreshCw, Copy, Check, Save,
   FileText, FilePlus, FolderPlus, Upload, Download, ChevronRight, X,
   Plus, Edit2, Users, Scissors, Archive, Gamepad2, Coffee, Smartphone, Signal,
-  Shield, ArrowRight, AlertTriangle, Link2,
+  Shield, ArrowRight, AlertTriangle, Link2, Info,
 } from 'lucide-react';
 import Layout from '../../components/Layout/Layout.jsx';
 import Card, { CardHeader } from '../../components/ui/Card.jsx';
@@ -104,10 +104,21 @@ const PERMISSION_LABELS = {
 
 // Roster (player allow-list) options — mirror the manager's config.roster.
 const ROSTER_PLATFORMS = [
-  { id: 'java',    label: 'Java',    icon: Coffee,     color: 'green', placeholder: 'Java username…' },
-  { id: 'bedrock', label: 'Bedrock', icon: Smartphone, color: 'blue',  placeholder: 'Xbox gamertag…' },
-  { id: 'steam',   label: 'Steam',   icon: Signal,     color: 'gray',  placeholder: 'Steam vanity URL…' },
+  { id: 'java',    label: 'Minecraft Java',    icon: Coffee,     color: 'green', placeholder: 'Java username…' },
+  { id: 'bedrock', label: 'Minecraft Bedrock', icon: Smartphone, color: 'blue',  placeholder: 'Xbox gamertag…' },
+  { id: 'steam',   label: 'Steam',             icon: Signal,     color: 'gray',  placeholder: 'Steam vanity URL…' },
 ];
+// Which platforms a game exposes — mirrors config.roster.platformsByGame on the
+// manager. A game missing here falls back to every platform.
+const PLATFORMS_BY_GAME = {
+  minecraft: ['java', 'bedrock'],
+  counterstrike: ['steam'],
+  terraria: ['steam'],
+};
+const platformsForGame = (game) => {
+  const allowed = PLATFORMS_BY_GAME[game];
+  return allowed ? ROSTER_PLATFORMS.filter(p => allowed.includes(p.id)) : ROSTER_PLATFORMS;
+};
 const ROSTER_ACCESS = [
   { id: 'host',   label: 'Host',   color: 'purple', hint: 'Always allowed in — and while they’re online, Guests can join too.' },
   { id: 'member', label: 'Member', color: 'blue',   hint: 'Always allowed in.' },
@@ -1277,6 +1288,11 @@ function PlayersTab({ instance, canEdit }) {
         {canEdit && <Button size="sm" variant="secondary" icon={Plus} onClick={() => setDialog('new')}>Add player</Button>}
       </div>
 
+      <div className="players-note">
+        <Info size={14} />
+        <span>Roster changes take effect the next time the server restarts.</span>
+      </div>
+
       {loading ? (
         <div className="players-loading"><Spinner size={18} /></div>
       ) : players.length === 0 ? (
@@ -1303,6 +1319,7 @@ function PlayersTab({ instance, canEdit }) {
       {dialog && (
         <PlayerDialog
           instanceId={instance.id}
+          gameType={instance.type}
           entry={dialog === 'new' ? null : dialog}
           onSaved={onSaved}
           onClose={() => setDialog(null)}
@@ -1348,9 +1365,10 @@ function PlayerRow({ entry, canEdit, onEdit, onDelete }) {
   );
 }
 
-function PlayerDialog({ instanceId, entry, onSaved, onClose }) {
+function PlayerDialog({ instanceId, gameType, entry, onSaved, onClose }) {
   const isEdit = !!entry;
-  const [platform, setPlatform] = useState(entry?.platform || 'java');
+  const platformOptions = platformsForGame(gameType);
+  const [platform, setPlatform] = useState(entry?.platform || platformOptions[0]?.id || 'java');
   const [name, setName] = useState(entry?.name || '');
   const [access, setAccess] = useState(entry?.access || 'member');
   const [privileged, setPrivileged] = useState(entry?.privileged || false);
@@ -1408,7 +1426,7 @@ function PlayerDialog({ instanceId, entry, onSaved, onClose }) {
               <div className="link-form-field">
                 <label className="link-form-label">Platform</label>
                 <Select value={platform} onChange={e => setPlatform(e.target.value)}>
-                  {ROSTER_PLATFORMS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                  {platformOptions.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </Select>
               </div>
               <div className="link-form-field">

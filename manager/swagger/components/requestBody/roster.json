@@ -12,6 +12,7 @@
           "properties": {
             "platform": {
               "type": "string",
+              "description": "Player platform. The accepted values depend on the instance's game: Minecraft accepts `java`/`bedrock`, Counter-Strike and Terraria accept `steam`. Sending a platform the game doesn't support returns `400`.",
               "enum": [
                 "java",
                 "bedrock",

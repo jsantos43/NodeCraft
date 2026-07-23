@@ -883,6 +883,19 @@
 .players-head-text { display: flex; flex-direction: column; gap: 2px; }
 .players-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .players-count { font-size: 12px; color: var(--text-muted); }
+.players-note {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 11px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--blue-text);
+  background: var(--blue-dim);
+  border: 1px solid rgba(99, 194, 230, 0.2);
+  border-radius: var(--radius-sm);
+}
+.players-note svg { flex-shrink: 0; }
 .players-loading { display: flex; justify-content: center; padding: 40px; }
 
 .roster { display: flex; flex-direction: column; gap: 8px; }

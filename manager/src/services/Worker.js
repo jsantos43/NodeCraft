@@ -1,11 +1,11 @@
 import { Op } from 'sequelize';
-import Auth from './Auth.js';
 import {
   Worker as Model,
   WorkerHeartbeat as HeartbeatModel,
 } from '../models/index.js';
 import { NotFound } from '../errors/index.js';
 import logger from '../../config/logger.js';
+import { hashToken, generateRandomToken } from '../utils/token.js';
 
 const HEARTBEAT_RETENTION_DAYS = 7;
 const HEARTBEAT_RETENTION_MS = HEARTBEAT_RETENTION_DAYS * 24 * 60 * 60 * 1000;
@@ -22,12 +22,12 @@ const HEARTBEAT_RANGES = {
 
 class Worker {
   static async create(data) {
-    const apiKey = Auth.generateRandomToken();
-    const secret = Auth.generateRandomToken();
+    const apiKey = generateRandomToken();
+    const secret = generateRandomToken();
 
     const worker = await Model.create({
       name: data.name,
-      apiKey: Auth.hashToken(apiKey),
+      apiKey: hashToken(apiKey),
       secret,
     });
 
@@ -134,7 +134,7 @@ class Worker {
   }
 
   static compareApiKey(apiKey, storedApiKey) {
-    const hashedApiKey = Auth.hashToken(apiKey);
+    const hashedApiKey = hashToken(apiKey);
 
     return hashedApiKey === storedApiKey;
   }

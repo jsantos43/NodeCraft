@@ -5,6 +5,9 @@ import renderTemplate from '../utils/renderTemplate.js';
 import logger from '../../config/logger.js';
 import FileService from '../services/File.js';
 
+const dashUuid = (id) => id.replace(/-/g, '').replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+const xuidToUuid = (xuid) => dashUuid(BigInt(xuid).toString(16).padStart(32, '0'));
+
 class Minecraft extends Instance {
   constructor(instance) {
     super(instance);
@@ -28,14 +31,12 @@ class Minecraft extends Instance {
     };
 
     this.barrier = {
-      allowedGamertags: [],
-      superGamertags: [],
-      opGamertags: [],
-      allowMonitored: false,
-      needUpdate: true,
-      applyRules: true,
-      updating: false,
+      allowGuests: false,
+      needUpdate: false,
+      hostGamertags: [],
     };
+
+    this.rosters = [];
 
     this.setup();
   }
@@ -49,18 +50,9 @@ class Minecraft extends Instance {
     }
   }
 
-  async wipeOps() {
+  async wipeOpList() {
     try {
-      if (!this.rcon.service) {
-        await FileService.createOneFile(this.paths.ops, '[]');
-      } else {
-        const content = await FileService.readOneFile(this.paths.ops);
-        const currentOps = JSON.parse(content || '[]');
-
-        for (const op of currentOps) {
-          await this.sendRcon(`deop ${op.name}`);
-        }
-      }
+      await FileService.createOneFile(this.paths.ops, '[]');
     } catch (err) {
       logger.error({ err }, 'Error to wipe instance ops');
     }
@@ -136,102 +128,119 @@ class Minecraft extends Instance {
     await this.initRcon(25575, null, async () => {
       await this.sendRcon('gamerule send_command_feedback false');
       await this.sendRcon('gamerule log_admin_commands false');
-      await this.sendRcon('save-all');
       await this.sendRcon('save-on');
     });
   }
 
-  async updateBarrier() {
-    try {
-      const instancePlain = this.instance;
+  async initBarrier() {
+    // Wipe allowlist and privilegies
+    await this.wipeAllowlist();
+    await this.wipeOpList();
 
-      // Avoid players kicking while updating
-      this.barrier.updating = true;
+    this.rosters = this?.instance?.roster || [];
 
-      // Wipe barrier gamertags
-      this.barrier.allowedGamertags = [];
-      this.barrier.superGamertags = [];
-      this.barrier.opGamertags = [];
-
-      const links = instancePlain.players || [];
-      for (const link of links) {
-        const access = link?.access;
-        const gamertags = link.gamertags || [];
-
-        if (access === 'super') {
-          this.barrier.allowedGamertags.push(...gamertags);
-          this.barrier.superGamertags.push(...gamertags);
-        } else if (access === 'always') {
-          this.barrier.allowedGamertags.push(...gamertags);
-        } else if (access === 'monitored') {
-          if (this.barrier.allowMonitored) this.barrier.allowedGamertags.push(...gamertags);
-        }
-
-        if (link.privileges) {
-          this.barrier.opGamertags.push(...gamertags);
-        }
-      }
-
-      this.barrier.needUpdate = false;
-      this.barrier.updating = false;
-      this.barrier.applyRules = true;
-    } catch (err) {
-      logger.error({ err }, 'Error to update instance barrier');
-    }
+    await this.makeBarrier(true);
   }
 
-  async applyBarrier() {
-    try {
-      if (!this.rcon.service) return;
+  async makeBarrier(makeOplist = false) {
+    this.barrier.hostGamertags = [];
 
-      if (this.barrier.applyRules) {
-        await this.wipeAllowlist();
+    const allowlist = [];
+    const oplist = [];
 
-        for (const gamertag of this.barrier.allowedGamertags) {
-          await this.sendRcon(`whitelist add ${gamertag}`);
-        }
+    // Look for each roster
+    for (const roster of this.rosters) {
+      if (roster.identifier) {
+        // Verify barrier rules
+        if (
+          (roster.access === 'host' || roster.access === 'member')
+          || (roster.access === 'guest' && this.barrier.allowGuests)
+        ) {
+          if (roster.platform === 'java') {
+            // Mojang identifier comes undashed; Minecraft needs the dashed UUID
+            const dashedId = dashUuid(roster.identifier);
 
-        await this.sendRcon('whitelist reload');
+            // Add roster to allowlist
+            allowlist.push({
+              uuid: dashedId,
+              name: roster.name,
+            });
 
-        await this.wipeOps();
+            // Add roster to op list
+            if (roster.privileged && makeOplist) {
+              oplist.push({
+                uuid: dashedId,
+                name: roster.name,
+                level: 4,
+                bypassesPlayerLimit: true,
+              });
+            }
 
-        for (const gamertag of this.barrier.opGamertags) {
-          await this.sendRcon(`op ${gamertag}`);
-        }
+            // Push roster name to host gamertags
+            if (roster.name && roster.access === 'host') {
+              this.barrier.hostGamertags.push(roster.name);
+            }
+          } else if (roster.platform === 'bedrock') {
+            // Convert xuid bedrock to uuid java
+            const convertedId = xuidToUuid(roster.identifier);
 
-        this.barrier.applyRules = false;
-      }
+            // Add roster to allowlist
+            allowlist.push({
+              uuid: convertedId,
+              name: `.${roster.name}`,
+            });
 
-      if (!this.barrier.updating && this.instance.minecraft.allowlist) {
-        for (const player of this.state.players) {
-          if (!this.barrier.allowedGamertags.includes(player.name)) {
-            await this.sendRcon(`kick ${player.name}`);
+            // Add roster to op list
+            if (roster.privileged && makeOplist) {
+              oplist.push({
+                uuid: convertedId,
+                name: `.${roster.name}`,
+                level: 4,
+                bypassesPlayerLimit: true,
+              });
+            }
+
+            // Push roster name to host gamertags
+            if (roster.name && roster.access === 'host') {
+              this.barrier.hostGamertags.push(`.${roster.name}`);
+            }
           }
         }
       }
-    } catch (err) {
-      logger.error({ err }, 'Error to apply instance barrier');
     }
+
+    // Save allowlist
+    await FileService.createOneFile(this.paths.allowlist, JSON.stringify(allowlist));
+
+    // Save oplist
+    if (makeOplist === true) {
+      await FileService.createOneFile(this.paths.ops, JSON.stringify(oplist));
+    }
+
+    // Reload allowlist
+    const { sent } = await this.sendRcon('whitelist reload');
+    if (sent) this.barrier.needUpdate = false;
   }
 
-  async updateState() {
+  // Review
+  async verifyStatus() {
     try {
       const state = await query(this.instance.port);
       const { barrier } = this;
-      const { superGamertags } = barrier;
 
-      // Verify allow monitored and barrier need update
-      let allowMonitored = false;
+      // Verify if barrier can allow guests
+      let allowGuests = false;
       for (const player of state.players) {
-        if (superGamertags.includes(player.name)) {
-          allowMonitored = true;
+        if (barrier.hostGamertags.includes(player.name)) {
+          allowGuests = true;
           break;
         }
       }
 
-      if (allowMonitored !== barrier.allowMonitored) {
+      // Verify if barrier needs an update
+      if (allowGuests !== barrier.allowGuests) {
         barrier.needUpdate = true;
-        barrier.allowMonitored = allowMonitored;
+        barrier.allowGuests = allowGuests;
       }
 
       this.state = {
@@ -241,29 +250,20 @@ class Minecraft extends Instance {
         ping: state.ping,
       };
     } catch (err) {
+      this.state.alive = false;
       logger.error({ err }, 'Error to update instance state');
     }
   }
 
-  async newBarrier() {
-    try {
-      const instance = await this.readFunction();
-      this.instance = instance;
-      this.barrier.needUpdate = true;
-    } catch (err) {
-      logger.error({ err }, 'Error to set new instance barrier');
-    }
-  }
-
+  // Review
   async monitor() {
     try {
       // Verify last run
       if (this.checker.lastRun + 500 >= Date.now()) return;
 
       await this.verifyRcon();
-      await this.updateState();
-      if (this.barrier.needUpdate) await this.updateBarrier();
-      await this.applyBarrier();
+      await this.verifyStatus();
+      if (this.barrier.needUpdate && this.state.alive) await this.makeBarrier();
 
       this.checker.lastRun = Date.now();
     } catch (err) {
@@ -273,15 +273,14 @@ class Minecraft extends Instance {
 
   async setup() {
     try {
-      // Wipe allowlist and privilegies
-      await this.wipeAllowlist();
-      await this.wipeOps();
-
       // Sync properties files
       await this.sync();
 
       // Remove session.lock
       await this.removeSessionLock();
+
+      // Set allowlist
+      await this.initBarrier();
 
       // Set monitoring
       this.checker.interval = setInterval(() => this.monitor(), 5000);

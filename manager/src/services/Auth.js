@@ -1,23 +1,19 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import {
   NotFound, InvalidRequest, Unathorized,
 } from '../errors/index.js';
 import sendEmail from '../utils/sendEmail.js';
 import renderTemplate from '../utils/renderTemplate.js';
+import { hashToken, generateRandomToken } from '../utils/token.js';
 import User from './User.js';
 import Instance from './Instance.js';
 import Link from './Link.js';
 import config from '../../config/config.js';
 
 class Auth {
-  static hashToken(token) {
-    return crypto.createHash('sha256').update(token).digest('hex');
-  }
-
   static async saveToken(id, token, type = 'email') {
-    const hashedToken = Auth.hashToken(token);
+    const hashedToken = hashToken(token);
 
     if (type === 'email') {
       await User.update(id, {
@@ -91,10 +87,6 @@ class Auth {
     );
   }
 
-  static generateRandomToken() {
-    return crypto.randomBytes(64).toString('hex');
-  }
-
   static verifyJWTToken(token) {
     try {
       const payload = jwt.verify(token, config.token.jwtSecret);
@@ -120,7 +112,7 @@ class Auth {
     if (!passwordsAreEqual) throw new Unathorized('Email or Password is invalid!');
 
     const accessToken = Auth.generateAccessToken(user.id);
-    const refreshToken = Auth.generateRandomToken();
+    const refreshToken = generateRandomToken();
     await Auth.saveToken(user.id, refreshToken, 'refresh');
 
     const safeUser = await User.readOne(user.id);
@@ -129,7 +121,7 @@ class Auth {
   }
 
   static async refreshAuthentication(token) {
-    const hashedToken = Auth.hashToken(token);
+    const hashedToken = hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'refresh');
 
     if (!user || !user?.refreshTokenHash) throw new InvalidRequest('Refresh token is invalid!');
@@ -137,7 +129,7 @@ class Auth {
     if (user.refreshTokenExpires < Date.now()) throw new InvalidRequest('Refresh token is expiried!');
 
     const accessToken = Auth.generateAccessToken(user.id);
-    const refreshToken = Auth.generateRandomToken();
+    const refreshToken = generateRandomToken();
     await Auth.saveToken(user.id, refreshToken, 'refresh');
 
     const safeUser = await User.readOne(user.id);
@@ -146,7 +138,7 @@ class Auth {
   }
 
   static async sendVerification(user) {
-    const token = Auth.generateRandomToken();
+    const token = generateRandomToken();
 
     // Save Email token on database
     await Auth.saveToken(user.id, token, 'email');
@@ -169,7 +161,7 @@ class Auth {
   }
 
   static async validateAccount(token) {
-    const hashedToken = Auth.hashToken(token);
+    const hashedToken = hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'email');
 
     if (!user || !user?.emailTokenHash) throw new InvalidRequest('Email token is invalid!');
@@ -189,7 +181,7 @@ class Auth {
     const user = await User.readAllAttributes(null, email);
     if (!user) throw new NotFound('User not found!');
 
-    const token = Auth.generateRandomToken();
+    const token = generateRandomToken();
 
     // Save the reset password token in the database
     await Auth.saveToken(user.id, token, 'password');
@@ -218,7 +210,7 @@ class Auth {
   }
 
   static async resetPassword(token, password) {
-    const hashedToken = Auth.hashToken(token);
+    const hashedToken = hashToken(token);
     const user = await User.readAllAttributes(null, null, hashedToken, 'password');
 
     if (!user || !user?.resetPasswordTokenHash) throw new InvalidRequest('Reset password token is invalid!');
