@@ -13,7 +13,7 @@ git pull origin main
 echo "--- Manager: installing dependencies ---"
 cd manager
 npm ci --omit=dev
-node_modules/.bin/sequelize-cli db:migrate
+node_modules/.bin/sequelize-cli db:migrate --env production
 cd "$APP_DIR"
 
 echo "--- Worker: installing dependencies ---"

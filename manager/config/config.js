@@ -70,8 +70,7 @@ const config = {
     password: process.env.EMAIL_PASSWORD || null,
   },
   token: {
-    jwtSecret: process.env.JWT_SECRET
-    || '4246e8f9e71b0b086b3b194a4bcb5d07c94dd773dddb51752183f7e9c82c543f',
+    jwtSecret: process.env.JWT_SECRET,
     accessLifetime: 15 * ONE_MINUTE,
     emailLifetime: 1 * ONE_DAY,
     resetPasswordLifetime: 20 * ONE_MINUTE,
