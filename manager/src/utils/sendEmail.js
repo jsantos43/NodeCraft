@@ -1,4 +1,4 @@
-import mailer from '../../config/mailer.js';
+import mailer, { getSender } from '../../config/mailer.js';
 import config from '../../config/config.js';
 import { ServiceUnavailable } from '../errors/index.js';
 
@@ -8,7 +8,7 @@ const sendEmail = async ({
   if (!config.email.enable) throw new ServiceUnavailable('Email service is not set!');
 
   await mailer.sendMail({
-    from: `"${config.email.fromName}" <${config.email.user}>`,
+    from: getSender(),
     to,
     subject,
     html,
