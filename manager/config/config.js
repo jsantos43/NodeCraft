@@ -61,6 +61,7 @@ const config = {
   email: {
     enable: process.env.EMAIL_ENABLE === 'true',
     fromName: process.env.EMAIL_FROM_NAME || 'NodeCraft',
+    fromAddress: (process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER || '').trim(),
     host: process.env.EMAIL_HOST || null,
     port: process.env.EMAIL_PORT
       ? Number(process.env.EMAIL_PORT)
