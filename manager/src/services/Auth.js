@@ -55,12 +55,18 @@ class Auth {
 
   // Returns the permissions a user effectively has on an instance
   static async getInstancePermissions(user, id) {
-    if (user.admin) return [...config.instance.permissions, 'instance:owner'];
+    if (user.admin) return ['instance:read', ...config.instance.permissions, 'instance:owner'];
 
     const instance = await Instance.readOne(id);
-    if (instance.ownerId === user.id) return [...config.instance.permissions, 'instance:owner'];
+    return Auth.permissionsForInstance(user, instance);
+  }
 
-    return Link.readUserPermissions(user.id, id);
+  static async permissionsForInstance(user, instance) {
+    if (user.admin || instance.ownerId === user.id) {
+      return ['instance:read', ...config.instance.permissions, 'instance:owner'];
+    }
+
+    return Link.readUserPermissions(user.id, instance.id);
   }
 
   static async checkPermission(user, permission, id) {

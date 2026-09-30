@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read a Instance",
-    "description": "Reads a single instance with its game-specific config and linked players. Requires the `instance:read` permission.",
+    "description": "Reads basic instance details. Owners, admins and every linked user have instance:read implicitly. Console history requires instance:console:read; full configuration of every game is available with instance:read; editing still requires instance:edit; roster requires instance:roster:edit; sharing details require owner/admin access. Unauthorized fields are omitted.",
     "tags": [
       "Instance"
     ],

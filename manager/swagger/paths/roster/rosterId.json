@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read a Roster entry",
-    "description": "Reads a single roster entry by id. Requires the `instance:read` permission.",
+    "description": "Reads a single roster entry by id. Requires the `instance:roster:edit` permission.",
     "tags": [
       "Roster"
     ],

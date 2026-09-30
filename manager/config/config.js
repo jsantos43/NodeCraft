@@ -93,7 +93,6 @@ const config = {
       ? Number(process.env.MAX_PORT)
       : 5671,
     permissions: [
-      'instance:read',
       'instance:edit',
       'instance:execute',
       'instance:backup',

@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { SourceTextModule, SyntheticModule } from 'node:vm';
 import * as errors from '../src/errors/index.js';
+import * as instanceViews from '../src/utils/instanceView.js';
 
 function moduleStub(exports) {
   return new SyntheticModule(Object.keys(exports), function initialize() {
@@ -57,10 +58,12 @@ async function fixture(overrides = {}) {
     './Link.js': { default: {} }, './User.js': { default: User },
     './Worker.js': { default: {} }, '../../config/config.js': { default: {} },
     './Limit.js': { default: Limit },
+    '../utils/instanceView.js': instanceViews,
   });
   const Controller = await load('../src/controllers/Instance.js', {
     jsonwebtoken: { default: {} }, '../errors/index.js': errors,
-    '../services/Instance.js': { default: Service }, '../services/Auth.js': { default: {} },
+    '../services/Instance.js': { default: Service }, '../services/Auth.js': { default: { async permissionsForInstance() { return ['instance:read']; } } },
+    '../utils/instanceView.js': instanceViews,
     '../services/Limit.js': { default: Limit },
     '../utils/getWorkerContext.js': {
       default: async () => ({ instance, worker: { url: 'http://worker.test', secret: 'test' } }),

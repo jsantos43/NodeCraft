@@ -57,7 +57,8 @@
       "items": {
         "type": "string"
       },
-      "example": []
+      "example": [],
+      "description": "In public instance responses, present only with instance:console:read (including owner/admin)."
     },
     "lastActivityAt": {
       "type": "string",
@@ -90,19 +91,39 @@
       "example": "success"
     },
     "minecraft": {
-      "$ref": "./minecraft.json"
+      "allOf": [
+        {
+          "$ref": "./minecraft.json"
+        }
+      ],
+      "description": "Full configuration is readable with instance:read (implicit for linked users). Editing still requires instance:edit."
     },
     "kerbal": {
-      "$ref": "./kerbal.json",
-      "example": null
+      "example": null,
+      "allOf": [
+        {
+          "$ref": "./kerbal.json"
+        }
+      ],
+      "description": "Full configuration is readable with instance:read (implicit for linked users). Editing still requires instance:edit."
     },
     "hytale": {
-      "$ref": "./hytale.json",
-      "example": null
+      "example": null,
+      "allOf": [
+        {
+          "$ref": "./hytale.json"
+        }
+      ],
+      "description": "Full configuration is readable with instance:read (implicit for linked users). Editing still requires instance:edit."
     },
     "terraria": {
-      "$ref": "./terraria.json",
-      "example": null
+      "example": null,
+      "allOf": [
+        {
+          "$ref": "./terraria.json"
+        }
+      ],
+      "description": "Full configuration is readable with instance:read (implicit for linked users). Editing still requires instance:edit."
     },
     "links": {
       "type": "array",
@@ -111,9 +132,7 @@
           "id": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd",
           "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
           "userId": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
-          "permissions": [
-            "instance:read"
-          ],
+          "permissions": [],
           "user": {
             "id": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
             "name": "Maria",
@@ -121,7 +140,7 @@
           }
         }
       ],
-      "description": "Accounts this instance is shared with. The embedded `user` is limited to `id`, `name` and `email` \u2014 a link holder never sees another holder's admin flag, verification state or quotas."
+      "description": "Sharing details with user id, name and email; public instance responses expose these only to the owner or an admin."
     },
     "createdAt": {
       "type": "string",
@@ -129,6 +148,44 @@
       "nullable": true,
       "description": "When the record was created. Null for rows that predate the column (migration 20260830120000).",
       "example": "2026-07-17T02:45:00.000Z"
+    },
+    "roster": {
+      "type": "array",
+      "items": {
+        "$ref": "./roster.json"
+      },
+      "description": "In public instance responses, present only with instance:roster:edit (including owner/admin)."
+    },
+    "worker": {
+      "type": "object",
+      "nullable": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "healthy": {
+          "type": "boolean"
+        }
+      },
+      "description": "Public worker identity and connection address; excludes credentials."
+    },
+    "connection": {
+      "type": "object",
+      "properties": {
+        "bedrock": {
+          "type": "boolean"
+        },
+        "software": {
+          "type": "string"
+        }
+      },
+      "description": "Basic Minecraft connection information available to all readers; excludes private configuration."
     }
   },
   "example": {
@@ -180,9 +237,7 @@
         "id": "716bc479-6ec0-4881-a3fa-b9aee60bc7fd",
         "instanceId": "76ad39e5-827f-4e0f-9715-e590be710595",
         "userId": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
-        "permissions": [
-          "instance:read"
-        ],
+        "permissions": [],
         "user": {
           "id": "1e7ca2e6-519d-45af-ba5f-18305979ac8b",
           "name": "Maria",
@@ -191,5 +246,6 @@
       }
     ],
     "createdAt": "2026-07-17T02:45:00.000Z"
-  }
+  },
+  "description": "Instance data. In public instance responses, restricted fields are omitted according to the caller permissions; worker/admin fleet endpoints retain their internal full representation."
 }

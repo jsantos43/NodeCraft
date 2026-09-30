@@ -16,9 +16,9 @@
     "permissions": {
       "type": "array",
       "example": [
-        "instance:read",
         "instance:execute"
-      ]
+      ],
+      "description": "Additional stored permissions. Every link grants instance:read implicitly; legacy rows may still contain that value."
     },
     "createdAt": {
       "type": "string",

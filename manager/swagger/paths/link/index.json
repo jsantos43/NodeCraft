@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read all Links",
-    "description": "Lists all links (shared-access grants) for the instance. Requires the `instance:read` permission.",
+    "description": "Lists all links (shared-access grants) for the instance. Requires the `instance:owner` permission.",
     "tags": [
       "Link"
     ],

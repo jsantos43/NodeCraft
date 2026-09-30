@@ -14,7 +14,8 @@ const isPermissionArray = (label) => function validatePermissionArray(value) {
   isStringArray(label).call(this, value);
 
   value.forEach((item) => {
-    if (!config.instance.permissions.includes(item)) {
+    // Older rows may still store the now-implicit read permission.
+    if (item !== 'instance:read' && !config.instance.permissions.includes(item)) {
       throw new Error(`${item} is an invalid permission!`);
     }
   });

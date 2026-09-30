@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read all Roster entries",
-    "description": "Lists every roster entry (authorized player identities) for the instance. Requires the `instance:read` permission.",
+    "description": "Lists every roster entry (authorized player identities) for the instance. Requires the `instance:roster:edit` permission.",
     "tags": [
       "Roster"
     ],

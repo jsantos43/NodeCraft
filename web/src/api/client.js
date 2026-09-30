@@ -72,11 +72,8 @@ async function tryRefresh() {
     });
     if (!res.ok) return false;
     const data = await res.json();
-    if (data?.accessToken) {
-      setAccessToken(data.accessToken);
-      return true;
-    }
-    return false;
+    // The manager renews httpOnly cookies; no token is returned in the JSON body.
+    return data?.success === true;
   } catch {
     return false;
   }

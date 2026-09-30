@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read a Link",
-    "description": "Reads a single link by id. Requires the `instance:read` permission.",
+    "description": "Reads a single link by id. Requires the `instance:owner` permission.",
     "tags": [
       "Link"
     ],

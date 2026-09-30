@@ -11,6 +11,7 @@ import User from './User.js';
 import Worker from './Worker.js';
 import config from '../../config/config.js';
 import Limit from './Limit.js';
+import { summaryAttributes, instanceSummary } from '../utils/instanceView.js';
 
 class Instance {
   static async create(userId, instanceData, gameData) {
@@ -47,21 +48,20 @@ class Instance {
   }
 
   static async personalRead(user) {
-    if (user.admin) return Instance.readAll();
-
-    const instancesId = await Link.readInstancesIdByUserLink(user.id);
+    const instancesId = user.admin ? [] : await Link.readInstancesIdByUserLink(user.id);
 
     const instances = await Model.findAll({
-      where: {
+      where: user.admin ? {} : {
         [Op.or]: [
           { ownerId: user.id },
           { id: { [Op.in]: instancesId } },
         ],
       },
-      include: instanceInclude,
+      attributes: summaryAttributes,
+      include: instanceInclude.filter((include) => include.as === 'worker'),
     });
 
-    return instances;
+    return instances.map(instanceSummary);
   }
 
   static async readOne(id) {
