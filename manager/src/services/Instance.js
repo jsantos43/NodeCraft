@@ -10,6 +10,7 @@ import Link from './Link.js';
 import User from './User.js';
 import Worker from './Worker.js';
 import config from '../../config/config.js';
+import Limit from './Limit.js';
 
 class Instance {
   static async create(userId, instanceData, gameData) {
@@ -86,6 +87,7 @@ class Instance {
 
   static async update(id, instanceData, gameData = null) {
     const instance = await Instance.readOne(id);
+    await Limit.verifyCanUpdate(instance, instanceData);
 
     await db.transaction(async (t) => {
       // Update instance basic data
@@ -198,13 +200,13 @@ class Instance {
     instances.forEach((instance) => {
       const serverPort = instance.port;
 
-      if (serverPort > minPort && serverPort < maxPort) {
+      if (serverPort >= minPort && serverPort <= maxPort) {
         usedPorts.push(serverPort);
       }
     });
 
     // Verify max used ports
-    if (maxPort - minPort <= usedPorts.length) throw new Error('No port available!');
+    if (usedPorts.length >= maxPort - minPort + 1) throw new Error('No port available!');
 
     // Find available port
     for (let port = minPort; port <= maxPort; port += 1) {

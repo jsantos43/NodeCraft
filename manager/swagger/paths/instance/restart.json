@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "restart Instance",
-    "description": "Restarts the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+    "description": "Restarts the instance on its worker (fire-and-forget), including a stopped instance. Requires the `instance:execute` permission. Checks the owner's disk, memory and CPU quotas before sending the command; an already running instance is counted only once. Returns 403 if a quota is exceeded.",
     "tags": [
       "Instance"
     ],

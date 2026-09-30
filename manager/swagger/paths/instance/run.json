@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "run Instance",
-    "description": "Starts the instance on its worker (fire-and-forget: responds immediately). Requires the `instance:execute` permission.",
+    "description": "Starts the instance on its worker (fire-and-forget: responds immediately). Requires the `instance:execute` permission. Checks the owner's disk, memory and CPU quotas before sending the command and returns 403 if a quota is exceeded.",
     "tags": [
       "Instance"
     ],

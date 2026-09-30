@@ -161,6 +161,8 @@ class Instance {
 
       const { instance, worker } = await getWorkerContext(id);
 
+      await Limit.verifyCanStart(instance);
+
       const route = `${worker.url}/server/${id}/restart`;
       const response = await proxyFetch(route, {
         method: 'POST',

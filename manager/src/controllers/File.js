@@ -49,13 +49,13 @@ class File {
       const { id } = req.params;
       const { destiny } = req.query;
 
-      const response = proxyToWorker(id, {
+      const response = await proxyToWorker(id, {
         route: `/files/create?destiny=${encodeURIComponent(destiny || '')}`,
         method: 'POST',
         body: req.body || {},
       });
 
-      return sendWorkerJson(res, response, 201);
+      return await sendWorkerJson(res, response, 201);
     } catch (err) {
       return next(err);
     }
@@ -69,10 +69,13 @@ class File {
       const response = await proxyToWorker(id, {
         route: `/files/upload?destiny=${encodeURIComponent(destiny || '')}`,
         method: 'POST',
+        headers: {
+          'Content-Type': req.headers['content-type'],
+        },
         body: req,
       });
 
-      return sendWorkerJson(res, response, 201);
+      return await sendWorkerJson(res, response, 201);
     } catch (err) {
       return next(err);
     }
@@ -89,7 +92,7 @@ class File {
         body: req.body || {},
       });
 
-      return sendWorkerJson(res, response, 200);
+      return await sendWorkerJson(res, response, 200);
     } catch (err) {
       return next(err);
     }
@@ -105,7 +108,7 @@ class File {
         route: `/files/delete?path=${encodeURIComponent(path || '')}`,
       });
 
-      return sendWorkerJson(res, response, 200);
+      return await sendWorkerJson(res, response, 200);
     } catch (err) {
       return next(err);
     }
@@ -121,7 +124,7 @@ class File {
         method: 'POST',
       });
 
-      return sendWorkerJson(res, response, 200);
+      return await sendWorkerJson(res, response, 200);
     } catch (err) {
       return next(err);
     }
@@ -137,7 +140,7 @@ class File {
         method: 'POST',
       });
 
-      return sendWorkerJson(res, response, 200);
+      return await sendWorkerJson(res, response, 200);
     } catch (err) {
       return next(err);
     }

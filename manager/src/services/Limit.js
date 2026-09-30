@@ -3,16 +3,17 @@ import User from './User.js';
 import { Forbidden } from '../errors/index.js';
 
 class Limit {
-  static async readUsage(userId) {
+  static async readUsage(userId, excludeResourceInstanceId = null) {
     const user = await User.readOne(userId);
 
     const instances = await InstanceModel.findAll({
       where: { ownerId: userId },
-      attributes: ['memory', 'cpu', 'diskUsage', 'status'],
+      attributes: ['id', 'memory', 'cpu', 'diskUsage', 'status'],
     });
 
     const usage = instances.reduce((acc, instance) => {
-      const running = instance.status === 'running';
+      // Restart replaces this instance's allocation; still count its disk and slot.
+      const running = instance.status === 'running' && instance.id !== excludeResourceInstanceId;
       return {
         count: acc.count + 1,
         disk: acc.disk + instance.diskUsage,
@@ -53,7 +54,10 @@ class Limit {
     }
 
     const { memory, cpu } = InstanceModel.build(instanceData);
+    Limit.verifyInstanceResources(user, { memory, cpu });
+  }
 
+  static verifyInstanceResources(user, { memory, cpu }) {
     if (memory > user.maxMemory) {
       throw new Forbidden('This instance asks for more memory than your quota!');
     }
@@ -63,8 +67,18 @@ class Limit {
     }
   }
 
+  static async verifyCanUpdate(instance, changes) {
+    if (changes.memory === undefined && changes.cpu === undefined) return;
+
+    const user = await User.readOne(instance.ownerId);
+    Limit.verifyInstanceResources(user, {
+      memory: changes.memory ?? instance.memory,
+      cpu: changes.cpu ?? instance.cpu,
+    });
+  }
+
   static async verifyCanStart(instance) {
-    const { user, usage } = await Limit.readUsage(instance.ownerId);
+    const { user, usage } = await Limit.readUsage(instance.ownerId, instance.id);
 
     if (usage.disk > user.maxDisk) {
       throw new Forbidden('You have exceeded your disk quota!');
