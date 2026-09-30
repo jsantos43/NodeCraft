@@ -48,6 +48,12 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+  sessionVersion: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    validate: { min: 0 },
+  },
   verified: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
@@ -150,6 +156,7 @@ User.init({
     attributes: {
       exclude: [
         'password',
+        'sessionVersion',
         'emailTokenHash',
         'emailTokenExpires',
         'resetPasswordTokenHash',

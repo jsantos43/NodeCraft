@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "refresh User access token",
-    "description": "Rotates the session using the `refreshToken` cookie: issues a fresh access token (and refresh token) as httpOnly cookies. Returns 401 if the refresh token is missing, expired or invalid.",
+    "description": "Rotates the session using the refreshToken cookie and issues new access/refresh tokens as httpOnly cookies. Each refresh token can be consumed only once, including concurrent requests. Returns 401 if the cookie is missing; returns 400 if the token is invalid, expired or already consumed. A rejected refresh does not set or clear session cookies. Access JWTs include the current session version. Legacy access tokens without a version are rejected by authenticated routes; an unexpired, unrevoked refresh token can still renew the session. A refresh using a token revoked by logout or reset fails.",
     "tags": [
       "Auth"
     ],
@@ -22,6 +22,9 @@
       },
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
       }
     }
   }

@@ -8,12 +8,12 @@ const router = Router();
 router
   .get(
     '/:id/link',
-    auth('instance:read'),
+    auth('instance:owner'),
     Controller.readAll,
   )
   .get(
     '/:id/link/:linkId',
-    auth('instance:read'),
+    auth('instance:owner'),
     Controller.readOne,
   )
   .post(

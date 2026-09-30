@@ -44,7 +44,6 @@ const PERMISSION_GROUPS = [
   {
     label: 'General',
     perms: [
-      { id: 'instance:read',    label: 'View'    },
       { id: 'instance:edit',    label: 'Edit'    },
       { id: 'instance:execute', label: 'Execute' },
       { id: 'instance:backup',  label: 'Backup'  },
@@ -77,15 +76,9 @@ const PERMISSION_GROUPS = [
 // Checking a permission auto-adds these; unchecking a prerequisite cascades
 // removal to everything that depends on it.
 const PERMISSION_DEPS = {
-  'instance:edit':          ['instance:read'],
-  'instance:execute':       ['instance:read'],
-  'instance:backup':        ['instance:read'],
-  'instance:console:read':  ['instance:read'],
-  'instance:console:write': ['instance:read', 'instance:console:read'],
-  'instance:files:read':    ['instance:read'],
-  'instance:files:write':   ['instance:read', 'instance:files:read', 'instance:files:edit'],
-  'instance:files:edit':    ['instance:read', 'instance:files:read'],
-  'instance:roster:edit':   ['instance:read'],
+  'instance:console:write': ['instance:console:read'],
+  'instance:files:write':   ['instance:files:read', 'instance:files:edit'],
+  'instance:files:edit':    ['instance:files:read'],
 };
 
 // Human-readable label for each permission, used on the roster chips.
@@ -1089,7 +1082,7 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
   const isEdit = !!link;
   const [userId, setUserId] = useState('');
   const [lookedUpUser, setLookedUpUser] = useState(link?.user || null);
-  const [permissions, setPermissions] = useState(link?.permissions || ['instance:read']);
+  const [permissions, setPermissions] = useState(() => (link?.permissions || []).filter(p => p !== 'instance:read'));
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState(null);
 
@@ -1201,6 +1194,7 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
 
           <div className="link-form-field">
             <label className="link-form-label">What they can do</label>
+            <span className="link-form-optional">Everyone with access can view basic server details. Remove access to revoke viewing.</span>
             {PERMISSION_GROUPS.map(group => (
               <div key={group.label} className="link-perm-group">
                 <span className="link-perm-group-label">{group.label}</span>
@@ -1245,13 +1239,11 @@ function RosterRow({ link, onEdit, onDelete }) {
       <div className="roster-main">
         <span className="roster-name">{name}</span>
         <span className="roster-meta">{link.user?.email || link.userId}</span>
-        {link.permissions?.length > 0 && (
-          <div className="roster-perms">
-            {link.permissions.map(p => (
-              <span key={p} className="roster-perm">{PERMISSION_LABELS[p] || p.replace('instance:', '')}</span>
-            ))}
-          </div>
-        )}
+        <div className="roster-perms">
+          {['instance:read', ...(link.permissions || []).filter(p => p !== 'instance:read')].map(p => (
+            <span key={p} className="roster-perm">{PERMISSION_LABELS[p] || p.replace('instance:', '')}</span>
+          ))}
+        </div>
       </div>
       <div className="roster-actions">
         <button className="files-icon-btn" onClick={onEdit} title="Edit access"><Edit2 size={13} /></button>
@@ -1536,7 +1528,7 @@ function EditionCard({ icon: Icon, title, fields, steps }) {
   );
 }
 
-function ConnectTab({ instance, onRefetch }) {
+function ConnectTab({ instance, canRemap, onRefetch }) {
   const toast = useToast();
   const remapPort = useAction(async () => {
     try { await instancesApi.remapPort(instance.id); }
@@ -1547,11 +1539,11 @@ function ConnectTab({ instance, onRefetch }) {
   const port = instance.port;
   const address = host && port ? `${host}:${port}` : null;
   const isMinecraft = instance.type === 'minecraft';
-  const bedrock = !!instance.minecraft?.bedrock;
+  const bedrock = !!instance.connection?.bedrock;
   const live = instance.status === 'running';
 
   const subParts = [GAME_LABELS[instance.type] || instance.type];
-  const software = instance.minecraft?.software;
+  const software = instance.connection?.software;
   if (isMinecraft && software) subParts.push(software.charAt(0).toUpperCase() + software.slice(1));
   if (instance.maxPlayers) subParts.push(`${instance.maxPlayers} slots`);
 
@@ -1625,10 +1617,12 @@ function ConnectTab({ instance, onRefetch }) {
         </div>
       </div>
 
-      <div className="connect-footer">
-        <span className="connect-footer-text">Need a fresh address? A new port is assigned at random.</span>
-        <Button size="sm" variant="ghost" onClick={remapPort.execute} loading={remapPort.loading}>Remap port</Button>
-      </div>
+      {canRemap && (
+        <div className="connect-footer">
+          <span className="connect-footer-text">Need a fresh address? Assign an available port.</span>
+          <Button size="sm" variant="ghost" onClick={remapPort.execute} loading={remapPort.loading}>Remap port</Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1827,6 +1821,9 @@ export default function ServerDetails() {
 
   const { data: permData } = useApi(() => instancesApi.getPermissions(id), [id]);
   const permissions = permData?.permissions || [];
+  const canReadInstance = permissions.includes('instance:read');
+  const canReadConsole = permissions.includes('instance:console:read');
+  const canReadFiles = permissions.includes('instance:files:read');
   const canExecute = permissions.includes('instance:execute');
   const canEditInstance = permissions.includes('instance:edit');
   const canBackup = permissions.includes('instance:backup');
@@ -1945,7 +1942,13 @@ export default function ServerDetails() {
 
         <div className="server-tabs">
           {[
-            ...TABS,
+            ...TABS.filter(({ id: tid }) => {
+              if (tid === 'console') return canReadConsole;
+              if (tid === 'files') return canReadFiles;
+              if (tid === 'env') return canReadInstance;
+              if (tid === 'players') return canEditRoster;
+              return true;
+            }),
             ...(canManageLinks ? [LINK_TAB] : []),
             ...(isAdmin ? [ADMIN_TAB] : []),
           ].map(({ id: tid, label, icon: Icon }) => (
@@ -1962,12 +1965,12 @@ export default function ServerDetails() {
 
         <div className="server-tab-content">
           {tab === 'overview' && <Card><OverviewTab instance={instance} /></Card>}
-          {tab === 'console'  && <Card padding={false}><ConsoleTab instance={instance} /></Card>}
-          {tab === 'files'    && <Card><FilesTab instanceId={id} /></Card>}
+          {tab === 'console' && canReadConsole && <Card padding={false}><ConsoleTab instance={instance} /></Card>}
+          {tab === 'files' && canReadFiles && <Card><FilesTab instanceId={id} /></Card>}
           {tab === 'backups'  && <Card><BackupsTab instance={instance} canBackup={canBackup} onRefetch={refetch} /></Card>}
-          {tab === 'env'      && <Card><VariablesTab instance={instance} canEdit={canEditInstance} onSaved={refetch} /></Card>}
-          {tab === 'players'  && <Card><PlayersTab instance={instance} canEdit={canEditRoster} /></Card>}
-          {tab === 'connect'  && <Card><ConnectTab instance={instance} onRefetch={refetch} /></Card>}
+          {tab === 'env' && canReadInstance && <Card><VariablesTab instance={instance} canEdit={canEditInstance} onSaved={refetch} /></Card>}
+          {tab === 'players' && canEditRoster && <Card><PlayersTab instance={instance} canEdit={canEditRoster} /></Card>}
+          {tab === 'connect'  && <Card><ConnectTab instance={instance} canRemap={canManageLinks} onRefetch={refetch} /></Card>}
           {tab === 'links'    && canManageLinks && <Card><LinkTab instance={instance} /></Card>}
           {tab === 'admin' && isAdmin && <Card><AdminTab instance={instance} onOwnerChanged={refetch} /></Card>}
         </div>

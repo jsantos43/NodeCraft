@@ -16,8 +16,8 @@ const auth = (permission) => async (req, res, next) => {
     // Get token payload
     const payload = Service.verifyJWTToken(token);
 
-    // Get user by token
-    const user = await User.readOne(payload.sub);
+    // Read only if the token still belongs to the user's current session version.
+    const user = await User.readOne(payload.sub, payload.sessionVersion);
 
     // Save user for next steps
     req.user = user;

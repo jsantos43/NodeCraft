@@ -3,6 +3,7 @@ import config from '../../config/config.js';
 
 const createUser = Joi.object({
   id: Joi.forbidden(),
+  sessionVersion: Joi.forbidden(),
   admin: Joi.forbidden(),
   name: Joi.string().trim().min(3).max(32).required(),
   email: Joi.string().trim().max(254).email().required(),
@@ -12,6 +13,7 @@ const createUser = Joi.object({
 
 const updateUser = Joi.object({
   id: Joi.forbidden(),
+  sessionVersion: Joi.forbidden(),
   admin: Joi.forbidden(),
   name: Joi.string().trim().min(3).max(32).required(),
   email: Joi.forbidden(),
@@ -28,6 +30,7 @@ const updateUser = Joi.object({
 // Used by admins to manage other users, including quotas.
 const adminUpdateUser = Joi.object({
   id: Joi.forbidden(),
+  sessionVersion: Joi.forbidden(),
   admin: Joi.boolean(),
   name: Joi.string().trim().min(3).max(32),
   email: Joi.forbidden(),

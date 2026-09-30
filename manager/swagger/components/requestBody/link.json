@@ -16,7 +16,6 @@
             "permissions": {
               "type": "array",
               "example": [
-                "instance:read",
                 "instance:execute"
               ],
               "items": {
@@ -34,7 +33,7 @@
                   "instance:roster:edit"
                 ]
               },
-              "description": "Instance permissions granted to the linked account. Only the values listed here are accepted; instance:owner is not grantable."
+              "description": "Additional permissions granted to the linked account. Basic instance:read is implicit, even when this array is empty or omitted on creation. Legacy instance:read input is accepted and discarded; instance:owner is not grantable."
             }
           }
         }
@@ -51,7 +50,6 @@
             "permissions": {
               "type": "array",
               "example": [
-                "instance:read",
                 "instance:execute"
               ],
               "items": {
@@ -69,7 +67,7 @@
                   "instance:roster:edit"
                 ]
               },
-              "description": "Instance permissions granted to the linked account. Only the values listed here are accepted; instance:owner is not grantable."
+              "description": "Additional permissions granted to the linked account. Basic instance:read is implicit, even when this array is empty or omitted on creation. Legacy instance:read input is accepted and discarded; instance:owner is not grantable."
             }
           }
         }

@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read all Instances",
-    "description": "Lists every instance the current user owns or is linked to.",
+    "description": "Lists summaries of instances owned by or linked to the current user; admins see all instances. Every link grants basic read access, including links with an empty permissions array. Summaries omit console history, game configurations, roster and sharing details.",
     "tags": [
       "Instance"
     ],

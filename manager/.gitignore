@@ -7,3 +7,4 @@ yarn.lock
 config.json
 logs
 tests
+test

@@ -58,7 +58,7 @@ class Link {
     const link = await Model.create({
       instanceId,
       userId: data.userId,
-      permissions: data.permissions,
+      permissions: data.permissions?.filter((permission) => permission !== 'instance:read'),
     });
 
     return link;
@@ -66,7 +66,11 @@ class Link {
 
   static async update(instanceId, linkId, data) {
     const link = await Link.readOne(instanceId, linkId);
-    await link.update(data);
+    const changes = { ...data };
+    if (changes.permissions) {
+      changes.permissions = changes.permissions.filter((permission) => permission !== 'instance:read');
+    }
+    await link.update(changes);
 
     return link;
   }
@@ -104,7 +108,9 @@ class Link {
   static async readUserPermissions(userId, instanceId) {
     const link = await Link.findByUserAndInstance(userId, instanceId);
 
-    return link?.permissions || [];
+    if (!link) return [];
+
+    return [...new Set(['instance:read', ...(link.permissions || [])])];
   }
 }
 

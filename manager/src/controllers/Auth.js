@@ -1,6 +1,7 @@
 import config from '../../config/config.js';
 import { InvalidRequest, Unathorized } from '../errors/index.js';
 import Service from '../services/Auth.js';
+import UserService from '../services/User.js';
 
 const isProd = !config.app.isDev;
 
@@ -66,7 +67,7 @@ class Auth {
     try {
       const { user } = req;
 
-      await Service.wipeToken(user.id, 'refresh');
+      await UserService.revokeSessions(user.id);
       clearAuthCookies(res);
 
       return res.status(200).json({ success: true, user });

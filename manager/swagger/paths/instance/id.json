@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read a Instance",
-    "description": "Reads a single instance with its game-specific config and linked players. Requires the `instance:read` permission.",
+    "description": "Reads basic instance details. Owners, admins and every linked user have instance:read implicitly. Console history requires instance:console:read; full configuration of every game is available with instance:read; editing still requires instance:edit; roster requires instance:roster:edit; sharing details require owner/admin access. Unauthorized fields are omitted.",
     "tags": [
       "Instance"
     ],
@@ -28,7 +28,7 @@
   },
   "put": {
     "summary": "update a Instance",
-    "description": "Updates the instance settings (name, memory, cpu, maxPlayers and the game-specific `game` block). The instance must be stopped. Requires the `instance:edit` permission.",
+    "description": "Updates the instance settings (name, memory, cpu, maxPlayers and the game-specific `game` block). The instance must be stopped. Requires the `instance:edit` permission. When memory or CPU is supplied, the resulting instance configuration must fit the owner's individual memory and CPU quotas, otherwise returns 403. Aggregate memory and CPU quotas are checked when starting or restarting instances.",
     "tags": [
       "Instance"
     ],

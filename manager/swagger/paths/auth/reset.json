@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "reset User password",
-    "description": "Completes the password-reset flow: validates the token sent by email and sets the new password. Public route. Requires the email service to be available.",
+    "description": "Completes the password-reset flow: consumes a valid, unexpired email token once and changes the password while clearing the reset and refresh tokens in the same database update. Concurrent submissions with the same token allow only one success; invalid, expired or already consumed tokens return 400 without changing the password. The same update advances the session version, revoking all earlier manager access JWTs on subsequent API requests. Separately issued worker console tokens and open WebSockets are not revoked by this operation. Public route. Requires the email service to be available.",
     "tags": [
       "Auth"
     ],

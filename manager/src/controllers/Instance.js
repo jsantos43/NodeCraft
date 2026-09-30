@@ -5,6 +5,7 @@ import AuthService from '../services/Auth.js';
 import Limit from '../services/Limit.js';
 import getWorkerContext from '../utils/getWorkerContext.js';
 import proxyFetch from '../utils/proxyFetch.js';
+import { instanceView } from '../utils/instanceView.js';
 
 class Instance {
   static async create(req, res, next) {
@@ -19,7 +20,8 @@ class Instance {
       await Limit.verifyCanCreate(user.id, instanceData);
       const instance = await Service.create(user.id, instanceData, gameData);
 
-      return res.status(201).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(201).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -41,7 +43,8 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.readOne(id);
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -59,7 +62,8 @@ class Instance {
 
       const instance = await Service.update(id, instanceData, gameData);
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -72,7 +76,8 @@ class Instance {
 
       const instance = await Service.transferOwner(id, ownerId);
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -85,7 +90,8 @@ class Instance {
 
       const instance = await Service.changeWorker(id, workerId);
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -96,7 +102,8 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.delete(id);
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -125,7 +132,8 @@ class Instance {
 
       if (!response.ok) throw new Internal('Failed the run request to worker!');
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -149,7 +157,8 @@ class Instance {
 
       if (!response.ok) throw new Internal('Failed the stop request to worker!');
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -160,6 +169,8 @@ class Instance {
       const { id } = req.params;
 
       const { instance, worker } = await getWorkerContext(id);
+
+      await Limit.verifyCanStart(instance);
 
       const route = `${worker.url}/server/${id}/restart`;
       const response = await proxyFetch(route, {
@@ -173,7 +184,8 @@ class Instance {
 
       if (!response.ok) throw new Internal('Failed the restart request to worker!');
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -184,7 +196,8 @@ class Instance {
       const { id } = req.params;
       const instance = await Service.remapPort(id);
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }
@@ -252,7 +265,8 @@ class Instance {
 
       if (!response.ok) throw new Internal('Failed the backup request to worker!');
 
-      return res.status(200).json({ success: true, instance });
+      const permissions = await AuthService.permissionsForInstance(req.user, instance);
+      return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
       return next(err);
     }

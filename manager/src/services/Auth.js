@@ -55,12 +55,18 @@ class Auth {
 
   // Returns the permissions a user effectively has on an instance
   static async getInstancePermissions(user, id) {
-    if (user.admin) return [...config.instance.permissions, 'instance:owner'];
+    if (user.admin) return ['instance:read', ...config.instance.permissions, 'instance:owner'];
 
     const instance = await Instance.readOne(id);
-    if (instance.ownerId === user.id) return [...config.instance.permissions, 'instance:owner'];
+    return Auth.permissionsForInstance(user, instance);
+  }
 
-    return Link.readUserPermissions(user.id, id);
+  static async permissionsForInstance(user, instance) {
+    if (user.admin || instance.ownerId === user.id) {
+      return ['instance:read', ...config.instance.permissions, 'instance:owner'];
+    }
+
+    return Link.readUserPermissions(user.id, instance.id);
   }
 
   static async checkPermission(user, permission, id) {
@@ -84,11 +90,15 @@ class Auth {
     return false;
   }
 
-  static generateAccessToken(userId) {
+  static generateAccessToken(userId, sessionVersion) {
+    if (!Number.isSafeInteger(sessionVersion) || sessionVersion < 0) {
+      throw new Internal('Invalid session version!');
+    }
     return jwt.sign(
       {
         sub: userId,
         purpose: 'access',
+        sessionVersion,
       },
       config.token.jwtSecret,
       {
@@ -102,6 +112,9 @@ class Auth {
     try {
       const payload = jwt.verify(token, config.token.jwtSecret, { audience: 'api' });
       if (payload.purpose !== 'access') throw new Unathorized('Token is invalid!');
+      if (!Number.isSafeInteger(payload.sessionVersion) || payload.sessionVersion < 0) {
+        throw new Unathorized('Session token must be renewed!');
+      }
 
       return payload;
     } catch (err) {
@@ -124,9 +137,14 @@ class Auth {
     const passwordsAreEqual = await bcrypt.compare(password, user?.password || ABSENT_USER_HASH);
     if (!user || !passwordsAreEqual) throw new Unathorized('Email or Password is invalid!');
 
-    const accessToken = Auth.generateAccessToken(user.id);
+    const accessToken = Auth.generateAccessToken(user.id, user.sessionVersion);
     const refreshToken = generateRandomToken();
-    await Auth.saveToken(user.id, refreshToken, 'refresh');
+    // A logout/reset during password verification must not restore the old session.
+    const updated = await User.saveLoginSession(user.id, user.sessionVersion, {
+      refreshTokenHash: hashToken(refreshToken),
+      refreshTokenExpires: new Date(Date.now() + config.token.refreshLifetime),
+    });
+    if (!updated) throw new Unathorized('Session changed; please log in again!');
 
     const safeUser = await User.readOne(user.id);
 
@@ -139,11 +157,17 @@ class Auth {
 
     if (!user || !user?.refreshTokenHash) throw new InvalidRequest('Refresh token is invalid!');
     if (!compareToken(token, user.refreshTokenHash)) throw new InvalidRequest('Refresh token is invalid!');
-    if (user.refreshTokenExpires < Date.now()) throw new InvalidRequest('Refresh token is expiried!');
+    if (!user.refreshTokenExpires || user.refreshTokenExpires <= Date.now()) {
+      throw new InvalidRequest('Refresh token is expired!');
+    }
 
-    const accessToken = Auth.generateAccessToken(user.id);
+    const accessToken = Auth.generateAccessToken(user.id, user.sessionVersion);
     const refreshToken = generateRandomToken();
-    await Auth.saveToken(user.id, refreshToken, 'refresh');
+    const updated = await User.updateIfTokenValid(user.id, hashedToken, 'refresh', {
+      refreshTokenHash: hashToken(refreshToken),
+      refreshTokenExpires: new Date(Date.now() + config.token.refreshLifetime),
+    }, user.sessionVersion);
+    if (!updated) throw new InvalidRequest('Refresh token is invalid, expired or already used!');
 
     const safeUser = await User.readOne(user.id);
 
@@ -230,13 +254,20 @@ class Auth {
 
     if (!user || !user?.resetPasswordTokenHash) throw new InvalidRequest('Reset password token is invalid!');
     if (!compareToken(token, user.resetPasswordTokenHash)) throw new InvalidRequest('Reset password token is invalid!');
-    if (user.resetPasswordTokenExpires < Date.now()) throw new InvalidRequest('Reset password token is expiried!');
+    if (!user.resetPasswordTokenExpires || user.resetPasswordTokenExpires <= Date.now()) {
+      throw new InvalidRequest('Reset password token is expired!');
+    }
 
     // Change password and wipe tokens
     const hashedPassword = await bcrypt.hash(password, 12);
-    await User.update(user.id, { password: hashedPassword });
-    await Auth.wipeToken(user.id, 'refresh');
-    await Auth.wipeToken(user.id, 'password');
+    const updated = await User.updateIfTokenValid(user.id, hashedToken, 'password', {
+      password: hashedPassword,
+      refreshTokenHash: null,
+      refreshTokenExpires: null,
+      resetPasswordTokenHash: null,
+      resetPasswordTokenExpires: null,
+    });
+    if (!updated) throw new InvalidRequest('Reset password token is invalid, expired or already used!');
 
     const safeUser = await User.readOne(user.id);
 
