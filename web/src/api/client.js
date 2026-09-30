@@ -1,6 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 let accessToken = null;
+let refreshPromise = null;
+let refreshGeneration = 0;
 
 export function setAccessToken(token) {
   accessToken = token;
@@ -15,6 +17,7 @@ export function clearTokens() {
 }
 
 async function request(method, path, body, options = {}) {
+  const requestGeneration = refreshGeneration;
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -43,7 +46,8 @@ async function request(method, path, body, options = {}) {
   }
 
   if (res.status === 401 && !options._retry) {
-    const refreshed = await tryRefresh();
+    // A late 401 may belong to the cookies used before an already completed refresh.
+    const refreshed = refreshGeneration !== requestGeneration || await tryRefresh();
     if (refreshed) {
       return request(method, path, body, { ...options, _retry: true });
     }
@@ -64,7 +68,19 @@ async function request(method, path, body, options = {}) {
   return data;
 }
 
-async function tryRefresh() {
+function tryRefresh() {
+  if (!refreshPromise) {
+    refreshPromise = refreshSession().then((success) => {
+      if (success) refreshGeneration += 1;
+      return success;
+    }).finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+async function refreshSession() {
   try {
     const res = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',

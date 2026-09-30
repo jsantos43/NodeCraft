@@ -1,6 +1,7 @@
 import { hash } from 'bcrypt';
+import { Op, literal } from 'sequelize';
 import { User as Model, Link as LinkModel } from '../models/index.js';
-import { NotFound, Internal } from '../errors/index.js';
+import { NotFound, Internal, Unathorized } from '../errors/index.js';
 
 class User {
   static async create(data) {
@@ -21,10 +22,11 @@ class User {
     return user;
   }
 
-  static async readOne(id) {
+  static async readOne(id, sessionVersion = undefined) {
     const user = await Model.findOne({
       where: {
         id,
+        ...(sessionVersion !== undefined ? { sessionVersion } : {}),
       },
       include: {
         model: LinkModel,
@@ -32,7 +34,10 @@ class User {
       },
     });
 
-    if (!user) throw new NotFound('User not found!');
+    if (!user) {
+      if (sessionVersion !== undefined) throw new Unathorized('Session is no longer valid!');
+      throw new NotFound('User not found!');
+    }
 
     return user;
   }
@@ -76,6 +81,48 @@ class User {
     await user.update(data);
 
     return user;
+  }
+
+  // Consume/replace a token only while the same unexpired token is still stored.
+  static async updateIfTokenValid(id, tokenHash, type, data, sessionVersion = undefined) {
+    const columns = {
+      refresh: ['refreshTokenHash', 'refreshTokenExpires'],
+      password: ['resetPasswordTokenHash', 'resetPasswordTokenExpires'],
+    };
+
+    if (!columns[type] || typeof tokenHash !== 'string' || !tokenHash) {
+      throw new Internal('Invalid conditional token update!');
+    }
+
+    const [hashColumn, expiresColumn] = columns[type];
+    const [updated] = await Model.scope(null).update({
+      ...data,
+      // Reset consumption also revokes every previously issued access token.
+      ...(type === 'password' ? { sessionVersion: literal('sessionVersion + 1') } : {}),
+    }, {
+      where: {
+        id,
+        ...(sessionVersion !== undefined ? { sessionVersion } : {}),
+        [hashColumn]: tokenHash,
+        [expiresColumn]: { [Op.gt]: new Date() },
+      },
+    });
+
+    return updated === 1;
+  }
+
+  static async saveLoginSession(id, sessionVersion, data) {
+    const [updated] = await Model.scope(null).update(data, { where: { id, sessionVersion } });
+    return updated === 1;
+  }
+
+  static async revokeSessions(id) {
+    const [updated] = await Model.scope(null).update({
+      sessionVersion: literal('sessionVersion + 1'),
+      refreshTokenHash: null,
+      refreshTokenExpires: null,
+    }, { where: { id } });
+    if (updated !== 1) throw new NotFound('User not found!');
   }
 
   static async delete(id) {
