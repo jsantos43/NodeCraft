@@ -4,7 +4,7 @@ import Modal, { ModalFooter } from './Modal.jsx';
 import Button from './Button.jsx';
 import './ConfirmDelete.css';
 
-export default function ConfirmDelete({ open, onClose, onConfirm, name, loading }) {
+export default function ConfirmDelete({ open, onClose, onConfirm, name, loading, description }) {
   const [typed, setTyped] = useState('');
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function ConfirmDelete({ open, onClose, onConfirm, name, loading 
         </div>
         <div>
           <h3 className="cd-title">Delete this?</h3>
-          <p className="cd-subtitle">This action cannot be undone.</p>
+          <p className="cd-subtitle">{description || 'This action cannot be undone.'}</p>
         </div>
       </div>
 

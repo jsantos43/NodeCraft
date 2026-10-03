@@ -249,7 +249,8 @@ export default function Settings() {
             <div className="danger-text">
               <p className="danger-title">Delete account</p>
               <p className="danger-sub">
-                Permanently removes your account and all data you own. This can't be undone.
+                Permanently removes your account and owned servers. Stop all owned servers first.
+                Back up any data you want to keep. This can't be undone.
               </p>
             </div>
             <Button variant="danger" icon={Trash2} onClick={() => setConfirmDelete(true)}>
@@ -264,6 +265,7 @@ export default function Settings() {
         onClose={() => setConfirmDelete(false)}
         onConfirm={deleteAccount.execute}
         name={user?.email}
+        description="Stop all owned servers before deleting your account. Owned servers will be deleted; back up any data you want to keep. This cannot be undone."
         loading={deleteAccount.loading}
       />
     </Layout>

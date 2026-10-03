@@ -10,6 +10,7 @@ class File {
       const toDownload = download === 'true';
 
       const response = await proxyToWorker(id, {
+        streaming: toDownload,
         route: `/files?path=${encodeURIComponent(path || '')}&download=${toDownload}`,
       });
 
@@ -67,6 +68,7 @@ class File {
       const { destiny } = req.query;
 
       const response = await proxyToWorker(id, {
+        streaming: true,
         route: `/files/upload?destiny=${encodeURIComponent(destiny || '')}`,
         method: 'POST',
         headers: {

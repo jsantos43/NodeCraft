@@ -68,7 +68,7 @@ async function fixture(overrides = {}) {
     '../utils/getWorkerContext.js': {
       default: async () => ({ instance, worker: { url: 'http://worker.test', secret: 'test' } }),
     },
-    '../utils/proxyFetch.js': {
+    '../utils/proxyFetch.js': { discardWorkerResponse: async () => {},
       default: async () => { calls.worker++; return { ok: true }; },
     },
   });

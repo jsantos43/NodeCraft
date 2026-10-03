@@ -1,7 +1,11 @@
 import { hash } from 'bcrypt';
 import { Op, literal } from 'sequelize';
-import { User as Model, Link as LinkModel } from '../models/index.js';
-import { NotFound, Internal, Unathorized } from '../errors/index.js';
+import {
+  db, User as Model, Link as LinkModel, Instance as InstanceModel,
+} from '../models/index.js';
+import {
+  NotFound, Internal, Unathorized, InvalidRequest,
+} from '../errors/index.js';
 
 class User {
   static async create(data) {
@@ -126,10 +130,31 @@ class User {
   }
 
   static async delete(id) {
-    const user = await User.readOne(id);
-    await user.destroy();
+    return db.transaction(async (transaction) => {
+      const user = await Model.findOne({
+        where: { id },
+        include: { model: LinkModel, as: 'instances' },
+        transaction,
+      });
 
-    return user;
+      if (!user) throw new NotFound('User not found!');
+
+      const runningInstances = await InstanceModel.findAll({
+        where: { ownerId: id, status: 'running' },
+        attributes: ['id', 'name'],
+        transaction,
+      });
+
+      if (runningInstances.length > 0) {
+        throw new InvalidRequest(runningInstances.map(
+          (instance) => `Stop owned instance "${instance.name}" (${instance.id}) before deleting this account.`,
+        ));
+      }
+
+      await user.destroy({ transaction });
+
+      return user;
+    });
   }
 }
 

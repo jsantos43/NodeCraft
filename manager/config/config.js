@@ -9,11 +9,6 @@ const ONE_HOUR = 60 * ONE_MINUTE;
 const ONE_DAY = 24 * ONE_HOUR;
 
 const siteUrl = (process.env.SITE_URL || 'http://localhost:3030').replace(/\/+$/, '');
-
-// Prefix the API is published under by the reverse proxy, as the browser sees
-// it. Defaults to the previous hardcoded behaviour: nothing in dev, /api in
-// prod. Set it to "/" for an API served at the root — the trailing slash is
-// stripped, and an empty value falls back to the default like every other var.
 const apiBasePath = (process.env.API_BASE_PATH || (process.env.STAGE === 'DEV' ? '' : '/api'))
   .replace(/\/+$/, '');
 
@@ -76,9 +71,6 @@ const config = {
     emailLifetime: 1 * ONE_DAY,
     resetPasswordLifetime: 20 * ONE_MINUTE,
     refreshLifetime: 3 * ONE_DAY,
-    // Path the refresh cookie is scoped to, so it is not sent with every other
-    // request. It is the route as the *browser* sees it: the app serves
-    // /auth/refresh, and in prod the reverse proxy publishes it under apiBasePath.
     refreshCookiePath: `${apiBasePath}/auth/refresh`,
   },
   instance: {
@@ -108,7 +100,7 @@ const config = {
     // Timeout of every manager -> worker request that is not streaming a file.
     timeout: process.env.WORKER_TIMEOUT
       ? Number(process.env.WORKER_TIMEOUT)
-      : 15 * ONE_SECOND,
+      : 5 * ONE_MINUTE,
   },
   rateLimit: {
     windowMs: process.env.RATE_LIMIT_WINDOW

@@ -1,7 +1,7 @@
 {
   "get": {
     "summary": "read Files",
-    "description": "Lists a directory or reads a file at `path` inside the instance game folder. With `download=true` the raw file is streamed back. Proxied to the worker. Requires `instance:files:read`.",
+    "description": "Lists a directory or reads a file at `path` inside the instance game folder. With `download=true` the raw file is streamed back. Proxied to the worker. Requires `instance:files:read`. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. File uploads/downloads retain the streaming flow without an application-level timeout or inactivity timer. Non-download JSON reads use WORKER_TIMEOUT (default 300000 ms), including response body consumption.",
     "tags": [
       "Files"
     ],

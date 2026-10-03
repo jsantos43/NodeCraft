@@ -28,7 +28,7 @@
   },
   "put": {
     "summary": "update a Instance",
-    "description": "Updates the instance settings (name, memory, cpu, maxPlayers and the game-specific `game` block). The instance must be stopped. Requires the `instance:edit` permission. When memory or CPU is supplied, the resulting instance configuration must fit the owner's individual memory and CPU quotas, otherwise returns 403. Aggregate memory and CPU quotas are checked when starting or restarting instances.",
+    "description": "Updates the instance settings (name, memory, cpu, maxPlayers and the game-specific `game` block). The instance must be stopped. Requires the `instance:edit` permission. When memory or CPU is supplied, the resulting instance configuration must fit the owner's individual memory and CPU quotas, otherwise returns 403. Aggregate memory and CPU quotas are checked when starting or restarting instances. When supplied, type must match the persisted game; a mismatch returns 400 before any settings are changed. game requires type, while instance fields can be edited with or without type.",
     "tags": [
       "Instance"
     ],

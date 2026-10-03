@@ -324,6 +324,7 @@ export default function UserDetails() {
         onClose={() => setConfirmDelete(false)}
         onConfirm={deleteUser}
         name={user.email}
+        description="Stop all servers owned by this user first. Deleting this account also deletes their owned servers; back up any data you want to keep. This cannot be undone."
         loading={deleting}
       />
     </Layout>

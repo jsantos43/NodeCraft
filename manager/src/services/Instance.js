@@ -5,7 +5,7 @@ import {
   instanceInclude,
   Instance as Model,
 } from '../models/index.js';
-import { NotFound, Internal } from '../errors/index.js';
+import { NotFound, Internal, InvalidRequest } from '../errors/index.js';
 import Link from './Link.js';
 import User from './User.js';
 import Worker from './Worker.js';
@@ -87,11 +87,18 @@ class Instance {
 
   static async update(id, instanceData, gameData = null) {
     const instance = await Instance.readOne(id);
-    await Limit.verifyCanUpdate(instance, instanceData);
+
+    const { type, ...changes } = instanceData;
+
+    if (type !== undefined && type !== instance.type) {
+      throw new InvalidRequest('The instance type cannot be changed!');
+    }
+
+    await Limit.verifyCanUpdate(instance, changes);
 
     await db.transaction(async (t) => {
       // Update instance basic data
-      await instance.update(instanceData, { transaction: t });
+      await instance.update(changes, { transaction: t });
 
       // Update game data
       if (gameData && instance[instance.type]) {

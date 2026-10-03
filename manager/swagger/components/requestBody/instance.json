@@ -43,7 +43,7 @@
       "application/json": {
         "schema": {
           "type": "object",
-          "description": "Creates an instance. `workerId` is mandatory \u2014 there is no automatic placement \u2014 and must be one of the user's `allowedWorkers`. `game` must match `type`; sending a `game` block for a different game is rejected. `port`, `status` and `history` are server-assigned and rejected if sent.",
+          "description": "Creates an instance. workerId is mandatory and must be one of the user's allowedWorkers. game is required and validated according to type; {} uses the game defaults. Unknown game properties are discarded. Server-controlled fields such as port, status and history are rejected.",
           "required": [
             "name",
             "type",
@@ -90,20 +90,108 @@
               "example": 10
             },
             "game": {
-              "oneOf": [
-                {
+              "type": "object",
+              "description": "Settings validated using the schema selected by type. Empty objects are accepted; unknown game properties are discarded."
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "minecraft"
+                  ]
+                },
+                "game": {
                   "$ref": "../schemas/minecraft.json"
+                }
+              }
+            },
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "hytale"
+                  ]
                 },
-                {
+                "game": {
                   "$ref": "../schemas/hytale.json"
+                }
+              }
+            },
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "kerbal"
+                  ]
                 },
-                {
+                "game": {
                   "$ref": "../schemas/kerbal.json"
+                }
+              }
+            },
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "terraria"
+                  ]
                 },
-                {
+                "game": {
                   "$ref": "../schemas/terraria.json"
                 }
-              ]
+              }
+            }
+          ]
+        },
+        "examples": {
+          "minecraft": {
+            "value": {
+              "name": "My server",
+              "workerId": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f",
+              "type": "minecraft",
+              "game": {}
+            }
+          },
+          "hytale": {
+            "value": {
+              "name": "My server",
+              "workerId": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f",
+              "type": "hytale",
+              "game": {}
+            }
+          },
+          "kerbal": {
+            "value": {
+              "name": "My server",
+              "workerId": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f",
+              "type": "kerbal",
+              "game": {}
+            }
+          },
+          "terraria": {
+            "value": {
+              "name": "My server",
+              "workerId": "0c9f3d2a-1b4e-4c8a-9f7d-2e5a6b8c1d3f",
+              "type": "terraria",
+              "game": {}
             }
           }
         }
@@ -115,7 +203,7 @@
       "application/json": {
         "schema": {
           "type": "object",
-          "description": "Updates an existing instance. Every property is optional, but `game` may only be sent together with `type` (it is validated against it), and sending `type` requires `game`. `type` itself is not persisted \u2014 it only selects which `game` schema applies. `workerId` cannot be changed here; use `PUT /instance/{id}/worker` (admin). The instance must be stopped.",
+          "description": "Updates a stopped instance. Supply at least one of name, memory, cpu, maxPlayers or game. game requires type, but type does not require game. When supplied, type must equal the persisted instance type or the request returns 400 without changes. type is never persisted. Unknown game properties are discarded. To change workerId, use PUT /instance/{id}/worker (admin).",
           "properties": {
             "name": {
               "type": "string",
@@ -132,7 +220,7 @@
                 "kerbal"
               ],
               "example": "minecraft",
-              "description": "Selects which game schema validates `game`. Not persisted \u2014 the game of an instance cannot be changed."
+              "description": "Must equal the persisted instance type. Required when game is supplied; optional for updates of instance fields. Cannot change the game of an instance."
             },
             "memory": {
               "type": "integer",
@@ -151,21 +239,154 @@
               "example": 10
             },
             "game": {
-              "oneOf": [
-                {
+              "type": "object",
+              "description": "Settings validated using the schema selected by type. Empty objects are accepted; unknown game properties are discarded."
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "minecraft"
+                  ]
+                },
+                "game": {
                   "$ref": "../schemas/minecraft.json"
+                }
+              }
+            },
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "hytale"
+                  ]
                 },
-                {
+                "game": {
                   "$ref": "../schemas/hytale.json"
+                }
+              }
+            },
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "kerbal"
+                  ]
                 },
-                {
+                "game": {
                   "$ref": "../schemas/kerbal.json"
+                }
+              }
+            },
+            {
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "terraria"
+                  ]
                 },
-                {
+                "game": {
                   "$ref": "../schemas/terraria.json"
                 }
-              ],
-              "description": "Game-specific settings. Optional: an update may change only instance fields. When sent, `type` must be sent too (it selects which game schema applies and is not persisted)."
+              }
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "game"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "anyOf": [
+            {
+              "required": [
+                "name"
+              ]
+            },
+            {
+              "required": [
+                "memory"
+              ]
+            },
+            {
+              "required": [
+                "cpu"
+              ]
+            },
+            {
+              "required": [
+                "maxPlayers"
+              ]
+            },
+            {
+              "required": [
+                "game"
+              ]
+            }
+          ]
+        },
+        "examples": {
+          "minecraft": {
+            "value": {
+              "type": "minecraft",
+              "game": {}
+            }
+          },
+          "hytale": {
+            "value": {
+              "type": "hytale",
+              "game": {}
+            }
+          },
+          "kerbal": {
+            "value": {
+              "type": "kerbal",
+              "game": {}
+            }
+          },
+          "terraria": {
+            "value": {
+              "type": "terraria",
+              "game": {}
+            }
+          },
+          "instanceOnly": {
+            "value": {
+              "name": "My server"
+            }
+          },
+          "typedInstanceOnly": {
+            "value": {
+              "name": "My server",
+              "type": "minecraft"
             }
           }
         }

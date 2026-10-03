@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "copy/move File",
-    "description": "Copies or moves (`actions=copy|move`) a file/directory from `path` to `destiny`. Proxied to the worker. Requires `instance:files:write`.",
+    "description": "Copies or moves (`actions=copy|move`) a file/directory from `path` to `destiny`. Proxied to the worker. Requires `instance:files:write`. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. WORKER_TIMEOUT (default 300000 ms) covers the request and JSON response consumption. Unused control-command response bodies are cancelled; this deadline does not limit asynchronous game operations.",
     "tags": [
       "Files"
     ],

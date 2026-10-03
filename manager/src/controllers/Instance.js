@@ -4,7 +4,7 @@ import Service from '../services/Instance.js';
 import AuthService from '../services/Auth.js';
 import Limit from '../services/Limit.js';
 import getWorkerContext from '../utils/getWorkerContext.js';
-import proxyFetch from '../utils/proxyFetch.js';
+import proxyFetch, { discardWorkerResponse } from '../utils/proxyFetch.js';
 import { instanceView } from '../utils/instanceView.js';
 
 class Instance {
@@ -130,6 +130,8 @@ class Instance {
         body: JSON.stringify({ instance }),
       });
 
+      await discardWorkerResponse(response);
+
       if (!response.ok) throw new Internal('Failed the run request to worker!');
 
       const permissions = await AuthService.permissionsForInstance(req.user, instance);
@@ -154,6 +156,8 @@ class Instance {
         },
         body: JSON.stringify({ instance }),
       });
+
+      await discardWorkerResponse(response);
 
       if (!response.ok) throw new Internal('Failed the stop request to worker!');
 
@@ -181,6 +185,8 @@ class Instance {
         },
         body: JSON.stringify({ instance }),
       });
+
+      await discardWorkerResponse(response);
 
       if (!response.ok) throw new Internal('Failed the restart request to worker!');
 
@@ -262,6 +268,8 @@ class Instance {
         },
         body: JSON.stringify({ instance }),
       });
+
+      await discardWorkerResponse(response);
 
       if (!response.ok) throw new Internal('Failed the backup request to worker!');
 
