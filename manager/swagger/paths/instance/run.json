@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "run Instance",
-    "description": "Starts the instance on its worker (fire-and-forget: responds immediately). Requires the `instance:execute` permission. Checks the owner's disk, memory and CPU quotas before sending the command and returns 403 if a quota is exceeded. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. WORKER_TIMEOUT (default 300000 ms) covers the request and JSON response consumption. Unused control-command response bodies are cancelled; this deadline does not limit asynchronous game operations.",
+    "description": "Starts the instance on its worker (fire-and-forget: responds immediately). Requires the `instance:execute` permission. Quota checking and setting status to `starting` happen in one transaction; `starting` counts toward memory/CPU quotas until the worker reports running, stopped or failed. Duplicate start/restart requests while starting return 400. Checks the owner's disk, memory and CPU quotas before sending the command and returns 403 if a quota is exceeded. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. WORKER_TIMEOUT (default 300000 ms) covers the request and JSON response consumption. Unused control-command response bodies are cancelled; this deadline does not limit asynchronous game operations.",
     "tags": [
       "Instance"
     ],

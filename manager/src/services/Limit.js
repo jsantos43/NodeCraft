@@ -1,19 +1,47 @@
-import { Instance as InstanceModel } from '../models/index.js';
-import User from './User.js';
-import { Forbidden } from '../errors/index.js';
+import { Transaction } from 'sequelize';
+import { db, User as UserModel, Instance as InstanceModel } from '../models/index.js';
+import { Forbidden, NotFound } from '../errors/index.js';
+
+// SQLite uses one writer; serialize this process as well (including in-memory databases).
+let sqliteQueue = Promise.resolve();
 
 class Limit {
-  static async readUsage(userId, excludeResourceInstanceId = null) {
-    const user = await User.readOne(userId);
+  static async withOwner(userId, action) {
+    const execute = () => db.transaction({
+      ...(db.getDialect() === 'sqlite'
+        ? { type: Transaction.TYPES.IMMEDIATE }
+        : { isolationLevel: Transaction.ISOLATION_LEVELS.READ_COMMITTED }),
+    }, async (transaction) => {
+      const user = await UserModel.findByPk(userId, { transaction, lock: transaction.LOCK.UPDATE });
+
+      if (!user) throw new NotFound('User not found!');
+
+      return action(transaction);
+    });
+
+    if (db.getDialect() !== 'sqlite') return execute();
+
+    const result = sqliteQueue.then(execute);
+
+    sqliteQueue = result.catch(() => {});
+
+    return result;
+  }
+
+  static async readUsage(userId, excludeResourceInstanceId = null, transaction = undefined) {
+    const user = await UserModel.findByPk(userId, { transaction });
+
+    if (!user) throw new NotFound('User not found!');
 
     const instances = await InstanceModel.findAll({
       where: { ownerId: userId },
+      transaction,
       attributes: ['id', 'memory', 'cpu', 'diskUsage', 'status'],
     });
 
     const usage = instances.reduce((acc, instance) => {
       // Restart replaces this instance's allocation; still count its disk and slot.
-      const running = instance.status === 'running' && instance.id !== excludeResourceInstanceId;
+      const running = ['running', 'starting'].includes(instance.status) && instance.id !== excludeResourceInstanceId;
       return {
         count: acc.count + 1,
         disk: acc.disk + instance.diskUsage,
@@ -27,8 +55,8 @@ class Limit {
     return { user, usage };
   }
 
-  static async verifyCanCreate(userId, instanceData) {
-    const { user, usage } = await Limit.readUsage(userId);
+  static async verifyCanCreate(userId, instanceData, transaction = undefined) {
+    const { user, usage } = await Limit.readUsage(userId, null, transaction);
 
     const { type } = instanceData;
 
@@ -70,15 +98,15 @@ class Limit {
   static async verifyCanUpdate(instance, changes) {
     if (changes.memory === undefined && changes.cpu === undefined) return;
 
-    const user = await User.readOne(instance.ownerId);
+    const user = await UserModel.findByPk(instance.ownerId);
     Limit.verifyInstanceResources(user, {
       memory: changes.memory ?? instance.memory,
       cpu: changes.cpu ?? instance.cpu,
     });
   }
 
-  static async verifyCanStart(instance) {
-    const { user, usage } = await Limit.readUsage(instance.ownerId, instance.id);
+  static async verifyCanStart(instance, transaction = undefined) {
+    const { user, usage } = await Limit.readUsage(instance.ownerId, instance.id, transaction);
 
     if (usage.disk > user.maxDisk) {
       throw new Forbidden('You have exceeded your disk quota!');

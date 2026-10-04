@@ -12,8 +12,6 @@ class Kerbal extends Instance {
       instance: this.instancePath,
       settings: Path.join(this.instancePath, 'Config', 'Settings.txt'),
     };
-
-    this.setup();
   }
 
   async syncSettings() {
@@ -51,6 +49,7 @@ class Kerbal extends Instance {
       this.listenStreamEvents();
     } catch (err) {
       logger.error({ err }, 'Error to setup kerbal instance');
+      throw err;
     }
   }
 }

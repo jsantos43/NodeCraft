@@ -46,6 +46,7 @@
     "status": {
       "type": "string",
       "enum": [
+        "starting",
         "running",
         "stopped",
         "failed"

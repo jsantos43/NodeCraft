@@ -1825,15 +1825,15 @@ export default function ServerDetails() {
   const canReadConsole = permissions.includes('instance:console:read');
   const canReadFiles = permissions.includes('instance:files:read');
   const canExecute = permissions.includes('instance:execute');
-  const canEditInstance = permissions.includes('instance:edit');
-  const canBackup = permissions.includes('instance:backup');
+  const canEditInstance = permissions.includes('instance:edit') && instance?.status !== 'starting';
+  const canBackup = permissions.includes('instance:backup') && instance?.status !== 'starting';
   const canManageLinks = permissions.includes('instance:owner');
   const canEditRoster = permissions.includes('instance:roster:edit') || permissions.includes('instance:owner');
 
   // Resolve pending when real status matches expected
   useEffect(() => {
-    if (!instance || !pendingStatus) return;
-    const done = (pendingStatus === 'starting' && instance.status === 'running') ||
+    if (!instance || !pendingStatus || instance.status === 'starting') return;
+    const done = (pendingStatus === 'starting' && ['running', 'failed'].includes(instance.status)) ||
                  (pendingStatus === 'stopping' && instance.status !== 'running');
     if (done) {
       setPendingStatus(null);
@@ -1843,6 +1843,13 @@ export default function ServerDetails() {
   }, [instance?.status, pendingStatus]);
 
   useEffect(() => () => clearInterval(pollRef.current), []);
+
+  // Keep a persisted starting status visible after reload or an HTTP timeout.
+  useEffect(() => {
+    if (instance?.status !== 'starting' || pendingStatus) return undefined;
+    const timer = setInterval(refetch, 3000);
+    return () => clearInterval(timer);
+  }, [instance?.status, pendingStatus, refetch]);
 
   const startPolling = useCallback(() => {
     if (pollRef.current) return;
@@ -1885,14 +1892,14 @@ export default function ServerDetails() {
     </Layout>
   );
 
-  const effectiveStatus = pendingStatus || instance.status || 'stopped';
+  const effectiveStatus = instance.status === 'starting' ? 'starting' : pendingStatus || instance.status || 'stopped';
   const isRunning = effectiveStatus === 'running' || effectiveStatus === 'starting';
-  const transitioning = !!pendingStatus;
+  const transitioning = !!pendingStatus || instance.status === 'starting';
 
   const handleRun = async () => {
     setPendingStatus('starting');
     try { await runAction.execute(() => instancesApi.run(id)); }
-    catch (err) { setPendingStatus(null); toast.error(err, { title: "Couldn't start the server" }); return; }
+    catch (err) { setPendingStatus(null); refetch(); toast.error(err, { title: "Couldn't start the server" }); return; }
     startPolling();
   };
   const handleStop = async () => {
@@ -1904,7 +1911,7 @@ export default function ServerDetails() {
   const handleRestart = async () => {
     setPendingStatus('starting');
     try { await runAction.execute(() => instancesApi.restart(id)); }
-    catch (err) { setPendingStatus(null); toast.error(err, { title: "Couldn't restart the server" }); return; }
+    catch (err) { setPendingStatus(null); refetch(); toast.error(err, { title: "Couldn't restart the server" }); return; }
     startPolling();
   };
 
@@ -1936,7 +1943,7 @@ export default function ServerDetails() {
                 Restart
               </Button>
             )}
-            {canManageLinks && <Button icon={Trash2} variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} />}
+            {canManageLinks && <Button icon={Trash2} variant="ghost" size="sm" disabled={transitioning} onClick={() => setConfirmDelete(true)} />}
           </div>
         </div>
 

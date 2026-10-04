@@ -89,7 +89,8 @@ class BackupScheduler {
     // backup is in flight and every later tick of the 3am hour would trigger it
     // again. Being in the database also survives a manager restart.
     const pending = instances.filter(
-      (instance) => !instance.backupRequestedAt || localDate(instance.backupRequestedAt) !== today,
+      (instance) => instance.status !== 'starting'
+        && (!instance.backupRequestedAt || localDate(instance.backupRequestedAt) !== today),
     );
 
     for (const instance of pending) {

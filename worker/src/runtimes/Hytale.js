@@ -12,8 +12,6 @@ class Hytale extends Instance {
       instance: this.instancePath,
       settings: Path.join(this.instancePath, 'config.json'),
     };
-
-    this.setup();
   }
 
   async syncSettings() {
@@ -50,6 +48,7 @@ class Hytale extends Instance {
       this.listenStreamEvents();
     } catch (err) {
       logger.error({ err }, 'Error to setup hytale instance');
+      throw err;
     }
   }
 }

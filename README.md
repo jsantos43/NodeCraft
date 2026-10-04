@@ -110,6 +110,8 @@ sequenceDiagram
 - **Worker → Manager** authenticates with a per-worker API key (`MANAGER_API_KEY`, stored SHA-256 hashed).
 - **Manager → Worker** authenticates with a shared `MANAGER_SECRET`.
 - Worker endpoints are **fire-and-forget**: they return `200` immediately and run the heavy work asynchronously.
+- Manager → worker requests use `WORKER_TIMEOUT` (default 300000 ms), including JSON response reading. File uploads/downloads are exempt from this timeout and have no application-level inactivity timer. `WORKER_TIMEOUT` must be positive integer milliseconds, at most 600000 (10 minutes).
+- Communication failures/timeouts on ordinary requests return `503`. A timeout does not undo a command the worker may have accepted. Check the resulting state before retrying; the proxy does not retry automatically.
 - The manager flags a worker `healthy: false` after 3 minutes without a heartbeat.
 
 ---
@@ -218,6 +220,27 @@ npm run dev                 # → http://localhost:3030
 ```
 PORT, STAGE, DATABASE_*, EMAIL_*, SITE_URL, SITE_VALIDATE_URL, SITE_RESET_URL, CORS_ORIGIN
 ```
+
+`EMAIL_USER` / `EMAIL_PASSWORD` authenticate to SMTP. `EMAIL_FROM_ADDRESS` sets
+the sender address, and `EMAIL_FROM_NAME` sets its display name. If omitted,
+the sender address falls back to `EMAIL_USER` for providers whose login is an
+email address. An invalid sender is rejected before sending.
+
+For [Resend SMTP](https://resend.com/docs/send-with-smtp), use:
+
+```dotenv
+EMAIL_ENABLE=true
+EMAIL_HOST=smtp.resend.com
+EMAIL_PORT=465
+EMAIL_SECURE=true
+EMAIL_USER=resend
+EMAIL_PASSWORD=re_YOUR_API_KEY
+EMAIL_FROM_NAME=NodeCraft
+EMAIL_FROM_ADDRESS=noreply@your-verified-domain.com
+```
+
+Replace the API key and sender with your own values; the sender domain must be
+verified in Resend. Restart the manager after updating its environment.
 </details>
 
 <details>
@@ -239,9 +262,19 @@ STORAGE_FORCE_PATHSTYLE, STORAGE_ID, STORAGE_SECRET, STORAGE_MAX
 - **Refresh token** — 3 days, stored **SHA-256 hashed** in the DB and rotated on every refresh.
 - **Email flows** — account verification and password reset via time-limited tokens.
 - **Per-instance permissions** — access is granted at the level of individual actions:
-  `instance:read · edit · execute · backup · console:read · console:write · files:read · files:write · files:edit`.
+  `instance:edit · execute · backup · console:read · console:write · files:read · files:write · files:edit · roster:edit`.
+  Every link grants basic `instance:read` automatically, even with no additional permissions. Remove the link to revoke basic access. Console history requires `instance:console:read`, full settings for every game are readable with `instance:read` (editing still requires `instance:edit`), roster requires `instance:roster:edit`, and sharing details are limited to the owner or an administrator.
   Every route and socket event enforces its exact permission on the backend; the frontend mirrors the same rules to gate the UI.
 - **Instance links** — a non-owner can be granted scoped access with `permissions`, in-game `gamertags`, an `access` level (`super` / `always` / `monitored`) and op/admin `privileges`.
+
+
+### Manager session revocation
+
+Logout and password reset revoke all earlier manager API access tokens for the account, including copies in other browsers. The server checks the token's session version against the user record on each authenticated request. The version stays internal and is not included in public user responses. Previously authorized requests already in progress are not cancelled.
+
+Before starting the updated manager, run `npm run db:migrate` in `manager/` to apply `20260930120000-add-user-session-version.js`. Existing users start at version zero. Access tokens issued before this update must be renewed; a valid refresh cookie can renew them without another login. All manager processes must run the updated code for revocation to be enforced consistently.
+
+Worker console tokens remain separate: they expire after 120 seconds for new connections, and logout/reset does not disconnect existing WebSockets. This change revokes manager API sessions, including the ability to request new console tokens with an old access token.
 
 ---
 

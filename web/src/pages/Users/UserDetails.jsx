@@ -69,10 +69,9 @@ export default function UserDetails() {
   const workers = workerData?.workers || [];
   const owned = (instData?.instances || []).filter(i => i.ownerId === id);
 
-  // Memory/CPU limits are enforced across running instances only (that is when
-  // the resources are actually occupied); disk counts every owned instance.
+  // Memory/CPU limits are enforced across running and starting instances; disk counts every owned instance.
   const usage = owned.reduce((a, i) => {
-    const running = i.status === 'running';
+    const running = ['running', 'starting'].includes(i.status);
     return {
       count: a.count + 1,
       memory: a.memory + (running ? (i.memory || 0) : 0),

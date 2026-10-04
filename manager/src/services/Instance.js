@@ -20,10 +20,12 @@ class Instance {
     const TargetModel = gameModels[gameType];
     if (!TargetModel) throw new Internal('Game model not found!');
 
-    const port = await Instance.selectPort(instanceData.workerId);
-
     // Use a Transaction to ensure: either everything is recorded or nothing is.
-    return db.transaction(async (t) => {
+    return Limit.withOwner(userId, async (t) => {
+      await Limit.verifyCanCreate(userId, instanceData, t);
+
+      const port = await Instance.selectPort(instanceData.workerId, t);
+
       // Create instance and game data in an unique command
       const instance = await Model.create({
         ownerId: userId,
@@ -83,6 +85,26 @@ class Instance {
     });
 
     return instances;
+  }
+
+  static async markStarting(id, restart = false) {
+    const current = await Instance.readOne(id);
+
+    await Limit.withOwner(current.ownerId, async (transaction) => {
+      const instance = await Model.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
+
+      if (!instance) throw new NotFound('Instance not found!');
+
+      if (instance.status === 'starting' || (!restart && instance.status === 'running')) {
+        throw new InvalidRequest('Instance is already running or starting!');
+      }
+
+      await Limit.verifyCanStart(instance, transaction);
+
+      await instance.update({ status: 'starting' }, { transaction });
+    });
+
+    return Instance.readOne(id);
   }
 
   static async update(id, instanceData, gameData = null) {
@@ -193,10 +215,11 @@ class Instance {
     });
   }
 
-  static async selectPort(workerId = null) {
+  static async selectPort(workerId = null, transaction = undefined) {
     const instances = await Model.findAll({
       where: { workerId },
       attributes: ['port'],
+      transaction,
     });
     const { minPort, maxPort } = config.instance;
 

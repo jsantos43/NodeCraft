@@ -15,29 +15,44 @@ const backingUp = new Set();
 
 class Server {
   static async run(instance) {
+    let runtime;
     try {
-      const instancePath = `${config.paths.instances}/${instance.id}`;
+      const Runtime = gameRuntimes[instance.type];
+      if (!Runtime) throw new Internal('Instance game runtime not found!');
 
+      clearInterval(running[instance.id]?.synchronizer.interval);
+      runtime = new Runtime(instance);
+      running[instance.id] = runtime;
+
+      const instancePath = `${config.paths.instances}/${instance.id}`;
       await File.createOneDirectory(instancePath);
       await Container.create(instance);
-
-      const Runtime = gameRuntimes[instance.type];
-      if (!Runtime) throw new Internal('Instace game runtime not found!');
-
-      running[instance.id] = new Runtime(instance);
+      await runtime.setup();
     } catch (err) {
-      Server.stop(instance);
+      await Server.stop(instance, false);
       logger.error({ err }, `Error to run instance ${instance?.id}`);
+      if (!runtime) {
+        await Manager.sendInstanceDetails(instance.id, { status: 'failed' });
+        return;
+      }
+      runtime.status = 'failed';
     }
+
+    // The ordinary report confirms startup, and retries if the manager is unavailable.
+    runtime.suppressReports = false;
+    running[instance.id] = runtime;
+    runtime.synchronizer.interval = setInterval(() => runtime.sendInstanceDetails(), 15000);
   }
 
-  static async stop(instance) {
+  static async stop(instance, report = true) {
     try {
+      if (running[instance.id]) running[instance.id].suppressReports = !report;
       await Container.stop(instance.id);
 
       // Stop runtime instance
-      if (running[instance.id]) running[instance.id].finish();
+      if (running[instance.id]) await running[instance.id].finish();
       await Container.delete(instance.id);
+      delete running[instance.id];
     } catch (err) {
       logger.error({ err }, `Error to stop instance ${instance?.id}`);
     }
@@ -45,7 +60,7 @@ class Server {
 
   static async restart(instance) {
     try {
-      await Server.stop(instance);
+      await Server.stop(instance, false);
       await Server.run(instance);
     } catch (err) {
       logger.error({ err }, `Error to restart instance ${instance?.id}`);
@@ -75,7 +90,7 @@ class Server {
     let result = { status: 'failed' };
 
     try {
-      if (isRunning) await Server.stop(instance);
+      if (isRunning) await Server.stop(instance, false);
 
       result = await Backup.execute(instance, true);
     } catch (err) {
@@ -96,7 +111,7 @@ class Server {
 
       for (const instance of instances) {
         try {
-          if (instance.status === 'running') {
+          if (['running', 'starting'].includes(instance.status)) {
             await Server.run(instance);
           }
         } catch (err) {

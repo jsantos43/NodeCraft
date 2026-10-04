@@ -1,5 +1,6 @@
 // Run: node --experimental-vm-modules test/instance-quotas.test.mjs
 // Load production modules with in-memory persistence and worker transport doubles.
+import { Transaction } from 'sequelize';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
@@ -30,13 +31,15 @@ async function fixture(overrides = {}) {
     ...overrides,
   };
   const instance = {
-    id: 'target', ownerId: user.id, status: 'stopped', memory: 2048, cpu: 2,
+    id: 'target', ownerId: user.id, workerId: 'worker', status: 'stopped', memory: 2048, cpu: 2,
     diskUsage: 20, name: 'Original',
     async update(data) { Object.assign(this, data); },
   };
   const rows = [instance];
   const calls = { worker: 0, transactions: 0, gameWrites: 0 };
   const models = {
+    User: { findByPk: async () => user },
+    Link: {},
     Instance: {
       async findAll({ where, attributes }) {
         assert.equal(where.ownerId, user.id);
@@ -46,12 +49,12 @@ async function fixture(overrides = {}) {
       async findByPk() { return instance; },
       build(data) { return { memory: 1024, cpu: 2, ...data }; },
     },
-    db: { async transaction(fn) { calls.transactions++; return fn({}); } },
+    db: { getDialect: () => 'sqlite', async transaction(options, fn) { calls.transactions++; return (fn || options)({ LOCK: { UPDATE: 'UPDATE' } }); } },
     gameModels: {}, instanceInclude: [],
   };
   const User = { async readOne(id) { assert.equal(id, user.id); return user; } };
   const Limit = await load('../src/services/Limit.js', {
-    '../models/index.js': models, './User.js': { default: User }, '../errors/index.js': errors,
+    sequelize: { Transaction }, '../models/index.js': models, './User.js': { default: User }, '../errors/index.js': errors,
   });
   const Service = await load('../src/services/Instance.js', {
     sequelize: { Op: {} }, '../models/index.js': models, '../errors/index.js': errors,

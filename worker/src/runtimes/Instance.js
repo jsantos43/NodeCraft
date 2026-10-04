@@ -15,7 +15,8 @@ class Instance {
     this.id = instance.id;
     this.path = Path.join(config.paths.instances, instance.id);
     this.instance = instance;
-    this.status = 'stopped';
+    this.status = 'starting';
+    this.finish = this.finish.bind(this);
     this.stream = null;
     this.io = null;
     this.rcon = {
@@ -184,7 +185,7 @@ class Instance {
   }
 
   async sendInstanceDetails() {
-    if (this.sending) return;
+    if (this.sending || this.suppressReports) return;
     this.sending = true;
 
     try {
@@ -194,7 +195,7 @@ class Instance {
       const sending = [...history];
 
       const delivered = await Manager.sendInstanceDetails(this.id, {
-        status: this.status === 'running' ? this.status : 'stopped',
+        status: this.status,
         history: sending,
         diskUsage,
       });
@@ -212,24 +213,25 @@ class Instance {
   }
 
   async start() {
+    await Container.run(this.id);
+
+    const container = await Container.get(this.id);
+    const info = await container?.inspect();
+
+    if (!info?.State.Running) throw new Error('Container did not start');
+
+    this.status = 'running';
     try {
       this.io = getIO();
-
-      this.status = 'running';
-      await this.sendInstanceDetails();
-      this.synchronizer.interval = setInterval(() => {
-        this.sendInstanceDetails();
-      }, 15000);
     } catch (err) {
       this.io = null;
     }
-
-    await Container.run(this.id);
   }
 
   async finish() {
     try {
       if (!this) return;
+      this.status = 'stopped';
 
       // remove stream
       if (this?.stream) {
@@ -244,6 +246,8 @@ class Instance {
       // remove manager interval
       const synchronizerInterval = this?.synchronizer?.interval;
       if (synchronizerInterval) clearInterval(synchronizerInterval);
+
+      if (this.suppressReports) return;
 
       // Send to manager that instance has stopped
       await Manager.sendInstanceDetails(this.id, {

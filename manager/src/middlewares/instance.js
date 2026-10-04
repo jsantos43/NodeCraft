@@ -6,9 +6,9 @@ const verifyNotRunning = async (req, res, next) => {
     const id = req?.params?.id;
 
     const instance = await Service.readOne(id);
-    const running = instance.status === 'running';
+    const running = ['running', 'starting'].includes(instance.status);
 
-    if (running) throw new InvalidRequest('You cannot do this while instance is running!');
+    if (running) throw new InvalidRequest('You cannot do this while instance is running or starting!');
 
     return next();
   } catch (err) {

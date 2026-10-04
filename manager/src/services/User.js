@@ -140,7 +140,7 @@ class User {
       if (!user) throw new NotFound('User not found!');
 
       const runningInstances = await InstanceModel.findAll({
-        where: { ownerId: id, status: 'running' },
+        where: { ownerId: id, status: { [Op.in]: ['running', 'starting'] } },
         attributes: ['id', 'name'],
         transaction,
       });

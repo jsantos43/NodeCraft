@@ -2,12 +2,6 @@ import Instance from './Instance.js';
 import logger from '../../config/logger.js';
 
 class CounterStrike extends Instance {
-  constructor(instance, readFunction) {
-    super(instance, readFunction);
-
-    this.setup();
-  }
-
   async applyConfig() {
     try {
       const instance = this.instance.get({ plain: true });
@@ -71,6 +65,7 @@ class CounterStrike extends Instance {
       this.listenStreamEvents();
     } catch (err) {
       logger.error({ err }, 'Error to setup counterstrike instance');
+      throw err;
     }
   }
 }
