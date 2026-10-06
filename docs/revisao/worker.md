@@ -1,6 +1,6 @@
 # Revisão do worker
 
-Data: 26/09/2026. Base e orientações: [README](README.md). Status: análise concluída; correções não iniciadas.
+Data: 26/09/2026. Base e orientações: [README](README.md). Status: análise concluída; W01 verificado como corrigido localmente em 05/10/2026; demais itens ainda pendentes de verificação/correção.
 
 ## Escopo e verificação
 
@@ -12,7 +12,7 @@ O contrato público está no Swagger do manager. Não foi localizada uma especif
 
 ## Lista de correções
 
-### [ ] W01 — P1 — KSP, Hytale e Terraria não conseguem construir seus runtimes
+### [x] W01 — P1 — KSP, Hytale e Terraria não conseguem construir seus runtimes
 
 - **Local:** `worker/src/runtimes/Kerbal.js:9–21`, `Hytale.js:9–21`, `Terraria.js:9–21`; base `Instance.js`.
 - **Evidência reproduzida:** os três construtores usam `Path.join(this.instancePath, ...)`, mas a base define `this.path`. Cada construção lançou `The "path" argument must be of type string. Received undefined`.
@@ -28,6 +28,7 @@ O contrato público está no Swagger do manager. Não foi localizada uma especif
 - **Impacto:** mesmo após W01, a sincronização pode gravar configuração vazia e substituir configuração já existente.
 - **Correção prevista:** fornecer template versionado ou serialização estruturada e falhar explicitamente quando faltar um recurso obrigatório; conferir o ignore.
 - **Integração:** testar os campos Hytale publicados no Swagger, sem depender de um arquivo local não versionado.
+- **Busca histórica em 05/10/2026:** não foi localizado um template Hytale nos commits de todas as referências locais (incluindo `origin/main`, `origin/dev` e `origin/v1`–`v3`), reflogs ou objetos sem referência. A busca também cobriu nomes antigos e conteúdo dos templates. O antigo `src/templates/json/config.json` era configuração da aplicação, não do Hytale. Não foi possível restaurar o template a partir do histórico disponível; W02 permanece pendente.
 
 ### [ ] W03 — P1 — Eventos de término não encerram o runtime correto
 
@@ -181,4 +182,4 @@ O contrato público está no Swagger do manager. Não foi localizada uma especif
 
 ## Retomada e limites
 
-Todos os achados estão pendentes. Corrigir primeiro inicialização dos jogos, isolamento/autorização e preservação de dados. Os problemas do proxy, cotas no manager e migração entre workers estão no [relatório do manager](manager.md). Validar as futuras correções em ambiente descartável com Docker e storage de teste antes de publicar.
+W01 foi verificado como corrigido localmente em 05/10/2026, com os limites registrados no item. Os demais achados permanecem pendentes de verificação/correção. Corrigir primeiro inicialização dos jogos, isolamento/autorização e preservação de dados. Os problemas do proxy, cotas no manager e migração entre workers estão no [relatório do manager](manager.md). Validar as futuras correções em ambiente descartável com Docker e storage de teste antes de publicar.
