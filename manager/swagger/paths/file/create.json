@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "create File",
-    "description": "Creates a file or directory at `destiny` inside the instance game folder. Proxied to the worker. Requires `instance:files:write`. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. WORKER_TIMEOUT (default 300000 ms) covers the request and JSON response consumption. Unused control-command response bodies are cancelled; this deadline does not limit asynchronous game operations.",
+    "description": "Creates a file or directory at `destiny` inside the instance game folder. Proxied to the worker. Requires `instance:files:write`. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. WORKER_TIMEOUT (default 300000 ms) covers the request and JSON response consumption. Unused control-command response bodies are cancelled; this deadline does not limit asynchronous game operations. Symbolic links in the requested source or destination path are rejected with 403, including intermediate directories.",
     "tags": [
       "Files"
     ],

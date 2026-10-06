@@ -2,11 +2,13 @@
 
 06/10/2026 — Apenas pendências de alta gravidade (P1). Itens corrigidos e de menor impacto removidos. Validação por leitura de fluxo e reproduções isoladas com dependências simuladas; sem Docker, banco ou storage reais.
 
-## W04 — Links simbólicos permitem acessar arquivos fora da instância
+## W04 — Limite da proteção simples contra links simbólicos
 
-**Local:** `worker/src/middlewares/file.js:14`; `worker/src/services/File.js` (`getType`, `readOneFile`, `createOneFile`).
+Implementado em 06/10/2026: o middleware usa `verifyNoSymlinks()` para rejeitar links em cada componente de `path` e `destiny`, inclusive links quebrados, links internos e pastas anteriores à raiz da instância. W20 também foi corrigido: exclusão e movimentação da raiz são bloqueadas, mantendo sua leitura permitida.
 
-A validação confere o caminho textual, mas não resolve links simbólicos. Se um plugin/processo do jogo criar um link na pasta montada, uma requisição de arquivo pode seguir esse link no host e ler ou sobrescrever arquivos externos que o usuário do worker consiga acessar, inclusive de outras instâncias. Não exige `..` no caminho enviado.
+**Limite conhecido:** a verificação com `lstat()` acontece antes da operação. Um processo malicioso com escrita na pasta ainda pode substituir um componente por link nesse intervalo. A solução simples aprovada não fornece isolamento contra essa corrida.
+
+Validação: sete cenários automatizados com arquivos temporários reais, sem Docker ou storage, cobrindo links, caminhos inválidos, proteção da raiz e operações comuns.
 
 ## W05 — RCON permite controlar outras instâncias na rede compartilhada
 
@@ -49,12 +51,6 @@ Upload não limita tamanho, e cópia/descompactação não limitam os bytes grav
 **Local:** `worker/src/runtimes/Minecraft.js:138,150`; `manager/src/services/Roster.js` (`update`, `delete`).
 
 O runtime mantém o roster recebido no início. Alterações no manager mudam apenas o banco, sem atualizar o worker; a lista de operadores é gerada somente no setup. Um jogador removido ou rebaixado no painel mantém a autorização/privilégio no servidor até reiniciá-lo.
-
-## W20 — Exclusão sem caminho apaga a pasta inteira da instância
-
-**Local:** `manager/src/controllers/File.js` (`delete`); `worker/src/middlewares/file.js:42`; `worker/src/controllers/File.js:107`.
-
-O manager converte `path` ausente em vazio. O worker aceita esse valor e resolve o alvo para a raiz da instância, chamando remoção recursiva inclusive com o jogo ligado. Uma requisição incompleta pode apagar todo o mundo. Reprodução isolada confirmou o caminho entregue à remoção; nenhum arquivo real foi excluído.
 
 ## W21 — Hytale não recebe imagem nem volumes ao criar o container (novo)
 
