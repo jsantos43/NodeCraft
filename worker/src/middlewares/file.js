@@ -33,7 +33,7 @@ const verifyPath = (verifyDestiny = false, protectRoot = false) => async (req, r
     verifyDirectoryTraversal(destiny);
 
     // Validate if path is allowed
-    await verifyAllowedPath(instancePath, path);
+    await verifyAllowedPath(instancePath, path, false, req.method === 'GET');
     if (verifyDestiny) await verifyAllowedPath(instancePath, destiny, true);
 
     // Verify if path exits

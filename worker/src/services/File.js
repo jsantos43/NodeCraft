@@ -1,5 +1,7 @@
 import {
   access,
+  realpath,
+  lstat,
   mkdir,
   stat,
   rm,
@@ -7,15 +9,18 @@ import {
   readdir,
   writeFile,
   rename,
-  open,
   cp,
 } from 'node:fs/promises';
 import * as unzipper from 'unzipper';
-import { createWriteStream, createReadStream } from 'node:fs';
+import { createWriteStream } from 'node:fs';
+import { pipeline, finished } from 'node:stream/promises';
 import Path from 'path';
 import archiver from 'archiver';
 import logger from '../../config/logger.js';
 import config from '../../config/config.js';
+
+import { openInsideInstance, visitInstanceFiles } from '../utils/verifyPaths.js';
+import { InvalidRequest } from '../errors/index.js';
 
 const TEMP_LIFETIME = 900000;
 
@@ -58,25 +63,29 @@ class File {
 
   // Recursively sum the size of a directory tree, in MB.
   static async getDirSize(path) {
-    try {
-      const stats = await stat(path);
+    let bytes = 0;
 
-      if (!stats.isDirectory()) return stats.size / (1024 * 1024);
+    await visitInstanceFiles(path, '', async ({ stats }) => {
+      if (stats.isFile()) bytes += stats.size;
+    });
 
-      const entries = await readdir(path, { withFileTypes: true });
-      const sizes = await Promise.all(
-        entries.map((entry) => File.getDirSize(Path.join(path, entry.name))),
-      );
-
-      return sizes.reduce((acc, size) => acc + size, 0);
-    } catch (err) {
-      logger.error({ err }, 'Error to get directory size');
-
-      return 0;
-    }
+    return bytes / (1024 * 1024);
   }
 
-  static async readOneFile(path) {
+  static async readOneFile(path, instancePath = null) {
+    if (instancePath) {
+      const root = await realpath(instancePath);
+      const { handle, stats } = await openInsideInstance(root, path);
+
+      try {
+        if (!stats.isFile()) throw new InvalidRequest('The path must be a file!');
+
+        return await handle.readFile('utf8');
+      } finally {
+        await handle.close();
+      }
+    }
+
     try {
       const rawData = await readFile(path, 'utf8');
 
@@ -88,7 +97,34 @@ class File {
     }
   }
 
-  static async readOneDirectory(path, detailed = false) {
+  static async readOneDirectory(path, detailed = false, instancePath = null) {
+    if (instancePath) {
+      const root = await realpath(instancePath);
+      const { handle, stats } = await openInsideInstance(root, path);
+
+      try {
+        if (!stats.isDirectory()) throw new InvalidRequest('The path must be a directory!');
+
+        const directory = `/proc/self/fd/${handle.fd}`;
+        const items = await readdir(directory);
+        if (!detailed) return items;
+
+        const result = [];
+        for (const name of items) {
+          const child = await openInsideInstance(root, Path.join(directory, name));
+
+          try {
+            result.push({ name, type: child.stats.isDirectory() ? 'directory' : 'file' });
+          } finally {
+            await child.handle.close();
+          }
+        }
+        return result;
+      } finally {
+        await handle.close();
+      }
+    }
+
     try {
       const items = await readdir(path, 'utf8');
 
@@ -198,78 +234,77 @@ class File {
     }
   }
 
-  static async makeZip(outputPath, paths) {
+  static async makeZip(outputPath, paths, instancePath) {
     const output = createWriteStream(outputPath);
     const archive = archiver('zip', { zlib: { level: 6 } });
 
-    // Create promise to monitore stream end
-    const streamFinished = new Promise((resolve, reject) => {
-      output.on('close', () => resolve(outputPath));
-      output.on('error', reject);
-      archive.on('error', reject);
-    });
+    // Attach immediately: traversal can fail while the output is also failing.
+    const completion = pipeline(archive, output);
+    completion.catch(() => {});
 
-    archive.pipe(output);
+    try {
+      for (const itemPath of paths) {
+        // Backup definitions include optional files. Broken links are not missing files.
+        try {
+          await lstat(itemPath);
+        } catch (err) {
+          if (err.code === 'ENOENT') continue;
+          throw err;
+        }
 
-    for (const itemPath of paths) {
-      try {
-        const type = await File.getType(itemPath);
-        const name = Path.basename(itemPath);
+        const prefix = Path.basename(itemPath);
+        const relativePath = Path.relative(instancePath, itemPath);
+        await visitInstanceFiles(instancePath, relativePath, async ({ handle, stats, name }) => {
+          const entryName = Path.join(prefix, name);
+          if (stats.isDirectory()) {
+            archive.append('', { name: `${entryName}/` });
+            return;
+          }
 
-        if (type === 'file') archive.file(itemPath, { name });
-        else if (type === 'directory') archive.directory(itemPath, name);
-      } catch (err) {
-        logger.error({ err }, 'Error to add file in zip');
+          const stream = handle.createReadStream({ autoClose: false });
+          try {
+            archive.append(stream, { name: entryName });
+            await Promise.race([finished(stream), completion]);
+          } finally {
+            stream.destroy();
+          }
+        });
       }
-    }
 
-    await archive.finalize();
-
-    return streamFinished;
-  }
-
-  static async verifyZip(path) {
-    let file;
-
-    try {
-      file = await open(path, 'r');
-
-      const buffer = Buffer.alloc(4);
-      await file.read(buffer, 0, 4, 0);
-
-      await file.close();
-
-      // SIGNATURE ZIP: 0x504B0304
-      return buffer.equals(Buffer.from([0x50, 0x4B, 0x03, 0x04]));
+      await archive.finalize();
+      await completion;
+      return outputPath;
     } catch (err) {
-      if (file) await file.close();
-
-      return false;
+      archive.destroy(err);
+      output.destroy(err);
+      await completion.catch(() => {});
+      await rm(outputPath, { force: true });
+      throw err;
     }
   }
 
-  static async unzip(fromZip, toPath) {
+  static async unzip(fromZip, toPath, instancePath) {
+    const root = await realpath(instancePath);
+    const { handle, stats } = await openInsideInstance(root, fromZip);
+
     try {
+      if (!stats.isFile()) throw new InvalidRequest('The path must be a ZIP file!');
+
+      const signature = Buffer.alloc(4);
+      await handle.read(signature, 0, 4, 0);
+      if (!signature.equals(Buffer.from([0x50, 0x4B, 0x03, 0x04]))) {
+        throw new InvalidRequest('The file is not a ZIP!');
+      }
+
       await File.createOneDirectory(toPath);
+      await pipeline(
+        handle.createReadStream({ start: 0, autoClose: false }),
+        unzipper.Extract({ path: toPath }),
+      );
 
-      // Create the read stream for the .zip file
-      const stream = createReadStream(fromZip).pipe(unzipper.Extract({ path: toPath }));
-
-      // Transform the Stream event into a Promise
-      return new Promise((resolve, reject) => {
-        stream.on('close', () => {
-          resolve(true);
-        });
-
-        stream.on('error', (err) => {
-          logger.error({ err }, 'Error during zip extraction');
-          reject(err);
-        });
-      });
-    } catch (err) {
-      logger.error({ err }, 'Error configuring unzip');
-
-      return false;
+      return true;
+    } finally {
+      await handle.close();
     }
   }
 
@@ -306,7 +341,7 @@ class File {
     const backupName = `backup-${Date.now()}.zip`;
     const backupPath = Path.join(tempPath, backupName);
 
-    await File.makeZip(backupPath, paths);
+    await File.makeZip(backupPath, paths, instancePath);
 
     const backupSize = await File.getSize(backupPath);
 

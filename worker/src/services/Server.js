@@ -161,7 +161,7 @@ class Server {
         // Verify if pending delete process exists
         if (existsPendingDelete) {
           // Try to read .delete.json
-          const rawData = await File.readOneFile(pendingDelete);
+          const rawData = await File.readOneFile(pendingDelete, instancePath);
           const data = JSON.parse(rawData);
 
           const time = Number(data?.time);
