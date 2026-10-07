@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import logger from '../../config/logger.js';
 import { Internal, InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import AuthService from '../services/Auth.js';
@@ -249,10 +250,19 @@ class Instance {
   }
 
   static async backup(req, res, next) {
+    let pendingInstance = null;
+    let previousStatus = null;
+
     try {
       const { id } = req.params;
 
       const { instance, worker } = await getWorkerContext(id);
+      pendingInstance = instance;
+      previousStatus = instance.lastBackupStatus;
+
+      // Clear the previous result before dispatch so a skipped attempt can be
+      // distinguished from a previous skipped backup while the UI polls.
+      await instance.update({ lastBackupStatus: null });
 
       const route = `${worker.url}/server/${id}/backup`;
       const response = await proxyFetch(route, {
@@ -271,6 +281,14 @@ class Instance {
       const permissions = await AuthService.permissionsForInstance(req.user, instance);
       return res.status(200).json({ success: true, instance: instanceView(instance, permissions) });
     } catch (err) {
+      if (pendingInstance) {
+        try {
+          await Service.restoreBackupStatusIfPending(pendingInstance.id, previousStatus);
+        } catch (restoreError) {
+          // Preserve the original worker/proxy failure for the caller.
+          logger.error({ err: restoreError, instanceId: pendingInstance.id }, 'Failed to restore backup status');
+        }
+      }
       return next(err);
     }
   }

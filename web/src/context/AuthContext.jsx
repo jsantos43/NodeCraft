@@ -4,6 +4,7 @@ import React, {
 import { authApi } from '../api/auth.js';
 import { usersApi } from '../api/users.js';
 import { setAccessToken } from '../api/client.js';
+import { useToast } from './ToastContext.jsx';
 
 const AuthContext = createContext(null);
 const PUBLIC_AUTH_PATHS = new Set(['/login', '/register', '/forgot', '/reset']);
@@ -11,6 +12,7 @@ const PUBLIC_AUTH_PATHS = new Set(['/login', '/register', '/forgot', '/reset']);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
   const sessionRevision = useRef(0);
 
   const fetchUser = useCallback(async (expectedRevision = sessionRevision.current) => {
@@ -50,10 +52,15 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await authApi.logout();
-    sessionRevision.current += 1;
-    setUser(null);
-    setAccessToken(null);
+    try {
+      await authApi.logout();
+    } catch (err) {
+      toast.error(err, { title: 'Could not end the server session' });
+    } finally {
+      sessionRevision.current += 1;
+      setUser(null);
+      setAccessToken(null);
+    }
   };
 
   return (

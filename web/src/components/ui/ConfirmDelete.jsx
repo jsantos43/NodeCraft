@@ -12,15 +12,20 @@ export default function ConfirmDelete({ open, onClose, onConfirm, name, loading,
   }, [open]);
 
   const match = typed === name;
+  const close = () => { if (!loading) onClose(); };
 
   const handleConfirm = async () => {
-    if (!match) return;
-    await onConfirm();
-    onClose();
+    if (!match || loading) return;
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      // The action keeps this dialog open and shows its own error.
+    }
   };
 
   return (
-    <Modal open={open} onClose={onClose} size="sm">
+    <Modal open={open} onClose={close} size="sm">
       <div className="cd-header">
         <div className="cd-icon">
           <TriangleAlert size={20} />
@@ -50,7 +55,7 @@ export default function ConfirmDelete({ open, onClose, onConfirm, name, loading,
       />
 
       <ModalFooter>
-        <Button variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button variant="secondary" disabled={loading} onClick={close}>Cancel</Button>
         <Button variant="danger" disabled={!match} loading={loading} onClick={handleConfirm}>
           Delete
         </Button>

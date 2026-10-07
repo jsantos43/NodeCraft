@@ -89,6 +89,7 @@ export default function UserDetails() {
   useEffect(() => {
     if (user) {
       setForm({
+        userId: user.id,
         name: user.name || '',
         admin: !!user.admin,
         maxInstances: user.maxInstances ?? 0,
@@ -116,6 +117,7 @@ export default function UserDetails() {
   }));
 
   const { execute: save, loading: saving, error: saveError } = useAction(async () => {
+    if (form?.userId !== id) return;
     setSaved(false);
     await usersApi.updateOther(id, {
       name: form.name,
@@ -214,7 +216,7 @@ export default function UserDetails() {
           </Card>
         </div>
 
-        {form && (
+        {form?.userId === id && (
           <Card>
             <CardHeader title="Account & Quotas" subtitle="Instance count on create; memory & CPU on start; disk monitored" />
             <div className="user-settings-top">

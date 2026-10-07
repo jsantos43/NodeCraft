@@ -1,4 +1,4 @@
-import { api, getAccessToken, ApiError } from './client.js';
+import { api, getAccessToken, restoreSession, ApiError } from './client.js';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -26,9 +26,9 @@ export const instancesApi = {
   // Uses XHR (not fetch) so we can report upload progress. Same endpoint/auth
   // as the rest of the client: cookie credentials + optional bearer token.
   // onProgress receives (percent, loaded, total).
-  uploadFile: (id, formData, destiny, onProgress) => {
+  uploadFile: async (id, formData, destiny, onProgress) => {
     const url = `${BASE_URL}/instance/${id}/files/upload${destiny ? `?destiny=${encodeURIComponent(destiny)}` : ''}`;
-    return new Promise((resolve, reject) => {
+    const send = () => new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', url);
       xhr.withCredentials = true;
@@ -53,6 +53,12 @@ export const instancesApi = {
       xhr.onabort = () => reject(new Error('Upload aborted'));
       xhr.send(formData);
     });
+    try {
+      return await send();
+    } catch (err) {
+      if (err.status === 401 && await restoreSession()) return send();
+      throw err;
+    }
   },
   downloadUrl: (id, path) => `${BASE_URL}/instance/${id}/files?path=${encodeURIComponent(path)}&download=true`,
   transferFile: (id, path, destiny, action) => api.post(`/instance/${id}/files/transfer?path=${encodeURIComponent(path)}&destiny=${encodeURIComponent(destiny)}&actions=${encodeURIComponent(action)}`),

@@ -40,7 +40,7 @@ export default function WorkerDetails() {
   const worker = data?.worker;
   const instances = instData?.instances || [];
 
-  const [form, setForm] = useState({ name: '', url: '', secret: '' });
+  const [form, setForm] = useState({ workerId: null, name: '', url: '', secret: '' });
   const [saved, setSaved] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -50,12 +50,13 @@ export default function WorkerDetails() {
   }, { errorToast: { title: "Couldn't delete the worker" } });
 
   useEffect(() => {
-    if (worker) setForm({ name: worker.name || '', url: worker.url || '', secret: worker.secret || '' });
-  }, [worker?.id]);
+    if (worker) setForm({ workerId: worker.id, name: worker.name || '', url: worker.url || '', secret: '' });
+  }, [worker]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const { execute: save, loading: saving, error: saveError } = useAction(async () => {
+    if (form.workerId !== id) return;
     setSaved(false);
     await workersApi.update(id, { name: form.name, url: form.url, secret: form.secret });
     setSaved(true);
@@ -141,7 +142,7 @@ export default function WorkerDetails() {
 
         <WorkerMetrics workerId={id} />
 
-        <Card>
+        {form.workerId === id && <Card>
           <CardHeader title="Settings" subtitle="Changes take effect on the next worker connection" />
           <div className="worker-settings-grid">
             <Input
@@ -167,7 +168,7 @@ export default function WorkerDetails() {
             {saved && <span className="worker-url-saved">Saved</span>}
             <Button icon={Save} loading={saving} onClick={save}>Save Changes</Button>
           </div>
-        </Card>
+        </Card>}
 
         <Card>
           <CardHeader
