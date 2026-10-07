@@ -624,6 +624,8 @@ function FilesTab({ instanceId }) {
   const [actionDest, setActionDest] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [upload, setUpload] = useState(null); // { name, percent }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const uploadRef = useRef(null);
 
   const { data, loading, error: listError, refetch } = useApi(
@@ -665,14 +667,23 @@ function FilesTab({ instanceId }) {
     }
   };
 
-  const deleteEntry = async (e, entry) => {
+  const askDeleteEntry = (e, entry) => {
     e.stopPropagation();
     if (!canWrite) return;
+    setDeleteTarget({ name: entry.name, path: join(entry.name), type: entry.type });
+  };
+
+  const deleteEntry = async () => {
+    if (!deleteTarget || !canWrite) return;
+    setDeleting(true);
     try {
-      await instancesApi.deleteFile(instanceId, join(entry.name));
+      await instancesApi.deleteFile(instanceId, deleteTarget.path);
       refetch();
     } catch (err) {
-      toast.error(err, { title: `Couldn't delete ${entry.name}` });
+      toast.error(err, { title: `Couldn't delete ${deleteTarget.name}` });
+      throw err;
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -889,7 +900,7 @@ function FilesTab({ instanceId }) {
                   <Download size={13} />
                 </button>
                 {canWrite && (
-                  <button className="files-icon-btn files-icon-danger" title="Delete" onClick={e => deleteEntry(e, entry)}>
+                  <button className="files-icon-btn files-icon-danger" title="Delete" onClick={e => askDeleteEntry(e, entry)}>
                     <Trash2 size={13} />
                   </button>
                 )}
@@ -967,6 +978,16 @@ function FilesTab({ instanceId }) {
           </div>
         </div>
       )}
+      <ConfirmDelete
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={deleteEntry}
+        name={deleteTarget?.name || ''}
+        description={deleteTarget?.type === 'directory'
+          ? 'This folder and everything inside it will be permanently deleted.'
+          : 'This file will be permanently deleted.'}
+        loading={deleting}
+      />
     </div>
   );
 }
@@ -979,49 +1000,63 @@ function BackupsTab({ instance, canBackup, onRefetch }) {
   const toast = useToast();
   const [backingUp, setBackingUp] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
-  const baselineRef = useRef(null);   // lastBackupAt captured when we triggered
   const pollRef = useRef(null);
-  const deadlineRef = useRef(0);
+  const checkingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const stopPolling = () => { clearInterval(pollRef.current); pollRef.current = null; };
-  useEffect(() => () => stopPolling(), []);
-
-  // The worker stamps lastBackupAt when a backup finishes (success or failed).
-  // Once it moves past our baseline, the backup is done — report the outcome.
-  useEffect(() => {
-    if (!backingUp) return;
-    if (instance.lastBackupAt !== baselineRef.current) {
-      setBackingUp(false);
-      stopPolling();
-      if (instance.lastBackupStatus === 'failed') {
-        toast.toast({ tone: 'danger', icon: 'server', title: 'Backup failed', description: 'The worker could not finish the backup. Check the worker and try again.' });
-      } else {
-        toast.success('Backup complete', 'This server was backed up successfully.');
-      }
-    }
-  }, [instance.lastBackupAt, backingUp]);
+  useEffect(() => () => { mountedRef.current = false; stopPolling(); }, []);
 
   const startBackup = async () => {
     setTimedOut(false);
-    baselineRef.current = instance.lastBackupAt ?? null;
+    setBackingUp(true);
+    const baseline = instance.lastBackupAt ?? null;
     try {
       await instancesApi.backup(instance.id);
     } catch (err) {
       toast.error(err, { title: "Couldn't start the backup" });
+      setBackingUp(false);
       return;
     }
-    setBackingUp(true);
-    deadlineRef.current = Date.now() + BACKUP_TIMEOUT;
-    onRefetch?.();
-    pollRef.current = setInterval(() => {
-      if (Date.now() > deadlineRef.current) {
-        stopPolling();
-        setBackingUp(false);
-        setTimedOut(true);
-        return;
+    if (!mountedRef.current) return;
+    const deadline = Date.now() + BACKUP_TIMEOUT;
+    let finished = false;
+    const checkResult = async () => {
+      if (checkingRef.current || finished || !mountedRef.current) return;
+      checkingRef.current = true;
+      try {
+        if (Date.now() > deadline) {
+          finished = true;
+          stopPolling();
+          setBackingUp(false);
+          setTimedOut(true);
+          return;
+        }
+        const latest = (await onRefetch?.())?.instance;
+        if (!latest || !mountedRef.current) return;
+        if (latest.lastBackupStatus === 'skipped') {
+          finished = true;
+          stopPolling();
+          setBackingUp(false);
+          toast.toast({ tone: 'notice', icon: 'invalid', title: 'Backup skipped', description: 'No backup was created. Check the worker storage configuration.' });
+        } else if (latest.lastBackupAt !== baseline && ['success', 'failed'].includes(latest.lastBackupStatus)) {
+          finished = true;
+          stopPolling();
+          setBackingUp(false);
+          if (latest.lastBackupStatus === 'failed') {
+            toast.toast({ tone: 'danger', icon: 'server', title: 'Backup failed', description: 'The worker could not finish the backup. Check the worker and try again.' });
+          } else {
+            toast.success('Backup complete', 'This server was backed up successfully.');
+          }
+        }
+      } finally {
+        checkingRef.current = false;
       }
-      onRefetch?.();
-    }, 3000);
+    };
+    await checkResult();
+    if (!finished && mountedRef.current) {
+      pollRef.current = setInterval(checkResult, 3000);
+    }
   };
 
   const formatDate = (iso) => iso
@@ -1081,6 +1116,7 @@ function BackupsTab({ instance, canBackup, onRefetch }) {
 function LinkDialog({ instanceId, link, onSaved, onClose }) {
   const isEdit = !!link;
   const [userId, setUserId] = useState('');
+  const currentUserId = useRef('');
   const [lookedUpUser, setLookedUpUser] = useState(link?.user || null);
   const [permissions, setPermissions] = useState(() => (link?.permissions || []).filter(p => p !== 'instance:read'));
   const [lookingUp, setLookingUp] = useState(false);
@@ -1090,7 +1126,7 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
   const [saveError, setSaveError] = useState(null);
 
   // A new link needs a resolved user; editing keeps the existing one fixed.
-  const canSave = isEdit || !!lookedUpUser;
+  const canSave = isEdit || (!!lookedUpUser && lookedUpUser.id === userId.trim());
 
   const save = async () => {
     if (!canSave) return;
@@ -1100,7 +1136,7 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
       if (isEdit) {
         await instancesApi.updateLink(instanceId, link.id, { permissions });
       } else {
-        await instancesApi.createLink(instanceId, { userId: userId.trim(), permissions });
+        await instancesApi.createLink(instanceId, { userId: lookedUpUser.id, permissions });
       }
       onSaved();
     } catch (err) {
@@ -1111,15 +1147,20 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
   };
 
   const lookupUser = async () => {
-    if (!userId.trim()) return;
+    const requestedId = userId.trim();
+    if (!requestedId) return;
     setLookingUp(true);
     setLookupError(null);
     try {
-      const res = await usersApi.get(userId.trim());
-      setLookedUpUser(res.user);
+      const res = await usersApi.get(requestedId);
+      if (currentUserId.current.trim() === requestedId && res.user?.id === requestedId) {
+        setLookedUpUser(res.user);
+      }
     } catch {
-      setLookupError('No user found with that ID');
-      setLookedUpUser(null);
+      if (currentUserId.current.trim() === requestedId) {
+        setLookupError('No user found with that ID');
+        setLookedUpUser(null);
+      }
     } finally {
       setLookingUp(false);
     }
@@ -1179,7 +1220,7 @@ function LinkDialog({ instanceId, link, onSaved, onClose }) {
               <div className="link-form-row">
                 <Input
                   value={userId}
-                  onChange={e => { setUserId(e.target.value); setLookedUpUser(null); setLookupError(null); }}
+                  onChange={e => { currentUserId.current = e.target.value; setUserId(e.target.value); setLookedUpUser(null); setLookupError(null); }}
                   onKeyDown={e => e.key === 'Enter' && lookupUser()}
                   placeholder="Paste the user's ID..."
                 />
@@ -1695,7 +1736,7 @@ function VariablesTab({ instance, canEdit, onSaved }) {
       maxPlayers: instance.maxPlayers ?? 20,
     });
     setGame({ ...(instance[instance.type] || {}) });
-  }, [instance.id]);
+  }, [instance]);
 
   const setI = (k, v) => setInst(f => ({ ...f, [k]: v }));
   const setG = (k, v) => setGame(f => ({ ...f, [k]: v }));
@@ -1704,13 +1745,20 @@ function VariablesTab({ instance, canEdit, onSaved }) {
     setSaved(false);
     setSaveError(null);
     try {
+      const editableKeys = [
+        ...(GAME_FIELDS[instance.type]?.fields || []).map((field) => field.key),
+        ...(GAME_FIELDS[instance.type]?.toggles || []).map(([key]) => key),
+      ];
+      const editableGame = Object.fromEntries(
+        editableKeys.filter((key) => game[key] !== undefined).map((key) => [key, game[key]]),
+      );
       await instancesApi.update(instance.id, {
         name:       inst.name,
         memory:     Number(inst.memory),
         cpu:        Number(inst.cpu),
         maxPlayers: Number(inst.maxPlayers),
         type:       instance.type,
-        game,
+        ...(Object.keys(editableGame).length > 0 ? { game: editableGame } : {}),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);

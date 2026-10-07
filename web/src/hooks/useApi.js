@@ -5,30 +5,46 @@ import { useToast } from '../context/ToastContext.jsx';
 // Data-fetching hook. `error` holds the full thrown error (an ApiError carrying
 // `code`/`details`), so callers can render it with <Alert error={error} />.
 export function useApi(fn, deps = []) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const key = JSON.stringify(deps);
+  const currentKey = useRef(key);
+  const requestId = useRef(0);
+  const [state, setState] = useState({ key, data: null, loading: true, error: null });
 
   const execute = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    const id = ++requestId.current;
+    setState((previous) => ({
+      key,
+      data: previous.key === key ? previous.data : null,
+      loading: true,
+      error: null,
+    }));
     try {
       const result = await fn();
-      setData(result);
+      if (currentKey.current === key && requestId.current === id) {
+        setState({ key, data: result, loading: false, error: null });
+      }
       return result;
     } catch (err) {
-      setError(err);
+      if (currentKey.current === key && requestId.current === id) {
+        setState((previous) => ({
+          key,
+          data: previous.key === key ? previous.data : null,
+          loading: false,
+          error: err,
+        }));
+      }
       return null;
-    } finally {
-      setLoading(false);
     }
   }, deps);
 
   useEffect(() => {
+    currentKey.current = key;
     execute();
+    return () => { requestId.current += 1; };
   }, [execute]);
 
-  return { data, loading, error, refetch: execute };
+  const visible = state.key === key ? state : { data: null, loading: true, error: null };
+  return { data: visible.data, loading: visible.loading, error: visible.error, refetch: execute };
 }
 
 /**

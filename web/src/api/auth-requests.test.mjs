@@ -4,6 +4,7 @@ import { test } from 'node:test';
 
 const clientSource = await readFile(new URL('./client.js', import.meta.url), 'utf8');
 const authSource = await readFile(new URL('./auth.js', import.meta.url), 'utf8');
+const instancesSource = await readFile(new URL('./instances.js', import.meta.url), 'utf8');
 
 async function loadAuthApi() {
   const clientUrl = `data:text/javascript,${encodeURIComponent(
@@ -13,6 +14,18 @@ async function loadAuthApi() {
     authSource.replace("'./client.js'", JSON.stringify(clientUrl)),
   )}`;
   return import(authUrl);
+}
+
+async function loadInstancesApi() {
+  const clientUrl = `data:text/javascript,${encodeURIComponent(
+    clientSource.replace('import.meta.env.VITE_API_URL', JSON.stringify('http://localhost:3000')),
+  )}`;
+  const instancesUrl = `data:text/javascript,${encodeURIComponent(
+    instancesSource
+      .replace('import.meta.env.VITE_API_URL', JSON.stringify('http://localhost:3000'))
+      .replace("'./client.js'", JSON.stringify(clientUrl)),
+  )}`;
+  return import(instancesUrl);
 }
 
 test('a rejected login sends no refresh request', async () => {
@@ -108,5 +121,44 @@ test('session bootstrap and a protected request share one refresh', async () => 
     assert.equal(requests.filter((url) => url.endsWith('/auth/refresh')).length, 1);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test('upload renews an expired session and retries once', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalXhr = globalThis.XMLHttpRequest;
+  const uploads = [];
+  const refreshes = [];
+
+  globalThis.fetch = async (url) => {
+    refreshes.push(url);
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+  };
+  globalThis.XMLHttpRequest = class {
+    upload = {};
+    open(method, url) { this.method = method; this.url = url; }
+    setRequestHeader() {}
+    send(body) {
+      uploads.push({ method: this.method, url: this.url, body });
+      this.status = uploads.length === 1 ? 401 : 201;
+      this.responseText = JSON.stringify(uploads.length === 1
+        ? { error: 'UNATHORIZED' }
+        : { success: true });
+      queueMicrotask(() => this.onload());
+    }
+  };
+
+  try {
+    const { instancesApi } = await loadInstancesApi();
+    const form = new FormData();
+    form.append('file', new Blob(['data']), 'sample.txt');
+    assert.equal((await instancesApi.uploadFile('server-id', form, 'sample.txt')).success, true);
+    assert.equal(uploads.length, 2);
+    assert.equal(uploads[0].body, form);
+    assert.equal(uploads[1].body, form);
+    assert.deepEqual(refreshes, ['http://localhost:3000/auth/refresh']);
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.XMLHttpRequest = originalXhr;
   }
 });

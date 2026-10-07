@@ -215,6 +215,13 @@ class Instance {
     });
   }
 
+  static async restoreBackupStatusIfPending(id, previousStatus) {
+    await Model.update(
+      { lastBackupStatus: previousStatus },
+      { where: { id, lastBackupStatus: null } },
+    );
+  }
+
   static async selectPort(workerId = null, transaction = undefined) {
     const instances = await Model.findAll({
       where: { workerId },

@@ -53,9 +53,8 @@ export default function CreateServer() {
   const { data: workersData } = useApi(() => workersApi.available());
   const workers = workersData?.workers || [];
 
-  // Quota usage across the instances this user owns. Only the instance count is
-  // enforced at create time; memory/cpu limits are enforced when the instance is
-  // started (Quota.verifyCanStart), so they are shown here only as guidance.
+  // A new instance must fit its own memory/CPU caps at creation; aggregate
+  // running-instance usage is checked when the server starts.
   const { data: instData } = useApi(() => instancesApi.list());
   const owned = (instData?.instances || []).filter(i => i.ownerId === user?.id);
   const usage = owned.reduce((a) => ({ count: a.count + 1 }), { count: 0 });
@@ -81,7 +80,10 @@ export default function CreateServer() {
   if (form.type && !allowedGames.includes(form.type)) {
     quotaIssues.push('This game is not allowed for your account.');
   }
-  const canCreate = quotaIssues.length === 0 && !!form.workerId && form.name.length >= 3;
+  if (memoryUnstartable) quotaIssues.push(`Memory exceeds the ${limits.memory} MB account limit.`);
+  if (cpuUnstartable) quotaIssues.push(`CPU exceeds the ${limits.cpu} core account limit.`);
+  const canCreate = quotaIssues.length === 0 && Number(form.memory) >= 512 && Number(form.cpu) >= 1
+    && !!form.workerId && form.name.length >= 3;
 
   const { execute: createServer, loading } = useAction(async () => {
     const payload = {
@@ -106,6 +108,8 @@ export default function CreateServer() {
     if (step === 1) {
       if (!form.name || form.name.length < 3) e.name = 'Min 3 characters';
       if (form.memory < 512) e.memory = 'Min 512 MB';
+      if (memoryUnstartable) e.memory = `Account limit: ${limits.memory} MB`;
+      if (cpuUnstartable) e.cpu = `Account limit: ${limits.cpu} core(s)`;
       if (remaining.instances <= 0) e.quota = `Instance limit reached (${usage.count}/${limits.instances})`;
     }
     if (step === 2 && !form.workerId) e.workerId = 'Select a worker';
@@ -201,8 +205,8 @@ export default function CreateServer() {
                 </div>
               </div>
               <p className="create-section-sub">
-                Memory and CPU limits are enforced when you start the server — across all
-                your running instances at once — not when creating it.
+                A server must fit your account's memory and CPU limits when created.
+                Combined use across running servers is checked when starting it.
               </p>
               {(memoryUnstartable || cpuUnstartable) && (
                 <span className="ui-input-error">
