@@ -10,12 +10,6 @@ Implementado em 06/10/2026: o middleware usa `verifyNoSymlinks()` para rejeitar 
 
 Validação: sete cenários automatizados com arquivos temporários reais, sem Docker ou storage, cobrindo links, caminhos inválidos, proteção da raiz e operações comuns.
 
-## W06 — Mensagem inválida no console pode derrubar o worker
-
-**Local:** `worker/src/websocket/events.js:5,17`.
-
-Os handlers desestruturam o payload sem validar nem capturar exceções. Um cliente autenticado no console pode emitir `join-console` com `null` ou `send-command` sem argumento, provocando `TypeError` antes da checagem de permissões. A exceção não tratada ameaça todo o processo do worker. Exceção confirmada chamando os handlers reais com sockets simulados.
-
 ## W07 — Revogar acesso não encerra o controle pelo console
 
 **Local:** `worker/src/websocket/auth.js:10`; `worker/src/websocket/events.js`.

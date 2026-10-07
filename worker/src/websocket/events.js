@@ -2,7 +2,13 @@ import { running } from '../runtimes/index.js';
 
 const registerSocketEvents = (io) => {
   io.on('connection', (socket) => {
-    socket.on('join-console', ({ instanceId }) => {
+    socket.on('join-console', (payload) => {
+      if (!payload || typeof payload !== 'object' || typeof payload.instanceId !== 'string') {
+        socket.emit('instance-output', 'Invalid console request.');
+        return;
+      }
+
+      const { instanceId } = payload;
       if (socket.instanceId !== instanceId) {
         socket.emit('instance-output', 'Not authorized for this instance.');
         return;
@@ -14,7 +20,14 @@ const registerSocketEvents = (io) => {
       socket.join(`instance:${instanceId}`);
     });
 
-    socket.on('send-command', ({ instanceId, command }) => {
+    socket.on('send-command', (payload) => {
+      if (!payload || typeof payload !== 'object' || typeof payload.instanceId !== 'string'
+        || typeof payload.command !== 'string') {
+        socket.emit('instance-output', 'Invalid console request.');
+        return;
+      }
+
+      const { instanceId, command } = payload;
       if (socket.instanceId !== instanceId) {
         socket.emit('instance-output', 'Not authorized for this instance.');
         return;
