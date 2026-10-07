@@ -1,4 +1,4 @@
-import { api, getAccessToken } from './client.js';
+import { api, getAccessToken, ApiError } from './client.js';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -47,7 +47,7 @@ export const instancesApi = {
         let data = {};
         try { data = JSON.parse(xhr.responseText); } catch { /* non-JSON response */ }
         if (xhr.status >= 200 && xhr.status < 300) resolve(data);
-        else reject(new Error(data?.message || data?.error || 'Upload failed'));
+        else reject(new ApiError(xhr.status, data?.message || 'Upload failed', data?.error, data?.details || []));
       };
       xhr.onerror = () => reject(new Error('Upload failed'));
       xhr.onabort = () => reject(new Error('Upload aborted'));

@@ -119,7 +119,7 @@ Instance.init({
     allowNull: false,
     validate: {
       isIn: {
-        args: [['running', 'stopped', 'failed']],
+        args: [['starting', 'running', 'stopped', 'failed']],
         msg: 'status field must have a valid value!',
       },
     },

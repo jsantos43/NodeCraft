@@ -19,7 +19,7 @@
   },
   "post": {
     "summary": "create Instance",
-    "description": "Creates a new instance of the given game `type`. Placement is limited to the user's `allowedWorkers` and counts against their quotas. Requires authentication.",
+    "description": "Creates a new instance of the given game `type`. Placement is limited to the user's `allowedWorkers` and counts against their quotas. Requires authentication. The instance count check and creation share a transaction so simultaneous requests cannot exceed maxInstances.",
     "tags": [
       "Instance"
     ],

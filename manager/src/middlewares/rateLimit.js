@@ -13,8 +13,15 @@ const limiter = (max, { skipSuccessfulRequests = false } = {}) => rateLimit({
 
 const loginLimiter = limiter(config.rateLimit.login, { skipSuccessfulRequests: true });
 
+const refreshLimiter = limiter(config.rateLimit.login, { skipSuccessfulRequests: true });
+
 const createAccountLimiter = limiter(config.rateLimit.createAccount);
 
 const emailLimiter = limiter(config.rateLimit.email);
 
-export { loginLimiter, createAccountLimiter, emailLimiter };
+export {
+  loginLimiter,
+  refreshLimiter,
+  createAccountLimiter,
+  emailLimiter,
+};

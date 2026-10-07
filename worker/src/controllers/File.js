@@ -1,49 +1,59 @@
 import Path from 'path';
+import { realpath } from 'node:fs/promises';
+import { pipeline } from 'node:stream/promises';
+import { openInsideInstance } from '../utils/verifyPaths.js';
 import config from '../../config/config.js';
 import Service from '../services/File.js';
 import { InvalidRequest } from '../errors/index.js';
 
 class File {
   static async read(req, res, next) {
+    let handle;
+
     try {
-      const query = req?.query;
+      const path = req.query?.path || '';
+      const toDownload = req.query?.download === 'true';
 
-      const path = query?.path || '';
-      const toDownload = query?.download === 'true';
-
-      const instancePath = Path.join(config.paths.instances, req.params.id);
+      const instancePath = await realpath(Path.join(config.paths.instances, req.params.id));
       const fullPath = Path.join(instancePath, path);
 
-      const pathType = await Service.getType(fullPath);
+      const opened = await openInsideInstance(instancePath, fullPath);
+      handle = opened.handle;
+      const pathType = opened.stats.isFile() ? 'file' : 'directory';
 
-      let content = null;
+      let content;
       if (pathType === 'file') {
-        if (toDownload) return res.download(fullPath);
-
-        content = await Service.readOneFile(fullPath);
-      } else if (pathType === 'directory') {
         if (toDownload) {
-          const tempPath = await Service.createTemp();
-          const downloadName = `download-${Date.now()}.zip`;
-          const downloadPath = Path.join(tempPath, downloadName);
-          await Service.makeZip(downloadPath, [fullPath]);
-
-          return res.download(downloadPath);
+          res.attachment(Path.basename(fullPath));
+          await pipeline(handle.createReadStream({ autoClose: false }), res);
+          return undefined;
         }
 
-        content = await Service.readOneDirectory(fullPath, true);
+        content = await handle.readFile('utf8');
+      } else if (toDownload) {
+        const tempPath = await Service.createTemp();
+        const downloadName = `download-${Date.now()}.zip`;
+        const downloadPath = Path.join(tempPath, downloadName);
+
+        await Service.makeZip(downloadPath, [fullPath], instancePath);
+
+        return res.download(downloadPath);
       } else {
-        throw new InvalidRequest('This path is not directory or file');
+        content = await Service.readOneDirectory(fullPath, true, instancePath);
       }
 
       return res.status(200).json({
-        success: true,
-        path,
-        type: pathType,
-        content,
+        success: true, path, type: pathType, content,
       });
     } catch (err) {
+      if (res.headersSent) {
+        res.destroy(err);
+        return undefined;
+      }
+
       return next(err);
+    } finally {
+      if (handle) await handle.close();
     }
   }
 
@@ -153,12 +163,8 @@ class File {
       const fullPath = Path.join(instancePath, path);
       const fullDestiny = Path.join(instancePath, destiny);
 
-      // Verify if path is a zip
-      if (!(await Service.verifyZip(fullPath))) {
-        throw new InvalidRequest(`${path} path is not a zip file`);
-      }
-
-      await Service.unzip(fullPath, fullDestiny);
+      // The ZIP signature and contents are read through the same verified handle.
+      await Service.unzip(fullPath, fullDestiny, instancePath);
 
       return res.status(200).json({
         success: true,

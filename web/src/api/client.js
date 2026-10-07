@@ -45,13 +45,12 @@ async function request(method, path, body, options = {}) {
     throw new ApiError(0, 'Network request failed', 'NETWORK_ERROR');
   }
 
-  if (res.status === 401 && !options._retry) {
+  if (res.status === 401 && !options._retry && !options.skipAuthRefresh) {
     // A late 401 may belong to the cookies used before an already completed refresh.
     const refreshed = refreshGeneration !== requestGeneration || await tryRefresh();
     if (refreshed) {
       return request(method, path, body, { ...options, _retry: true });
     }
-    throw new ApiError(401, "You aren't authorized!", 'UNATHORIZED');
   }
 
   const data = await res.json().catch(() => ({}));
@@ -78,6 +77,10 @@ function tryRefresh() {
     });
   }
   return refreshPromise;
+}
+
+export function restoreSession() {
+  return tryRefresh();
 }
 
 async function refreshSession() {

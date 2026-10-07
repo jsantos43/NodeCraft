@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "upload File",
-    "description": "Uploads a file (multipart/form-data) into the instance game folder at `destiny`. Streamed through to the worker. Requires `instance:files:write`.",
+    "description": "Uploads a file (multipart/form-data) into the instance game folder at `destiny`. Streamed through to the worker. Requires `instance:files:write`. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. File uploads/downloads retain the streaming flow without an application-level timeout or inactivity timer. Non-download JSON reads use WORKER_TIMEOUT (default 300000 ms), including response body consumption. Symbolic links in the requested source or destination path are rejected with 403, including intermediate directories.",
     "tags": [
       "Files"
     ],

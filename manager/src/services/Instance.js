@@ -5,7 +5,7 @@ import {
   instanceInclude,
   Instance as Model,
 } from '../models/index.js';
-import { NotFound, Internal } from '../errors/index.js';
+import { NotFound, Internal, InvalidRequest } from '../errors/index.js';
 import Link from './Link.js';
 import User from './User.js';
 import Worker from './Worker.js';
@@ -20,10 +20,12 @@ class Instance {
     const TargetModel = gameModels[gameType];
     if (!TargetModel) throw new Internal('Game model not found!');
 
-    const port = await Instance.selectPort(instanceData.workerId);
-
     // Use a Transaction to ensure: either everything is recorded or nothing is.
-    return db.transaction(async (t) => {
+    return Limit.withOwner(userId, async (t) => {
+      await Limit.verifyCanCreate(userId, instanceData, t);
+
+      const port = await Instance.selectPort(instanceData.workerId, t);
+
       // Create instance and game data in an unique command
       const instance = await Model.create({
         ownerId: userId,
@@ -85,13 +87,40 @@ class Instance {
     return instances;
   }
 
+  static async markStarting(id, restart = false) {
+    const current = await Instance.readOne(id);
+
+    await Limit.withOwner(current.ownerId, async (transaction) => {
+      const instance = await Model.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
+
+      if (!instance) throw new NotFound('Instance not found!');
+
+      if (instance.status === 'starting' || (!restart && instance.status === 'running')) {
+        throw new InvalidRequest('Instance is already running or starting!');
+      }
+
+      await Limit.verifyCanStart(instance, transaction);
+
+      await instance.update({ status: 'starting' }, { transaction });
+    });
+
+    return Instance.readOne(id);
+  }
+
   static async update(id, instanceData, gameData = null) {
     const instance = await Instance.readOne(id);
-    await Limit.verifyCanUpdate(instance, instanceData);
+
+    const { type, ...changes } = instanceData;
+
+    if (type !== undefined && type !== instance.type) {
+      throw new InvalidRequest('The instance type cannot be changed!');
+    }
+
+    await Limit.verifyCanUpdate(instance, changes);
 
     await db.transaction(async (t) => {
       // Update instance basic data
-      await instance.update(instanceData, { transaction: t });
+      await instance.update(changes, { transaction: t });
 
       // Update game data
       if (gameData && instance[instance.type]) {
@@ -186,10 +215,11 @@ class Instance {
     });
   }
 
-  static async selectPort(workerId = null) {
+  static async selectPort(workerId = null, transaction = undefined) {
     const instances = await Model.findAll({
       where: { workerId },
       attributes: ['port'],
+      transaction,
     });
     const { minPort, maxPort } = config.instance;
 

@@ -1,21 +1,24 @@
-import { api, setAccessToken, clearTokens } from './client.js';
+import {
+  api, setAccessToken, clearTokens, restoreSession, ApiError,
+} from './client.js';
 
 export const authApi = {
   async login(email, password) {
-    const data = await api.post('/auth/login', { email, password });
+    const data = await api.post('/auth/login', { email, password }, { skipAuthRefresh: true });
     if (data.accessToken) setAccessToken(data.accessToken);
     return data;
   },
 
   async refresh() {
-    const data = await api.post('/auth/refresh');
-    if (data.accessToken) setAccessToken(data.accessToken);
-    return data;
+    if (!(await restoreSession())) {
+      throw new ApiError(401, 'Session could not be renewed', 'UNATHORIZED');
+    }
+    return { success: true };
   },
 
   async logout() {
     try {
-      await api.post('/auth/logout');
+      await api.post('/auth/logout', undefined, { skipAuthRefresh: true });
     } finally {
       clearTokens();
     }
@@ -34,6 +37,6 @@ export const authApi = {
   },
 
   async resetPassword(token, password) {
-    return api.post('/auth/reset', { token, password });
+    return api.post('/auth/reset', { token, password }, { skipAuthRefresh: true });
   },
 };

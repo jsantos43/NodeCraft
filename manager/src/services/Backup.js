@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { Worker as WorkerModel, Instance as InstanceModel, instanceInclude } from '../models/index.js';
 import logger from '../../config/logger.js';
 import config from '../../config/config.js';
-import proxyFetch from '../utils/proxyFetch.js';
+import proxyFetch, { discardWorkerResponse } from '../utils/proxyFetch.js';
 
 const ONE_MINUTE = 60 * 1000;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -52,8 +52,9 @@ class BackupScheduler {
         Authorization: `Bearer ${worker.secret}`,
       },
       body: JSON.stringify({ instance }),
-      signal: AbortSignal.timeout(config.worker.timeout),
     });
+
+    await discardWorkerResponse(response);
 
     if (!response.ok) {
       throw new Error(`Worker responded with ${response.status}`);
@@ -88,7 +89,8 @@ class BackupScheduler {
     // backup is in flight and every later tick of the 3am hour would trigger it
     // again. Being in the database also survives a manager restart.
     const pending = instances.filter(
-      (instance) => !instance.backupRequestedAt || localDate(instance.backupRequestedAt) !== today,
+      (instance) => instance.status !== 'starting'
+        && (!instance.backupRequestedAt || localDate(instance.backupRequestedAt) !== today),
     );
 
     for (const instance of pending) {

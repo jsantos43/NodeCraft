@@ -39,7 +39,7 @@ router
   .delete( // [Query: path]
     '/:id/files/delete',
     verifyManager,
-    verifyPath(),
+    verifyPath(false, true),
     Controller.delete,
   )
 

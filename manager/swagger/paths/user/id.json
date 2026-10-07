@@ -1,7 +1,7 @@
 {
   "get": {
-    "summary": "read another User (public fields)",
-    "description": "Resolves a user id to a display name. Requires authentication, and returns only `id` and `name` regardless of who asks — it cannot be used to harvest emails or quotas, or to discover which accounts are admins. Intended for resolving the `userId` of an instance link.",
+    "summary": "read another User",
+    "description": "Requires authentication. Non-admin callers receive only `id` and `name` for resolving instance links. Admin callers receive the safe profile, including quotas (`maxInstances`, `maxMemory`, `maxCpu`, `maxDisk`) and access limits.",
     "tags": [
       "User"
     ],
@@ -55,7 +55,7 @@
   },
   "delete": {
     "summary": "delete another User",
-    "description": "Deletes another user by id. Admin only.",
+    "description": "Deletes another user by id. Admin only. Rejects with 400 if any instance owned by the user has persisted status running or starting; stop those instances before retrying. Error details identify the blocking instances. Instances shared with the user do not block deletion and are preserved. The account, owned instances and dependent records are deleted in one database transaction. No automatic stop or backup is requested. Orphaned containers and local files are handled by the worker maintenance; files become eligible for deletion five days after being marked lost. This check is not coordinated with concurrent start/restart operations.",
     "tags": [
       "User"
     ],
@@ -74,6 +74,9 @@
       },
       "500": {
         "$ref": "../../components/responses/error.json#/Internal"
+      },
+      "400": {
+        "$ref": "../../components/responses/error.json#/InvalidRequest"
       }
     }
   },

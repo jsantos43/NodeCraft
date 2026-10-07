@@ -9,17 +9,13 @@ class Hytale extends Instance {
     super(instance, readFunction);
 
     this.paths = {
-      instance: this.instancePath,
-      settings: Path.join(this.instancePath, 'config.json'),
+      settings: Path.join(this.path, 'config.json'),
     };
-
-    this.setup();
   }
 
   async syncSettings() {
     try {
-      const instance = this.instance.get({ plain: true });
-      const gameData = instance?.hytale;
+      const gameData = this.instance?.hytale;
       if (!gameData) throw new Error('instance hytale data not found!');
 
       // Sync database with Settings.txt
@@ -27,7 +23,7 @@ class Hytale extends Instance {
         servername: gameData.servername,
         motd: gameData.motd,
         password: gameData.password,
-        maxPlayers: instance.maxPlayers,
+        maxPlayers: this.instance?.maxPlayers,
         maxView: gameData.maxView,
         worldname: gameData.worldname,
         gamemode: gameData.gamemode,
@@ -50,6 +46,7 @@ class Hytale extends Instance {
       this.listenStreamEvents();
     } catch (err) {
       logger.error({ err }, 'Error to setup hytale instance');
+      throw err;
     }
   }
 }

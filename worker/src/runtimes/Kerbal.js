@@ -9,17 +9,13 @@ class Kerbal extends Instance {
     super(instance, readFunction);
 
     this.paths = {
-      instance: this.instancePath,
-      settings: Path.join(this.instancePath, 'Config', 'Settings.txt'),
+      settings: Path.join(this.path, 'Config', 'Settings.txt'),
     };
-
-    this.setup();
   }
 
   async syncSettings() {
     try {
-      const instance = this.instance.get({ plain: true });
-      const gameData = instance?.kerbal;
+      const gameData = this.instance?.kerbal;
       if (!gameData) throw new Error('instance kerbal data not found!');
 
       // Sync database with Settings.txt
@@ -30,7 +26,7 @@ class Kerbal extends Instance {
         allowlist: gameData.allowlist ? 'True' : 'False',
         cheats: gameData.cheats ? 'True' : 'False',
         servername: gameData.servername,
-        maxPlayers: instance.maxPlayers,
+        maxPlayers: this.instance.maxPlayers,
       });
 
       await FileService.createOneDirectory(Path.dirname(this.paths.settings));
@@ -51,6 +47,7 @@ class Kerbal extends Instance {
       this.listenStreamEvents();
     } catch (err) {
       logger.error({ err }, 'Error to setup kerbal instance');
+      throw err;
     }
   }
 }

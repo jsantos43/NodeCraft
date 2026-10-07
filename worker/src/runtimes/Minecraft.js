@@ -37,8 +37,6 @@ class Minecraft extends Instance {
     };
 
     this.rosters = [];
-
-    this.setup();
   }
 
   async wipeAllowlist() {
@@ -296,6 +294,7 @@ class Minecraft extends Instance {
       });
     } catch (err) {
       logger.error({ err }, 'Error to setup minecraft instance');
+      throw err;
     }
   }
 }

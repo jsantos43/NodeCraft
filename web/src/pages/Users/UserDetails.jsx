@@ -69,10 +69,9 @@ export default function UserDetails() {
   const workers = workerData?.workers || [];
   const owned = (instData?.instances || []).filter(i => i.ownerId === id);
 
-  // Memory/CPU limits are enforced across running instances only (that is when
-  // the resources are actually occupied); disk counts every owned instance.
+  // Memory/CPU limits are enforced across running and starting instances; disk counts every owned instance.
   const usage = owned.reduce((a, i) => {
-    const running = i.status === 'running';
+    const running = ['running', 'starting'].includes(i.status);
     return {
       count: a.count + 1,
       memory: a.memory + (running ? (i.memory || 0) : 0),
@@ -100,7 +99,7 @@ export default function UserDetails() {
         allowedWorkers: Array.isArray(user.allowedWorkers) ? user.allowedWorkers : [],
       });
     }
-  }, [user?.id]);
+  }, [user]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const toggleGame = (gid) => setForm(f => ({
@@ -324,6 +323,7 @@ export default function UserDetails() {
         onClose={() => setConfirmDelete(false)}
         onConfirm={deleteUser}
         name={user.email}
+        description="Stop all servers owned by this user first. Deleting this account also deletes their owned servers; back up any data you want to keep. This cannot be undone."
         loading={deleting}
       />
     </Layout>

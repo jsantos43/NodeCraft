@@ -22,6 +22,12 @@ export const ERROR_CATALOG = {
     title: 'Sign in to continue',
     description: 'Your session ended or your credentials are wrong. Sign in again.',
   },
+  TOO_MANY_REQUESTS: {
+    tone: 'warning',
+    icon: 'lock',
+    title: 'Too many attempts',
+    description: 'Wait a few minutes before trying again.',
+  },
   FORBIDDEN: {
     tone: 'warning',
     icon: 'shield',
@@ -97,8 +103,8 @@ export function resolveError(err, override = {}) {
   }
 
   let description = override.description || base.description;
-  // For validation, the specific field message is far more useful than the generic line.
-  if (code === 'INVALID_REQUEST' && fields.length && !override.description) {
+  // Surface validation details and worker timeout guidance, including uncertain outcomes.
+  if (['INVALID_REQUEST', 'SERVICE_UNAVAILABLE'].includes(code) && fields.length && !override.description) {
     description = fields.join(' · ');
   } else if (!code && !override.description) {
     // Not a recognized API error (a client-side check, or a plain Error) — its

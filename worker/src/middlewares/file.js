@@ -1,54 +1,40 @@
 import Path from 'path';
 import {
-  NotFound, InvalidRequest, Forbidden,
+  NotFound, InvalidRequest,
 } from '../errors/index.js';
 import config from '../../config/config.js';
 import handleError from './handleError.js';
-import Service from '../services/File.js';
+import {
+  verifyDirectoryTraversal,
+  verifyAllowedPath,
+  verifyPathExists,
+  verifyPathNotExists,
+  verifyPathIsDirectory,
+} from '../utils/verifyPaths.js';
 
-const verifyDirectoryTraversal = (path) => {
-  const regex = /\.\./;
-  if (regex.test(path)) throw new InvalidRequest('directory traversal is not allowed!');
-};
-
-const verifyAllowedPath = (instancePath, path) => {
-  const fullPath = Path.resolve(Path.join(instancePath, path));
-
-  if (!fullPath.startsWith(instancePath)) throw new Forbidden(`${path} is forbidden!`);
-};
-
-const verifyPathExists = async (instancePath, path) => {
-  const fullPath = Path.resolve(Path.join(instancePath, path));
-
-  if (!(await Service.verifyExists(fullPath))) throw new NotFound(`${path} path not exists!`);
-};
-
-const verifyPathNotExists = async (instancePath, path) => {
-  const fullPath = Path.resolve(Path.join(instancePath, path));
-
-  if (await Service.verifyExists(fullPath)) throw new InvalidRequest(`${path} path already exists!`);
-};
-
-const verifyPathIsDirectory = async (instancePath, path) => {
-  const fullPath = Path.resolve(Path.join(instancePath, path));
-
-  const pathType = await Service.getType(fullPath);
-  if (pathType !== 'directory') throw new InvalidRequest(`${path} path must be a directory!`);
-};
-
-const verifyPath = (verifyDestiny = false) => async (req, res, next) => {
+const verifyPath = (verifyDestiny = false, protectRoot = false) => async (req, res, next) => {
   try {
-    const instancePath = Path.join(config.paths.instances, req.params.id);
-    const path = req?.query?.path || '';
-    const destiny = req?.query?.destiny || '';
+    const instancePath = Path.resolve(config.paths.instances, req.params.id);
+    const path = req.query.path === undefined ? '' : req.query.path;
+    const destiny = req.query.destiny === undefined ? '' : req.query.destiny;
+
+    if (typeof path !== 'string' || typeof destiny !== 'string') {
+      throw new InvalidRequest('Path and destiny must be strings!');
+    }
+
+    if (protectRoot || (verifyDestiny && req.query.actions === 'move')) {
+      if (!path.trim() || Path.resolve(Path.join(instancePath, path)) === instancePath) {
+        throw new InvalidRequest('Deleting or moving the instance root is not allowed!');
+      }
+    }
 
     // Verify directory traversal
     verifyDirectoryTraversal(path);
     verifyDirectoryTraversal(destiny);
 
     // Validate if path is allowed
-    verifyAllowedPath(instancePath, path);
-    verifyAllowedPath(instancePath, destiny);
+    await verifyAllowedPath(instancePath, path, false, req.method === 'GET');
+    if (verifyDestiny) await verifyAllowedPath(instancePath, destiny, true);
 
     // Verify if path exits
     await verifyPathExists(instancePath, path);

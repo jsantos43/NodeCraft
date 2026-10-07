@@ -9,22 +9,18 @@ class Terraria extends Instance {
     super(instance, readFunction);
 
     this.paths = {
-      instance: this.instancePath,
-      settings: Path.join(this.instancePath, 'serverconfig.txt'),
+      settings: Path.join(this.path, 'serverconfig.txt'),
     };
-
-    this.setup();
   }
 
   async syncSettings() {
     try {
-      const instance = this.instance.get({ plain: true });
-      const gameData = instance?.terraria;
+      const gameData = this.instance?.terraria;
       if (!gameData) throw new Error('instance terraria data not found!');
 
       // Sync database with Settings.txt
       const terrariaSettings = await renderTemplate('terraria/serverconfig.txt', {
-        maxPlayers: instance.maxPlayers,
+        maxPlayers: this.instance.maxPlayers,
         difficulty: gameData.difficulty,
         password: gameData.password,
         motd: gameData.motd,
@@ -47,6 +43,7 @@ class Terraria extends Instance {
       this.listenStreamEvents();
     } catch (err) {
       logger.error({ err }, 'Error to setup terraria instance');
+      throw err;
     }
   }
 }

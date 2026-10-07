@@ -8,6 +8,7 @@ yarn.lock
 .pnp.js
 /coverage
 /build
+/web/build/
 .DS_Store
 .env.local
 .env.development.local
@@ -19,5 +20,8 @@ yarn-error.log*
 config.json
 logs
 tests
+test
 .claude
 CLAUDE.md
+checks
+verification

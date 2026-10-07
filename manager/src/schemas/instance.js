@@ -33,7 +33,7 @@ const updateInstance = Joi.object({
   ownerId: Joi.forbidden(),
   name: Joi.string().trim().min(3).max(32),
   workerId: Joi.forbidden(),
-  type: Joi.string().trim().strip().valid(...config.instance.games),
+  type: Joi.string().trim().valid(...config.instance.games),
   port: Joi.forbidden(),
   memory: Joi.number().integer().min(512),
   cpu: Joi.number().integer().min(1),
@@ -49,7 +49,7 @@ const updateInstance = Joi.object({
     ],
     otherwise: Joi.forbidden(),
   }),
-}).min(1);
+}).or('name', 'memory', 'cpu', 'maxPlayers', 'game');
 
 const transferOwner = Joi.object({
   ownerId: Joi.string().trim().uuid().required(),

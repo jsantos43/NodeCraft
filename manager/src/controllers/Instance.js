@@ -2,9 +2,8 @@ import jwt from 'jsonwebtoken';
 import { Internal, InvalidRequest } from '../errors/index.js';
 import Service from '../services/Instance.js';
 import AuthService from '../services/Auth.js';
-import Limit from '../services/Limit.js';
 import getWorkerContext from '../utils/getWorkerContext.js';
-import proxyFetch from '../utils/proxyFetch.js';
+import proxyFetch, { discardWorkerResponse } from '../utils/proxyFetch.js';
 import { instanceView } from '../utils/instanceView.js';
 
 class Instance {
@@ -17,7 +16,6 @@ class Instance {
       delete instanceData.game;
       const gameData = body?.game || {};
 
-      await Limit.verifyCanCreate(user.id, instanceData);
       const instance = await Service.create(user.id, instanceData, gameData);
 
       const permissions = await AuthService.permissionsForInstance(req.user, instance);
@@ -113,12 +111,8 @@ class Instance {
     try {
       const { id } = req.params;
 
-      const { instance, worker } = await getWorkerContext(id);
-
-      const running = instance?.status === 'running';
-      if (running) throw new InvalidRequest('You cannot do this while instance is running!');
-
-      await Limit.verifyCanStart(instance);
+      const { worker } = await getWorkerContext(id);
+      const instance = await Service.markStarting(id);
 
       const route = `${worker.url}/server/${id}/run`;
       const response = await proxyFetch(route, {
@@ -129,6 +123,8 @@ class Instance {
         },
         body: JSON.stringify({ instance }),
       });
+
+      await discardWorkerResponse(response);
 
       if (!response.ok) throw new Internal('Failed the run request to worker!');
 
@@ -145,6 +141,8 @@ class Instance {
 
       const { instance, worker } = await getWorkerContext(id);
 
+      if (instance.status === 'starting') throw new InvalidRequest('Wait for the instance to finish starting!');
+
       const route = `${worker.url}/server/${id}/stop`;
       const response = await proxyFetch(route, {
         method: 'POST',
@@ -154,6 +152,8 @@ class Instance {
         },
         body: JSON.stringify({ instance }),
       });
+
+      await discardWorkerResponse(response);
 
       if (!response.ok) throw new Internal('Failed the stop request to worker!');
 
@@ -168,9 +168,8 @@ class Instance {
     try {
       const { id } = req.params;
 
-      const { instance, worker } = await getWorkerContext(id);
-
-      await Limit.verifyCanStart(instance);
+      const { worker } = await getWorkerContext(id);
+      const instance = await Service.markStarting(id, true);
 
       const route = `${worker.url}/server/${id}/restart`;
       const response = await proxyFetch(route, {
@@ -181,6 +180,8 @@ class Instance {
         },
         body: JSON.stringify({ instance }),
       });
+
+      await discardWorkerResponse(response);
 
       if (!response.ok) throw new Internal('Failed the restart request to worker!');
 
@@ -262,6 +263,8 @@ class Instance {
         },
         body: JSON.stringify({ instance }),
       });
+
+      await discardWorkerResponse(response);
 
       if (!response.ok) throw new Internal('Failed the backup request to worker!');
 

@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "stop Instance",
-    "description": "Stops the instance on its worker (fire-and-forget). Requires the `instance:execute` permission.",
+    "description": "Stops the instance on its worker (fire-and-forget). Requires the `instance:execute` permission. Worker communication failures return 503 before the response starts. A timeout does not confirm failure of the operation: check its resulting state before retrying. No automatic retry is performed. WORKER_TIMEOUT (default 300000 ms) covers the request and JSON response consumption. Unused control-command response bodies are cancelled; this deadline does not limit asynchronous game operations.",
     "tags": [
       "Instance"
     ],
