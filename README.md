@@ -1,118 +1,85 @@
-<div align="center">
-
 # NodeCraft
 
-**A self-hosted, multi-node game server hosting platform — think Aternos / Apex Hosting, built from scratch.**
+**A self-hosted panel for game servers across multiple machines.**
 
-Create, configure, run and monitor game servers for **Minecraft, Counter-Strike 2, Terraria, Kerbal Space Program and Hytale** from a single web panel — with real-time consoles, automated cloud backups, granular per-instance permissions and a distributed worker fleet running everything in isolated Docker containers.
+Create, configure and monitor game servers from one place. NodeCraft brings together a live console, file management, backups, user permissions and worker monitoring, with Minecraft, Terraria and Kerbal Space Program integrations. Hytale support is still in progress.
 
-![Status](https://img.shields.io/badge/status-MVP%20(running%20in%20production)-2ea44f)
-![Node.js](https://img.shields.io/badge/Node.js-ESM-339933?logo=node.js&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![Docker](https://img.shields.io/badge/Docker-dockerode-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-blue)
-
-</div>
+![Dashboard](docs/screenshots/dashboard.png)
 
 ---
 
 ## 📖 Overview
 
-**NodeCraft** is a full-stack, distributed platform for hosting and managing multiplayer game servers. It's my flagship personal project: a working MVP that already handles the complete lifecycle end-to-end — a user signs up, spins up a game server, edits its files and settings, watches the live console, and gets it backed up automatically every night.
+**NodeCraft** is my personal project for hosting and managing multiplayer game servers. The panel covers the day-to-day workflow: creating a server, changing its settings, working with its files, following the console and keeping backups.
 
 The system is split into three independent services that talk over authenticated HTTP + WebSockets:
 
 | Service | Role | Port |
 |---------|------|------|
 | **`manager`** | Central control plane — authentication, database, quotas, scheduling; orchestrates the workers. | `9183` |
-| **`worker`** | Runs the actual game instances as Docker containers (one worker per physical machine). | `9184` |
+| **`worker`** | Runs game instances and manages their files, console and backups on a host machine. | `9184` |
 | **`web`** | React single-page app — the user-facing control panel. | `3030` (dev) |
 
-It runs in a real self-hosted production environment (behind Nginx + systemd, deployed via GitHub Actions). *The public instance isn't linked here because new accounts are provisioned with a zero-instance quota by default — the panel is fully functional but instance creation is admin-gated.*
+NodeCraft runs in a self-hosted environment behind Nginx and systemd, with deployment through GitHub Actions. The public panel is not linked here because new accounts have no instance allowance until an administrator grants one.
 
 ---
 
 ## ✨ Key Features
 
-- 🐳 **Docker-based isolation** — every game server runs in its own container, created and controlled programmatically via `dockerode`.
 - 🖧 **Distributed worker fleet** — the manager coordinates any number of worker machines; each reports CPU / memory / disk health every 15s and is marked unhealthy if it goes silent.
-- 🎮 **Multi-game support** — Minecraft (Java + Bedrock via Geyser/Floodgate), Counter-Strike 2, Terraria, Kerbal Space Program and Hytale, each with its own runtime and settings.
+- 🎮 **Multi-game support** — Minecraft (Java + Bedrock via Geyser/Floodgate), Terraria, Kerbal Space Program and Hytale, each with its own runtime and settings.
 - 💻 **Real-time console** — live server output and command input streamed over Socket.io, secured with short-lived (120s) scoped JWTs so the browser talks straight to the worker.
 - 📁 **Full file manager** — browse, edit, upload, download, move, delete and unzip files inside a server's game folder, proxied through the manager to the right worker.
 - 🔐 **JWT auth + email flows** — access/refresh token rotation via httpOnly cookies, email verification and password reset (Nodemailer).
-- 🧑‍⚖️ **Granular per-instance permissions** — share a server with other users at the level of individual actions (`console:read`, `files:write`, `backup`, …), with an access model (`super` / `always` / `monitored`) and in-game privileges.
+- 🧑‍⚖️ **Granular per-instance permissions** — share specific panel actions with other users; manage Minecraft player access and privileges through a separate roster.
 - 📊 **Resource quotas** — per-user limits on instance count, total memory, CPU, disk and which games / workers they may use.
 - 💾 **Automated S3 backups** — nightly scheduled backups to any S3-compatible bucket (Backblaze / MinIO / AWS), with daily + weekly retention and automatic pruning.
 - 📈 **Monitoring dashboard** — historical worker hardware metrics rendered as charts (Recharts).
 - 📄 **Fully documented API** — modular OpenAPI 3.0 spec served through Swagger UI at `/docs`.
 
+| Server details | Live console |
+| --- | --- |
+| ![Server details](docs/screenshots/server-details.png) | ![Live console](docs/screenshots/console.png) |
+
 ---
 
-## 🏗️ Architecture
+## 🔐 Authentication & Permissions
 
-```mermaid
-flowchart TD
-    subgraph Client
-        WEB["🌐 web — React SPA"]
-    end
+- **Access token** — JWT (15 min), delivered in an httpOnly `accessToken` cookie.
+- **Refresh token** — 3 days, stored **SHA-256 hashed** in the DB and rotated on every refresh.
+- **Email flows** — account verification and password reset via time-limited tokens.
+- **Per-instance permissions** — access is granted at the level of individual actions. Every route and socket event enforces its exact permission on the backend; the frontend mirrors the same rules to gate the UI.
+- **Instance links** — owners can share specific panel permissions with other users. Minecraft player access and operator privileges are managed separately through the roster.
 
-    subgraph ControlPlane["Control plane"]
-        MGR["🧠 manager — Express API<br/>auth · DB · quotas · scheduler"]
-        DB[("🗄️ SQLite dev / MySQL prod<br/>Sequelize")]
-        S3[("☁️ S3-compatible<br/>backups")]
-    end
+---
 
-    subgraph Fleet["Worker fleet (1 per machine)"]
-        W1["⚙️ worker #1"]
-        W2["⚙️ worker #2"]
-    end
-
-    subgraph Containers["Docker"]
-        C1["🎮 Minecraft"]
-        C2["🎮 Terraria"]
-        C3["🎮 CS2 / KSP / Hytale"]
-    end
-
-    WEB -- "REST + cookies (JWT)" --> MGR
-    WEB -. "console WebSocket (scoped JWT)" .-> W1
-    MGR <--> DB
-    MGR -- "run / stop / backup" --> W1
-    MGR -- "run / stop / backup" --> W2
-    W1 -- "heartbeat + status (15s)" --> MGR
-    W2 -- "heartbeat + status (15s)" --> MGR
-    W1 --> C1 & C2
-    W2 --> C3
-    W1 -- "upload" --> S3
-```
-
-### How a server starts
-
-```mermaid
-sequenceDiagram
-    participant U as User (web)
-    participant M as Manager
-    participant W as Worker
-    participant D as Docker
-
-    U->>M: POST /instance/:id/run  (JWT cookie)
-    M->>M: check permission `instance:execute`
-    M-->>U: 200 (fire-and-forget)
-    M->>W: POST /server/:id/run  (MANAGER_SECRET)
-    W-->>M: 200 (async)
-    W->>D: create + start container
-    W->>M: PUT status/history (every 15s)
-    U-->>W: open console WebSocket (120s JWT)
-    W-->>U: stream stdout in real time
-```
-
-### Communication & trust
+## 🔄 Communication & Trust
 
 - **Worker → Manager** authenticates with a per-worker API key (`MANAGER_API_KEY`, stored SHA-256 hashed).
-- **Manager → Worker** authenticates with a shared `MANAGER_SECRET`.
-- Worker endpoints are **fire-and-forget**: they return `200` immediately and run the heavy work asynchronously.
-- Manager → worker requests use `WORKER_TIMEOUT` (default 300000 ms), including JSON response reading. File uploads/downloads are exempt from this timeout and have no application-level inactivity timer. `WORKER_TIMEOUT` must be positive integer milliseconds, at most 600000 (10 minutes).
-- Communication failures/timeouts on ordinary requests return `503`. A timeout does not undo a command the worker may have accepted. Check the resulting state before retrying; the proxy does not retry automatically.
+- **Manager → Worker** authenticates with the worker's `MANAGER_SECRET`.
+- Long-running worker actions return promptly and continue asynchronously; the resulting status is reported back to the manager.
 - The manager flags a worker `healthy: false` after 3 minutes without a heartbeat.
+
+---
+
+## 💾 Backups
+
+- The manager's `BackupScheduler` checks during the 03:00 hour for recently active instances on healthy workers.
+- The worker stops an instance if it is running, zips the game's important files, uploads the archive under its `daily/` or `weekly/` storage path, starts the instance again and reports the result.
+- **Retention:** 7 daily + 4 weekly, pruned automatically after each upload.
+- Backups require S3-compatible storage to be configured on the worker.
+
+---
+
+## 📊 Resources and Monitoring
+
+Administrators configure each user's allowed games and workers, maximum instance count, CPU, memory and disk allowance. Server slots and reported disk usage count across all owned instances; CPU and memory usage count instances that are running or starting. A stopped server therefore keeps its files and slot while releasing its active CPU and memory allocation.
+
+The worker applies CPU and memory settings when starting an instance and reports its disk usage to the manager. Disk allowance is currently checked when creating or starting instances; it is not a filesystem quota on uploads or archive extraction.
+
+Worker charts show CPU usage, used and total memory, and available disk space. The manager retains seven days of heartbeat history, with views from one hour to seven days. Server status and recent history help distinguish a requested action from its eventual result on the worker.
+
+![Monitoring](docs/screenshots/monitoring.png)
 
 ---
 
@@ -132,158 +99,16 @@ sequenceDiagram
 
 ---
 
-## 📂 Monorepo Structure
-
-```
-NodeCraft/
-├── manager/                 # Central API / control plane
-│   ├── src/
-│   │   ├── controllers/     # thin: parse request → call service → respond
-│   │   ├── services/        # all business logic
-│   │   ├── models/          # Sequelize models
-│   │   ├── routes/          # Express route definitions
-│   │   ├── middlewares/     # auth, validation, error handling
-│   │   ├── schemas/         # Joi request validation
-│   │   ├── errors/          # custom error classes → HTTP status
-│   │   └── utils/           # worker proxy, email, templates
-│   ├── db/migrations/       # schema is 100% migration-driven
-│   └── swagger/             # modular OpenAPI 3.0 spec (served at /docs)
-│
-├── worker/                  # Runs game instances via Docker
-│   └── src/
-│       ├── runtimes/        # per-game classes extending base `Instance`
-│       ├── services/        # Container, Backup, Heartbeat, Maintenance…
-│       ├── providers/       # S3 storage
-│       └── websocket/       # real-time console
-│
-├── web/                     # React control panel (Vite)
-│   └── src/{pages,components,api,context,hooks,icons}
-│
-├── scripts/                 # nginx.conf + systemd unit files
-├── deploy.sh                # production deploy script
-└── .github/workflows/       # CI: deploy on push to main
-```
-
----
-
 ## 🎮 Supported Games
 
-| Game | Docker image | Backups | RCON | Notes |
-|------|--------------|:-------:|:----:|-------|
-| **Minecraft** | `itzg/minecraft-server` | ✅ | ✅ | Java + Bedrock (Geyser + Floodgate), live allowlist/barrier system |
-| **Counter-Strike 2** | `cm2network/cs2` | ❌ | ❌ | Explicitly excluded from backups |
-| **Terraria** | `passivelemon/terraria-docker` | ✅ | ❌ | |
-| **Kerbal Space Program** | `ghcr.io/jsantos43/ksp` | ✅ | ❌ | Custom-built image |
-| **Hytale** | `ghcr.io/jsantos43/hytale` | ✅ | ❌ | Custom-built image |
+| Game | Backups | RCON | Notes |
+|------|:-------:|:----:|-------|
+| **Minecraft** | ✅ | ✅ | Java + Bedrock (Geyser + Floodgate), allowlist and player roster |
+| **Terraria** | ✅ | ❌ | Server configuration and world backups |
+| **Kerbal Space Program** | ✅ | ❌ | Multiplayer settings and backups |
+| **Hytale** | Planned | ❌ | Integration is present but not yet ready for normal use |
 
-Each game is a `Runtime` class extending a shared base `Instance` (Docker stream, Socket.io emit, RCON, heartbeat). Minecraft adds live `server.properties` sync and real-time player access control by gamertag.
-
----
-
-## 🚀 Getting Started (local dev)
-
-### Prerequisites
-- Node.js (LTS) and npm
-- Docker (for the worker to run game containers)
-
-### 1. Manager
-```bash
-cd manager
-npm install
-cp .env.example .env        # configure DB, email, site URLs
-npm run db:migrate          # schema is managed exclusively by migrations
-npm run dev                 # → http://localhost:9183  (Swagger at /docs)
-```
-
-### 2. Worker
-```bash
-cd worker
-npm install
-cp .env.example .env        # configure MANAGER_URL, keys, storage, paths
-npm run dev                 # → http://localhost:9184
-```
-
-### 3. Web
-```bash
-cd web
-npm install
-npm run dev                 # → http://localhost:3030
-```
-
-> **Database note:** the schema is managed **exclusively** through Sequelize migrations (`npm run db:migrate`) — `db.sync()` is never used, so dev (SQLite) and prod (MySQL) stay in lockstep.
-
-### Environment variables
-
-<details>
-<summary><b>Manager</b></summary>
-
-```
-PORT, STAGE, DATABASE_*, EMAIL_*, SITE_URL, SITE_VALIDATE_URL, SITE_RESET_URL, CORS_ORIGIN
-```
-
-`EMAIL_USER` / `EMAIL_PASSWORD` authenticate to SMTP. `EMAIL_FROM_ADDRESS` sets
-the sender address, and `EMAIL_FROM_NAME` sets its display name. If omitted,
-the sender address falls back to `EMAIL_USER` for providers whose login is an
-email address. An invalid sender is rejected before sending.
-
-For [Resend SMTP](https://resend.com/docs/send-with-smtp), use:
-
-```dotenv
-EMAIL_ENABLE=true
-EMAIL_HOST=smtp.resend.com
-EMAIL_PORT=465
-EMAIL_SECURE=true
-EMAIL_USER=resend
-EMAIL_PASSWORD=re_YOUR_API_KEY
-EMAIL_FROM_NAME=NodeCraft
-EMAIL_FROM_ADDRESS=noreply@your-verified-domain.com
-```
-
-Replace the API key and sender with your own values; the sender domain must be
-verified in Resend. Restart the manager after updating its environment.
-</details>
-
-<details>
-<summary><b>Worker</b></summary>
-
-```
-PORT, STAGE, WORKER_ID, MANAGER_URL, MANAGER_API_KEY, MANAGER_SECRET
-INSTANCE_PATH, TEMP_PATH
-STORAGE_ENABLE, STORAGE_BUCKET, STORAGE_REGION, STORAGE_ENDPOINT,
-STORAGE_FORCE_PATHSTYLE, STORAGE_ID, STORAGE_SECRET, STORAGE_MAX
-```
-</details>
-
----
-
-## 🔐 Authentication & Permissions
-
-- **Access token** — JWT (15 min), delivered in an httpOnly `accessToken` cookie.
-- **Refresh token** — 3 days, stored **SHA-256 hashed** in the DB and rotated on every refresh.
-- **Email flows** — account verification and password reset via time-limited tokens.
-- **Per-instance permissions** — access is granted at the level of individual actions:
-  `instance:edit · execute · backup · console:read · console:write · files:read · files:write · files:edit · roster:edit`.
-  Every link grants basic `instance:read` automatically, even with no additional permissions. Remove the link to revoke basic access. Console history requires `instance:console:read`, full settings for every game are readable with `instance:read` (editing still requires `instance:edit`), roster requires `instance:roster:edit`, and sharing details are limited to the owner or an administrator.
-  Every route and socket event enforces its exact permission on the backend; the frontend mirrors the same rules to gate the UI.
-- **Instance links** — a non-owner can be granted scoped access with `permissions`, in-game `gamertags`, an `access` level (`super` / `always` / `monitored`) and op/admin `privileges`.
-
-
-### Manager session revocation
-
-Logout and password reset revoke all earlier manager API access tokens for the account, including copies in other browsers. The server checks the token's session version against the user record on each authenticated request. The version stays internal and is not included in public user responses. Previously authorized requests already in progress are not cancelled.
-
-Before starting the updated manager, run `npm run db:migrate` in `manager/` to apply `20260930120000-add-user-session-version.js`. Existing users start at version zero. Access tokens issued before this update must be renewed; a valid refresh cookie can renew them without another login. All manager processes must run the updated code for revocation to be enforced consistently.
-
-Worker console tokens remain separate: they expire after 120 seconds for new connections, and logout/reset does not disconnect existing WebSockets. This change revokes manager API sessions, including the ability to request new console tokens with an old access token.
-
----
-
-## 💾 Backups
-
-- The manager's `BackupScheduler` fires a nightly backup (03:00) across all healthy workers.
-- The worker stops the instance if running, zips the game's important files, uploads to `s3://{instanceId}/daily/` (and `/weekly/`), restarts it, and reports the result back.
-- **Retention:** 7 daily + 4 weekly, pruned automatically after each upload.
-- Available disk is checked against `STORAGE_MAX` before every upload.
+Each game has a `Runtime` class extending a shared base `Instance`. Minecraft adds `server.properties` synchronization and player access control through its roster.
 
 ---
 
@@ -299,15 +124,50 @@ Every endpoint carries a `summary` + `description`, request/response schemas, ex
 
 ---
 
-## 🖼️ Screenshots
+## 🚀 Running locally
 
-| Dashboard | Server details |
-|-----------|----------------|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Server details](docs/screenshots/server-details.png) |
+### 📋 Prerequisites
+You will need Node.js and npm. The worker also needs a host prepared to run game servers and access to its configured storage paths. The commands below start the applications; host preparation is a separate step.
 
-| Live console | Worker monitoring |
-|--------------|-------------------|
-| ![Console](docs/screenshots/console.png) | ![Monitoring](docs/screenshots/monitoring.png) |
+### 1. 🧠 Manager
+```bash
+cd manager
+npm install
+cp .env.example .env        # configure DB, email, site URLs
+npm run db:migrate          # schema is managed exclusively by migrations
+npm run dev                 # → http://localhost:9183  (Swagger at /docs)
+```
+
+Set `STAGE=DEV` and a `JWT_SECRET` in `manager/.env` for local development.
+
+### 2. ⚙️ Worker
+```bash
+cd worker
+npm install
+cp .env.example .env        # configure MANAGER_URL, keys, storage, paths
+npm run dev                 # → http://localhost:9184
+```
+
+### 3. 🌐 Web
+
+Set `VITE_API_URL=http://localhost:9183` in `web/.env.local` so the panel connects to the manager.
+
+```bash
+cd web
+npm install
+npm run dev                 # → http://localhost:3030
+```
+
+> **Database note:** the schema is managed **exclusively** through Sequelize migrations (`npm run db:migrate`) — `db.sync()` is never used, so dev (SQLite) and prod (MySQL) stay in lockstep.
+
+---
+
+## ⚠️ Operational Limitations
+
+- **Moving a server between workers:** Changing its worker does not move its files. Stop the server, make a separate backup and copy the data before starting it elsewhere. Files left on the old worker are eligible for deletion after five days.
+- **Minecraft roster changes:** Player removals and privilege changes in the panel do not update a running game server. Restart it to apply them; until then, previous access or operator privileges may remain active.
+
+Other outstanding issues are tracked in the [manager review](docs/review/manager.md) and [worker review](docs/review/worker.md).
 
 ---
 

@@ -46,12 +46,6 @@ Upload não limita tamanho, e cópia/descompactação não limitam os bytes grav
 
 `makeZip()` ignora caminhos ausentes, e o backup não exige a presença dos dados do mundo. Uma pasta perdida ou vazia pode gerar ZIP vazio ou apenas de configuração, enviado como sucesso. A retenção roda em seguida; backups inválidos sucessivos podem eliminar as últimas cópias recuperáveis.
 
-## W16 — Remover jogador ou privilégio não revoga acesso no jogo ligado
-
-**Local:** `worker/src/runtimes/Minecraft.js:138,150`; `manager/src/services/Roster.js` (`update`, `delete`).
-
-O runtime mantém o roster recebido no início. Alterações no manager mudam apenas o banco, sem atualizar o worker; a lista de operadores é gerada somente no setup. Um jogador removido ou rebaixado no painel mantém a autorização/privilégio no servidor até reiniciá-lo.
-
 ## W21 — Hytale não recebe imagem nem volumes ao criar o container (novo)
 
 **Local:** `worker/src/services/Container.js:141,208`.
