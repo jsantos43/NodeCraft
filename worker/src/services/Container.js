@@ -1,4 +1,5 @@
 import Path from 'path';
+import { randomBytes } from 'node:crypto';
 import docker from '../../config/docker.js';
 import logger from '../../config/logger.js';
 import { Internal } from '../errors/index.js';
@@ -14,7 +15,7 @@ class Container {
     return manifest.latest.release;
   }
 
-  static async defineMinecraft(instance, path) {
+  static async defineMinecraft(instance, path, rconPassword) {
     const gameData = instance?.minecraft;
     if (!gameData) throw new Error('instance has no minecraft config!');
 
@@ -23,7 +24,7 @@ class Container {
     const enviroment = [
       'EULA=TRUE',
       'ENABLE_RCON=true',
-      'RCON_PASSWORD=nodecraft',
+      `RCON_PASSWORD=${rconPassword}`,
       'RCON_PORT=25575',
       `UID=${config.system.puid}`,
       `GID=${config.system.pgid}`,
@@ -189,14 +190,29 @@ class Container {
 
   static async create(instance) {
     const existsContainer = await Container.get(instance.id);
-    if (existsContainer) return existsContainer;
+    if (existsContainer) {
+      if (instance.type !== 'minecraft') return { container: existsContainer };
+
+      const details = await existsContainer.inspect();
+      const password = details.Config?.Env?.find((value) => value.startsWith('RCON_PASSWORD='))
+        ?.slice('RCON_PASSWORD='.length);
+
+      // Existing containers with the shared password must be replaced before startup.
+      if (/^[0-9a-f]{64}$/.test(password || '')) {
+        return { container: existsContainer, rconPassword: password };
+      }
+
+      await existsContainer.remove({ force: true });
+    }
 
     const instancePath = Path.join(config.paths.instances, instance.id);
     let info = null;
+    let rconPassword;
 
     switch (instance.type) {
       case 'minecraft':
-        info = await Container.defineMinecraft(instance, instancePath);
+        rconPassword = randomBytes(32).toString('hex');
+        info = await Container.defineMinecraft(instance, instancePath, rconPassword);
         break;
       case 'counterstrike':
         info = Container.defineCounterStrike(instance, instancePath);
@@ -243,7 +259,7 @@ class Container {
       },
     });
 
-    return container;
+    return { container, rconPassword };
   }
 
   static async get(id) {

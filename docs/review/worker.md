@@ -10,12 +10,6 @@ Implementado em 06/10/2026: o middleware usa `verifyNoSymlinks()` para rejeitar 
 
 Validação: sete cenários automatizados com arquivos temporários reais, sem Docker ou storage, cobrindo links, caminhos inválidos, proteção da raiz e operações comuns.
 
-## W05 — RCON permite controlar outras instâncias na rede compartilhada
-
-**Local:** `worker/src/services/Container.js:26,234`; `worker/src/templates/minecraft/server.properties:40`.
-
-Todos os containers usam `nodecraft-net` e os servidores Minecraft compartilham a senha RCON `nodecraft`. Código executado em uma instância, por exemplo por plugin instalado pelo usuário, pode conectar ao RCON das demais e executar comandos administrativos sem autorização do manager.
-
 ## W06 — Mensagem inválida no console pode derrubar o worker
 
 **Local:** `worker/src/websocket/events.js:5,17`.

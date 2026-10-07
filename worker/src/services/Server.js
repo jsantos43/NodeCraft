@@ -26,7 +26,11 @@ class Server {
 
       const instancePath = `${config.paths.instances}/${instance.id}`;
       await File.createOneDirectory(instancePath);
-      await Container.create(instance);
+
+      const { rconPassword } = await Container.create(instance);
+
+      if (instance.type === 'minecraft') runtime.rconPassword = rconPassword;
+
       await runtime.setup();
     } catch (err) {
       await Server.stop(instance, false);

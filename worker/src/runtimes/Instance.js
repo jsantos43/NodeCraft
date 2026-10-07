@@ -121,7 +121,7 @@ class Instance {
       const rcon = await Rcon.connect({
         host: containerIpAddress,
         port,
-        password: password || 'nodecraft',
+        password,
       });
 
       this.rcon.service = rcon;

@@ -84,11 +84,19 @@ class Minecraft extends Instance {
         levelType: instance.minecraft.levelType,
         monsters: instance.minecraft.monsters,
         spawn: instance.minecraft.spawn,
+        rconPassword: this.rconPassword,
       });
 
-      await FileService.createOneFile(this.paths.properties, properties);
+      if (!this.rconPassword || !properties.includes(`rcon.password=${this.rconPassword}`)) {
+        throw new Error('Minecraft RCON password was not rendered');
+      }
+
+      if (!await FileService.createOneFile(this.paths.properties, properties)) {
+        throw new Error('Unable to write Minecraft server.properties');
+      }
     } catch (err) {
       logger.error({ err }, 'Error to sync server.properties');
+      throw err;
     }
 
     try {
@@ -123,7 +131,7 @@ class Minecraft extends Instance {
   }
 
   async verifyRcon() {
-    await this.initRcon(25575, null, async () => {
+    await this.initRcon(25575, this.rconPassword, async () => {
       await this.sendRcon('gamerule send_command_feedback false');
       await this.sendRcon('gamerule log_admin_commands false');
       await this.sendRcon('save-on');
