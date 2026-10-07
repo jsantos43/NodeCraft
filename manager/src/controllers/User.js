@@ -37,7 +37,9 @@ class User {
   static async readById(req, res, next) {
     try {
       const { id } = req.params;
-      const user = await Service.readProfile(id);
+      const user = req.user.admin
+        ? await Service.readAdminProfile(id)
+        : await Service.readProfile(id);
 
       return res.status(200).json({ success: true, user });
     } catch (err) {

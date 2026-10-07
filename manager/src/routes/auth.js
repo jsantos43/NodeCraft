@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import Controller from '../controllers/Auth.js';
 import {
-  auth, verifyService, loginLimiter, emailLimiter, validate,
+  auth, verifyService, loginLimiter, refreshLimiter, emailLimiter, validate,
 } from '../middlewares/index.js';
 import {
   login, validateAccount, forgotPassword, resetPassword,
@@ -18,7 +18,7 @@ router
   )
   .post(
     '/auth/refresh',
-    loginLimiter,
+    refreshLimiter,
     Controller.refresh,
   )
   .post(

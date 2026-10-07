@@ -3,62 +3,25 @@ import { useState, useEffect } from 'react';
 import './Home.css'
 
 import InstanceCard from '../../components/InstanceCard/index.js';
+import { instancesApi } from '../../api/instances.js';
 
 export const Home = () => {
   const [data, setData] = useState(null)
 
-  const url = "http://localhost:3000/auth/login";
-
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            "email": "joao.santos.2007sp@gmail.com",
-            "password": "123456"
-          }),
-          credentials: 'include',
-        })
-    
-        const result = await res.json()
-
-        readMyInstances()
-        
-        console.log(result)
-      } catch (err) {
-        console.error(err)
-      }
-  
-    }
-
+    let active = true;
     const readMyInstances = async () => {
       try {
-        const res = await fetch("http://localhost:3000/instance", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          credentials: 'include',
-        })
-        const result = await res.json()
-
-        setData(result.instances)
-
-        console.log(result)
+        const result = await instancesApi.list();
+        if (active) setData(result.instances);
       } catch (err) {
-        console.error(err)        
+        if (active) setData([]);
       }
+    };
 
-    }
-  
-    fetchData()
-  }, [url])
-
-  console.log(data)
+    readMyInstances();
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className='home'>

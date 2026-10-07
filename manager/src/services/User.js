@@ -57,6 +57,20 @@ class User {
     return user;
   }
 
+  static async readAdminProfile(id) {
+    const user = await Model.findByPk(id, {
+      attributes: [
+        'id', 'name', 'email', 'admin', 'verified', 'createdAt',
+        'maxInstances', 'maxMemory', 'maxCpu', 'maxDisk',
+        'allowedGames', 'allowedWorkers',
+      ],
+    });
+
+    if (!user) throw new NotFound('User not found!');
+
+    return user;
+  }
+
   static async readAllAttributes(id = null, email = null, token = null, tokenType = 'email') {
     const tokenColumns = {
       email: 'emailTokenHash',

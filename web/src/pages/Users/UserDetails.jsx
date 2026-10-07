@@ -99,7 +99,7 @@ export default function UserDetails() {
         allowedWorkers: Array.isArray(user.allowedWorkers) ? user.allowedWorkers : [],
       });
     }
-  }, [user?.id]);
+  }, [user]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const toggleGame = (gid) => setForm(f => ({

@@ -32,7 +32,7 @@ export default function Login() {
     }
   };
 
-  // A 401 on the login form means bad credentials, not an expired session.
+  // This 401 comes from the login endpoint; session refresh is disabled for it.
   const errorOverride = error?.code === 'UNATHORIZED'
     ? { title: 'Sign in failed', description: 'Wrong email or password.', icon: 'lock', tone: 'warning' }
     : undefined;

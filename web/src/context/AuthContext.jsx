@@ -1,39 +1,57 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext, useContext, useState, useEffect, useCallback, useRef,
+} from 'react';
 import { authApi } from '../api/auth.js';
 import { usersApi } from '../api/users.js';
 import { setAccessToken } from '../api/client.js';
 
 const AuthContext = createContext(null);
+const PUBLIC_AUTH_PATHS = new Set(['/login', '/register', '/forgot', '/reset']);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const sessionRevision = useRef(0);
 
-  const fetchUser = useCallback(async () => {
+  const fetchUser = useCallback(async (expectedRevision = sessionRevision.current) => {
     try {
       const data = await usersApi.me();
-      setUser(data.user);
+      if (sessionRevision.current === expectedRevision) setUser(data.user);
       return data.user;
     } catch {
-      setUser(null);
+      if (sessionRevision.current === expectedRevision) setUser(null);
       return null;
     }
   }, []);
 
   useEffect(() => {
+    if (PUBLIC_AUTH_PATHS.has(window.location.pathname)) {
+      setLoading(false);
+      return;
+    }
+
+    const revision = sessionRevision.current;
     authApi.refresh()
-      .then(() => fetchUser())
-      .catch(() => setUser(null))
+      .then(() => {
+        if (sessionRevision.current === revision) return fetchUser(revision);
+        return null;
+      })
+      .catch(() => {
+        if (sessionRevision.current === revision) setUser(null);
+      })
       .finally(() => setLoading(false));
   }, [fetchUser]);
 
   const login = async (email, password) => {
-    await authApi.login(email, password);
-    return fetchUser();
+    const data = await authApi.login(email, password);
+    sessionRevision.current += 1;
+    setUser(data.user);
+    return data.user;
   };
 
   const logout = async () => {
     await authApi.logout();
+    sessionRevision.current += 1;
     setUser(null);
     setAccessToken(null);
   };

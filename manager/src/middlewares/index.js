@@ -5,7 +5,12 @@ import validate from './validate.js';
 import verifyService from './verifyService.js';
 import verifyNotRunning from './instance.js';
 import workerAuth, { workerOrAuth } from './worker.js';
-import { loginLimiter, createAccountLimiter, emailLimiter } from './rateLimit.js';
+import {
+  loginLimiter,
+  refreshLimiter,
+  createAccountLimiter,
+  emailLimiter,
+} from './rateLimit.js';
 
 export {
   auth,
@@ -17,6 +22,7 @@ export {
   verifyService,
   verifyNotRunning,
   loginLimiter,
+  refreshLimiter,
   createAccountLimiter,
   emailLimiter,
 };

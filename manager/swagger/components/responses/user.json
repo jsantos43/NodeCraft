@@ -93,7 +93,7 @@
     }
   },
   "byId": {
-    "description": "OK. Only `id` and `name` are returned — for every caller, including admins and when reading your own account. Email, quotas, `verified` and the `admin` flag are never exposed by this route: use `GET /user` for your own full profile, or `GET /user/all` (admin) for the full records.",
+    "description": "OK. Non-admin callers receive only `id` and `name`. Admin callers receive the user's safe profile, including quotas and access limits. Passwords and session tokens are never returned.",
     "content": {
       "application/json": {
         "schema": {
@@ -104,7 +104,16 @@
               "example": true
             },
             "user": {
-              "$ref": "../schemas/user.json"
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" }
+                  }
+                },
+                { "$ref": "../schemas/user.json" }
+              ]
             }
           }
         },

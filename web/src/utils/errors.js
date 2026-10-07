@@ -22,6 +22,12 @@ export const ERROR_CATALOG = {
     title: 'Sign in to continue',
     description: 'Your session ended or your credentials are wrong. Sign in again.',
   },
+  TOO_MANY_REQUESTS: {
+    tone: 'warning',
+    icon: 'lock',
+    title: 'Too many attempts',
+    description: 'Wait a few minutes before trying again.',
+  },
   FORBIDDEN: {
     tone: 'warning',
     icon: 'shield',

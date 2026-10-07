@@ -1,7 +1,7 @@
 {
   "get": {
-    "summary": "read another User (public fields)",
-    "description": "Resolves a user id to a display name. Requires authentication, and returns only `id` and `name` regardless of who asks — it cannot be used to harvest emails or quotas, or to discover which accounts are admins. Intended for resolving the `userId` of an instance link.",
+    "summary": "read another User",
+    "description": "Requires authentication. Non-admin callers receive only `id` and `name` for resolving instance links. Admin callers receive the safe profile, including quotas (`maxInstances`, `maxMemory`, `maxCpu`, `maxDisk`) and access limits.",
     "tags": [
       "User"
     ],
