@@ -74,6 +74,23 @@ class Manager {
       logger.error({ err }, 'Error to report backup result to Manager');
     }
   }
+
+  static async getConsoleAccess(instanceId, token) {
+    const { requestUrl, options } = Manager.buildRequest(`/instances/${instanceId}/console-access`, 'POST', { token });
+
+    const response = await fetch(requestUrl, options);
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error(`Manager answered ${response.status} to the console access check`);
+    }
+
+    const access = await response.json();
+    if (typeof access?.canRead !== 'boolean' || typeof access?.canWrite !== 'boolean') {
+      throw new Error('Manager answered the console access check without valid permissions');
+    }
+
+    return access;
+  }
 }
 
 export default Manager;

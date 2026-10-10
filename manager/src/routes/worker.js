@@ -64,6 +64,11 @@ router
     '/worker/:workerId/instances/:instanceId/backup',
     workerAuth(),
     Controller.reportBackupResult,
+  )
+  .post(
+    '/worker/:workerId/instances/:instanceId/console-access',
+    workerAuth(),
+    Controller.consoleAccess,
   );
 
 export default router;

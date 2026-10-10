@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "logout User",
-    "description": "Logs out all manager API sessions for the current account: atomically advances the session version and clears the stored refresh token, then clears accessToken/refreshToken cookies. All earlier access JWTs are rejected with 401 on subsequent authenticated API requests, including copies in other browsers. Requires a valid access token. Already authenticated in-flight requests are not cancelled. Separately issued worker console tokens and open WebSockets are not revoked by this operation.",
+    "description": "Logs out all manager API sessions for the current account: atomically advances the session version and clears the stored refresh token, then clears accessToken/refreshToken cookies. All earlier access JWTs are rejected with 401 on subsequent authenticated API requests, including copies in other browsers. Requires a valid access token. Already authenticated in-flight requests are not cancelled. Existing console sockets close on their next periodic access check.",
     "tags": [
       "Auth"
     ],

@@ -10,12 +10,6 @@ Implementado em 06/10/2026: o middleware usa `verifyNoSymlinks()` para rejeitar 
 
 Validação: sete cenários automatizados com arquivos temporários reais, sem Docker ou storage, cobrindo links, caminhos inválidos, proteção da raiz e operações comuns.
 
-## W07 — Revogar acesso não encerra o controle pelo console
-
-**Local:** `worker/src/websocket/auth.js:10`; `worker/src/websocket/events.js`.
-
-O JWT e as permissões são verificados somente na conexão. Quem já abriu o console com permissão de escrita continua enviando comandos após a remoção do vínculo, a revogação da permissão ou a expiração do token. A revogação de sessões da API não invalida esse socket.
-
 ## W08 — Iniciar durante backup permite copiar um mundo em alteração
 
 **Local:** `worker/src/services/Server.js:17,70`; `manager/src/routes/instance.js`.

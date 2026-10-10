@@ -493,10 +493,31 @@ function ConsoleTab({ instance }) {
 
   useEffect(() => {
     let socket;
+    let stopped = false;
+    let connecting = false;
+    let reconnectTimer;
+    let reconnectAttempts = 0;
+    let connectedAt = 0;
+
+    const reconnect = () => {
+      if (stopped || reconnectTimer) return;
+      reconnectAttempts += 1;
+      if (reconnectAttempts > 2) {
+        setError('Console access could not be verified.');
+        return;
+      }
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connect();
+      }, 1000);
+    };
 
     const connect = async () => {
+      if (stopped || connecting) return;
+      connecting = true;
       try {
         const { token, workerUrl, permissions } = await instancesApi.consoleToken(instance.id);
+        if (stopped) return;
         setCanWrite((permissions || []).includes('console:write'));
 
         // workerUrl may include a path prefix (e.g. https://host/worker) used by
@@ -511,37 +532,50 @@ function ConsoleTab({ instance }) {
         // supports the Upgrade handshake. Websocket-only would hang/timeout
         // behind a proxy that doesn't upgrade (e.g. missing nginx Upgrade
         // headers on the worker's /socket.io/ location).
-        socket = io(parsed.origin, {
+        socket?.disconnect();
+        const nextSocket = io(parsed.origin, {
           auth: { token },
           transports: ['polling', 'websocket'],
           path: `${prefix}/socket.io/`,
         });
-        socketRef.current = socket;
+        socket = nextSocket;
+        socketRef.current = nextSocket;
 
-        socket.on('connect', () => {
+        nextSocket.on('connect', () => {
+          connectedAt = Date.now();
           setConnected(true);
           setError(null);
-          socket.emit('join-console', { instanceId: instance.id });
+          nextSocket.emit('join-console', { instanceId: instance.id });
         });
 
-        socket.on('disconnect', () => setConnected(false));
+        nextSocket.on('disconnect', (reason) => {
+          if (stopped || socket !== nextSocket) return;
+          setConnected(false);
+          if (Date.now() - connectedAt >= 30000) reconnectAttempts = 0;
+          if (reason === 'io server disconnect') reconnect();
+        });
 
-        socket.on('connect_error', (err) => {
+        nextSocket.on('connect_error', (err) => {
+          if (stopped || socket !== nextSocket) return;
           setError(err.message || 'Connection failed');
           setConnected(false);
         });
 
-        socket.on('instance-output', (line) => {
+        nextSocket.on('instance-output', (line) => {
           setLines((prev) => [...prev, line]);
         });
       } catch (err) {
-        setError(err.message || 'Failed to get console token');
+        if (!stopped) setError(err.message || 'Failed to get console token');
+      } finally {
+        connecting = false;
       }
     };
 
     connect();
 
     return () => {
+      stopped = true;
+      clearTimeout(reconnectTimer);
       socket?.disconnect();
       socketRef.current = null;
     };

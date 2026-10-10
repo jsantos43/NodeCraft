@@ -1,0 +1,58 @@
+{
+  "post": {
+    "summary": "check current console access (worker auth)",
+    "description": "Checks a console JWT against its expiry, the user's current session and current permissions for an instance hosted by this worker. Called periodically for open sockets; commands use the most recent result stored by the worker.",
+    "tags": ["Worker"],
+    "security": [{ "workerApiKey": [] }],
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "required": ["token"],
+            "properties": { "token": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Current console permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["success", "canRead", "canWrite"],
+              "properties": {
+                "success": { "type": "boolean", "example": true },
+                "canRead": { "type": "boolean" },
+                "canWrite": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "400": { "$ref": "../../components/responses/error.json#/InvalidRequest" },
+      "401": { "$ref": "../../components/responses/error.json#/Unathorized" },
+      "403": { "$ref": "../../components/responses/error.json#/Forbidden" },
+      "404": { "$ref": "../../components/responses/error.json#/NotFound" },
+      "413": { "$ref": "../../components/responses/error.json#/PayloadTooLarge" },
+      "500": { "$ref": "../../components/responses/error.json#/Internal" }
+    }
+  },
+  "parameters": [
+    {
+      "name": "workerId",
+      "in": "path",
+      "required": true,
+      "schema": { "type": "string" }
+    },
+    {
+      "name": "instanceId",
+      "in": "path",
+      "required": true,
+      "schema": { "type": "string" }
+    }
+  ]
+}

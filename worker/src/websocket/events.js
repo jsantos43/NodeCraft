@@ -1,8 +1,43 @@
 import { running } from '../runtimes/index.js';
+import Manager from '../services/Manager.js';
+
+const ACCESS_CHECK_INTERVAL = 10000;
 
 const registerSocketEvents = (io) => {
   io.on('connection', (socket) => {
-    socket.on('join-console', (payload) => {
+    let accessCheckTimer;
+    let currentAccess = null;
+
+    const checkAccess = async () => {
+      try {
+        const { token } = socket.handshake.auth;
+        const access = await Manager.getConsoleAccess(socket.instanceId, token);
+
+        if (!access.canRead) {
+          currentAccess = null;
+          socket.disconnect(true);
+          return null;
+        }
+
+        currentAccess = access;
+        return access;
+      } catch {
+        currentAccess = null;
+        socket.disconnect(true);
+        return null;
+      }
+    };
+
+    const pollAccess = async () => {
+      await checkAccess();
+
+      if (socket.connected) accessCheckTimer = setTimeout(pollAccess, ACCESS_CHECK_INTERVAL);
+    };
+
+    const initialCheck = pollAccess();
+    socket.on('disconnect', () => clearTimeout(accessCheckTimer));
+
+    socket.on('join-console', async (payload) => {
       if (!payload || typeof payload !== 'object' || typeof payload.instanceId !== 'string') {
         socket.emit('instance-output', 'Invalid console request.');
         return;
@@ -13,14 +48,12 @@ const registerSocketEvents = (io) => {
         socket.emit('instance-output', 'Not authorized for this instance.');
         return;
       }
-      if (!socket.permissions.includes('console:read')) {
-        socket.emit('instance-output', 'You do not have permission to read the console.');
-        return;
-      }
+      await initialCheck;
+      if (!socket.connected) return;
       socket.join(`instance:${instanceId}`);
     });
 
-    socket.on('send-command', (payload) => {
+    socket.on('send-command', async (payload) => {
       if (!payload || typeof payload !== 'object' || typeof payload.instanceId !== 'string'
         || typeof payload.command !== 'string') {
         socket.emit('instance-output', 'Invalid console request.');
@@ -32,7 +65,9 @@ const registerSocketEvents = (io) => {
         socket.emit('instance-output', 'Not authorized for this instance.');
         return;
       }
-      if (!socket.permissions.includes('console:write')) {
+      await initialCheck;
+      if (!socket.connected) return;
+      if (!currentAccess?.canWrite) {
         socket.emit('instance-output', 'You do not have permission to send commands.');
         return;
       }

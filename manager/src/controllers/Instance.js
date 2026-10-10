@@ -236,6 +236,7 @@ class Instance {
           instanceId: id,
           purpose: 'console',
           permissions,
+          sessionVersion: req.authSessionVersion,
         },
         worker.secret,
         { expiresIn: 120 },

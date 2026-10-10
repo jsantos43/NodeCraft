@@ -21,6 +21,7 @@ const auth = (permission) => async (req, res, next) => {
 
     // Save user for next steps
     req.user = user;
+    req.authSessionVersion = payload.sessionVersion;
 
     // Check if user has permission
     const authorized = await Service.checkPermission(user, permission, id);

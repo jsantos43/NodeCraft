@@ -1,5 +1,9 @@
+import jwt from 'jsonwebtoken';
 import Service from '../services/Worker.js';
 import InstanceService from '../services/Instance.js';
+import UserService from '../services/User.js';
+import AuthService from '../services/Auth.js';
+import { Forbidden, Unathorized } from '../errors/index.js';
 
 class Worker {
   static async readAll(req, res, next) {
@@ -134,6 +138,48 @@ class Worker {
       await InstanceService.updateBackupStatus(workerId, instanceId, body);
 
       return res.status(200).json({ success: true });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async consoleAccess(req, res, next) {
+    try {
+      const { workerId, instanceId } = req.params;
+      const { token } = req.body || {};
+
+      if (typeof token !== 'string') throw new Unathorized('Invalid console token!');
+
+      const worker = await Service.readOneWithSecret(workerId);
+      let payload;
+      try {
+        payload = jwt.verify(token, worker.secret);
+      } catch {
+        throw new Unathorized('Invalid console token!');
+      }
+
+      if (payload.purpose !== 'console' || payload.instanceId !== instanceId
+        || typeof payload.sub !== 'string' || !payload.sub
+        || !Number.isSafeInteger(payload.sessionVersion) || payload.sessionVersion < 0) {
+        throw new Unathorized('Invalid console token!');
+      }
+
+      const instance = await InstanceService.readOne(instanceId);
+      if (instance.workerId !== workerId) throw new Forbidden('Instance is not on this worker!');
+
+      const user = await UserService.readOne(payload.sub, payload.sessionVersion);
+
+      const permissions = await AuthService.permissionsForInstance(user, instance);
+
+      const granted = Array.isArray(payload.permissions) ? payload.permissions : [];
+
+      const canRead = granted.includes('console:read')
+        && permissions.includes('instance:console:read');
+
+      const canWrite = canRead && granted.includes('console:write')
+        && permissions.includes('instance:console:write');
+
+      return res.status(200).json({ success: true, canRead, canWrite });
     } catch (err) {
       return next(err);
     }

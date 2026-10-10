@@ -1,7 +1,7 @@
 {
   "post": {
     "summary": "generate a console access token for a Instance",
-    "description": "Issues a short-lived (120s) JWT the frontend uses to open the console WebSocket directly on the worker. The token carries `console:read`, plus `console:write` when the user has that permission. Requires `instance:console:read`. Console tokens are validated independently by the worker: manager logout/reset prevents new token issuance with old access JWTs but does not revoke previously issued console tokens or disconnect existing sockets.",
+    "description": "Issues a short-lived (120s) JWT the frontend uses to open the console WebSocket directly on the worker. The token carries `console:read`, plus `console:write` when the user has that permission. Requires `instance:console:read`. The worker rechecks the token, session and current permissions with the manager every 10 seconds. Revoked read access or an expired token closes the socket; revoked write access blocks commands after the next check.",
     "tags": [
       "Instance"
     ],
