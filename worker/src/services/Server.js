@@ -3,7 +3,7 @@ import Container from './Container.js';
 import Backup from './Backup.js';
 import File from './File.js';
 import { running, gameRuntimes } from '../runtimes/index.js';
-import { Internal } from '../errors/index.js';
+import { Conflict, Internal } from '../errors/index.js';
 import logger from '../../config/logger.js';
 import config from '../../config/config.js';
 import Manager from './Manager.js';
@@ -12,8 +12,30 @@ import Manager from './Manager.js';
 // fire-and-forget, so a second request for the same instance would stop a
 // container that is mid-backup and race the restart and the status report.
 const backingUp = new Set();
+const starting = new Set();
 
 class Server {
+  static start(instance, restart = false) {
+    if (backingUp.has(instance.id)) throw new Conflict('Instance backup is in progress!');
+    if (starting.has(instance.id)) throw new Conflict('Instance is already starting!');
+
+    starting.add(instance.id);
+
+    const operation = restart ? Server.restart(instance) : Server.run(instance);
+
+    const tracked = operation.finally(() => starting.delete(instance.id));
+
+    tracked.catch((err) => logger.error({ err }, `Error to start instance ${instance.id}`));
+  }
+
+  static startBackup(instance) {
+    if (starting.has(instance.id)) throw new Conflict('Instance is starting!');
+    if (backingUp.has(instance.id)) throw new Conflict('Instance backup is already running!');
+
+    const operation = Server.backup(instance);
+    operation.catch((err) => logger.error({ err }, `Error to backup instance ${instance.id}`));
+  }
+
   static async run(instance) {
     let runtime;
     try {
@@ -100,11 +122,16 @@ class Server {
     } catch (err) {
       logger.error({ err }, `Error to backup instance ${instance?.id}`);
     } finally {
-      // Always bring the instance back up if it was running, even if the backup failed
-      if (isRunning) await Server.run(instance);
-      await Manager.reportBackupResult(instance.id, result);
-
-      backingUp.delete(instance.id);
+      try {
+        // This restart belongs to the backup, so it may run while backingUp is set.
+        if (isRunning) await Server.run(instance);
+      } finally {
+        try {
+          await Manager.reportBackupResult(instance.id, result);
+        } finally {
+          backingUp.delete(instance.id);
+        }
+      }
     }
   }
 
@@ -116,7 +143,15 @@ class Server {
       for (const instance of instances) {
         try {
           if (['running', 'starting'].includes(instance.status)) {
-            await Server.run(instance);
+            if (backingUp.has(instance.id) || starting.has(instance.id)) continue;
+
+            starting.add(instance.id);
+
+            try {
+              await Server.run(instance);
+            } finally {
+              starting.delete(instance.id);
+            }
           }
         } catch (err) {
           logger.error({ err }, 'Error to wake up an instance');

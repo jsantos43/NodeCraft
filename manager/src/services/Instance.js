@@ -89,6 +89,7 @@ class Instance {
 
   static async markStarting(id, restart = false) {
     const current = await Instance.readOne(id);
+    let previousStatus;
 
     await Limit.withOwner(current.ownerId, async (transaction) => {
       const instance = await Model.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
@@ -101,10 +102,15 @@ class Instance {
 
       await Limit.verifyCanStart(instance, transaction);
 
+      previousStatus = instance.status;
       await instance.update({ status: 'starting' }, { transaction });
     });
 
-    return Instance.readOne(id);
+    return { instance: await Instance.readOne(id), previousStatus };
+  }
+
+  static async restoreStartingStatus(id, previousStatus) {
+    await Model.update({ status: previousStatus }, { where: { id, status: 'starting' } });
   }
 
   static async update(id, instanceData, gameData = null) {

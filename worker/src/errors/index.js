@@ -5,6 +5,7 @@ import Unathorized from './Unathorized.js';
 import Forbidden from './Forbidden.js';
 import ServiceUnavailable from './ServiceUnavailable.js';
 import Internal from './Internal.js';
+import Conflict from './Conflict.js';
 
 export {
   NotFound,
@@ -14,4 +15,5 @@ export {
   Forbidden,
   ServiceUnavailable,
   Internal,
+  Conflict,
 };

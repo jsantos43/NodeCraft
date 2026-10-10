@@ -113,7 +113,7 @@ class Instance {
       const { id } = req.params;
 
       const { worker } = await getWorkerContext(id);
-      const instance = await Service.markStarting(id);
+      const { instance, previousStatus } = await Service.markStarting(id);
 
       const route = `${worker.url}/server/${id}/run`;
       const response = await proxyFetch(route, {
@@ -127,6 +127,10 @@ class Instance {
 
       await discardWorkerResponse(response);
 
+      if (response.status === 409) {
+        await Service.restoreStartingStatus(id, previousStatus);
+        throw new InvalidRequest('Instance is busy with a backup or start!');
+      }
       if (!response.ok) throw new Internal('Failed the run request to worker!');
 
       const permissions = await AuthService.permissionsForInstance(req.user, instance);
@@ -170,7 +174,7 @@ class Instance {
       const { id } = req.params;
 
       const { worker } = await getWorkerContext(id);
-      const instance = await Service.markStarting(id, true);
+      const { instance, previousStatus } = await Service.markStarting(id, true);
 
       const route = `${worker.url}/server/${id}/restart`;
       const response = await proxyFetch(route, {
@@ -184,6 +188,10 @@ class Instance {
 
       await discardWorkerResponse(response);
 
+      if (response.status === 409) {
+        await Service.restoreStartingStatus(id, previousStatus);
+        throw new InvalidRequest('Instance is busy with a backup or start!');
+      }
       if (!response.ok) throw new Internal('Failed the restart request to worker!');
 
       const permissions = await AuthService.permissionsForInstance(req.user, instance);
@@ -277,6 +285,7 @@ class Instance {
 
       await discardWorkerResponse(response);
 
+      if (response.status === 409) throw new InvalidRequest('Instance is starting or backing up!');
       if (!response.ok) throw new Internal('Failed the backup request to worker!');
 
       const permissions = await AuthService.permissionsForInstance(req.user, instance);

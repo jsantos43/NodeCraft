@@ -5,7 +5,7 @@ class Server {
     try {
       const instance = req?.body?.instance;
 
-      Service.run(instance);
+      Service.start(instance);
 
       return res.status(200).json({ success: true });
     } catch (err) {
@@ -29,7 +29,7 @@ class Server {
     try {
       const instance = req?.body?.instance;
 
-      Service.restart(instance);
+      Service.start(instance, true);
 
       return res.status(200).json({ success: true });
     } catch (err) {
@@ -41,7 +41,7 @@ class Server {
     try {
       const instance = req?.body?.instance;
 
-      Service.backup(instance);
+      Service.startBackup(instance);
 
       return res.status(200).json({ success: true });
     } catch (err) {

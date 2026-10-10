@@ -10,12 +10,6 @@ Implementado em 06/10/2026: o middleware usa `verifyNoSymlinks()` para rejeitar 
 
 Validação: sete cenários automatizados com arquivos temporários reais, sem Docker ou storage, cobrindo links, caminhos inválidos, proteção da raiz e operações comuns.
 
-## W08 — Iniciar durante backup permite copiar um mundo em alteração
-
-**Local:** `worker/src/services/Server.js:17,70`; `manager/src/routes/instance.js`.
-
-O conjunto `backingUp` bloqueia apenas outro backup. Após pedir backup de uma instância parada, o usuário pode chamar `/run` enquanto o ZIP ainda é criado; não há trava compartilhada entre essas operações. O jogo pode modificar o mundo durante a cópia, produzindo backup inconsistente marcado como sucesso. O setup já é aguardado no código atual; essa parte do relato antigo foi removida.
-
 ## W10 — Operações de arquivos podem esgotar o disco compartilhado
 
 **Local:** `worker/src/middlewares/uploader.js`; `worker/src/services/File.js` (`copy`, `unzip`); `manager/src/routes/file.js`.
